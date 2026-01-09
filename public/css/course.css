@@ -1,0 +1,419 @@
+.course,
+.courses {
+  margin-top: 88px;
+}
+
+.college-container {
+  height: auto;
+  border-radius: 16px;
+  color: var(--primary-black);
+  cursor: pointer;
+  box-shadow: 0px 2px 20px rgb(1 41 112 /10%);
+  border: 1px solid transparent;
+  transition: all .2s ease-in-out;
+}
+
+.college-container:hover {
+  border: 1px solid var(--primary-orange);
+  transform: scale(1.05);
+}
+
+.college-image-wrapper {
+  height: 100px;
+  /* background-color: aqua; */
+}
+
+.college-logo {
+  max-height: 100px;
+  overflow: hidden;
+}
+
+.college-logo-placeholder {
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, var(--primary-orange) 0%, var(--secondary-orange) 100%);
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(238, 124, 59, 0.3);
+}
+
+.college-placeholder-icon {
+  font-size: 40px;
+  color: white;
+}
+
+/* Course Detail Page Styles */
+.course-header-section {
+  margin-bottom: 2rem;
+}
+
+.course-title-header {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 2rem;
+}
+
+.course-main-title h1 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1a365d;
+  margin: 0;
+  line-height: 1.2;
+  text-align: center;
+}
+
+/* Tab Navigation */
+.course-tabs {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.tab-buttons {
+  display: flex;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 1rem 1.5rem;
+  background: none;
+  border: none;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #4a5568;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  border-bottom: 3px solid transparent;
+}
+
+.tab-btn:hover {
+  background: rgba(237, 137, 54, 0.1);
+  color: var(--primary-orange);
+}
+
+.tab-btn.active {
+  background: white;
+  color: var(--primary-orange);
+  border-bottom-color: var(--primary-orange);
+  font-weight: 600;
+}
+
+/* Tab Content */
+.tab-content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.tab-pane {
+  display: none;
+  padding: 2rem;
+}
+
+.tab-pane.active {
+  display: block;
+}
+
+.tab-content-inner {
+  color: #4a5568;
+  line-height: 1.7;
+  font-size: 1rem;
+}
+
+/* Headings */
+.tab-content-inner h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a365d;
+  margin-top: 2rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid var(--primary-orange);
+  padding-bottom: 0.5rem;
+}
+
+.tab-content-inner h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1a365d;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 0.25rem;
+}
+
+.tab-content-inner h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a365d;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.tab-content-inner h4 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1a365d;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Paragraphs */
+.tab-content-inner p {
+  margin-bottom: 1.25rem;
+  text-align: justify;
+}
+
+.tab-content-inner p:last-child {
+  margin-bottom: 0;
+}
+
+/* Lists */
+.tab-content-inner ul,
+.tab-content-inner ol {
+  margin-bottom: 1.5rem;
+  padding-left: 1.5rem;
+}
+
+.tab-content-inner ul {
+  list-style-type: disc;
+}
+
+.tab-content-inner ol {
+  list-style-type: decimal;
+}
+
+.tab-content-inner li {
+  margin-bottom: 0.75rem;
+  padding-left: 0.5rem;
+}
+
+.tab-content-inner li:last-child {
+  margin-bottom: 0;
+}
+
+/* Nested lists */
+.tab-content-inner ul ul,
+.tab-content-inner ol ol,
+.tab-content-inner ul ol,
+.tab-content-inner ol ul {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.tab-content-inner ul ul li,
+.tab-content-inner ol ol li,
+.tab-content-inner ul ol li,
+.tab-content-inner ol ul li {
+  margin-bottom: 0.25rem;
+}
+
+/* Blockquotes */
+.tab-content-inner blockquote {
+  border-left: 4px solid var(--primary-orange);
+  padding-left: 1rem;
+  margin: 1.5rem 0;
+  font-style: italic;
+  color: #2d3748;
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 0 6px 6px 0;
+}
+
+/* Strong and emphasis */
+.tab-content-inner strong,
+.tab-content-inner b {
+  font-weight: 600;
+  color: #1a365d;
+}
+
+.tab-content-inner em,
+.tab-content-inner i {
+  font-style: italic;
+  color: #4a5568;
+}
+
+/* Links */
+.tab-content-inner a {
+  color: var(--primary-orange);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.tab-content-inner a:hover {
+  text-decoration: underline;
+}
+
+/* Tables */
+.tab-content-inner table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tab-content-inner th,
+.tab-content-inner td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.tab-content-inner th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #1a365d;
+}
+
+.tab-content-inner tr:last-child td {
+  border-bottom: none;
+}
+
+/* Code blocks */
+.tab-content-inner code {
+  background: #f8f9fa;
+  padding: 0.125rem 0.25rem;
+  border-radius: 3px;
+  font-family: 'Monaco', 'Consolas', monospace;
+  font-size: 0.9em;
+}
+
+.tab-content-inner pre {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+  border: 1px solid #e2e8f0;
+}
+
+.tab-content-inner pre code {
+  background: none;
+  padding: 0;
+}
+
+/* Horizontal rules */
+.tab-content-inner hr {
+  border: none;
+  height: 1px;
+  background: #e2e8f0;
+  margin: 2rem 0;
+}
+
+/* Spacing utilities */
+.tab-content-inner .text-center {
+  text-align: center;
+}
+
+.tab-content-inner .text-left {
+  text-align: left;
+}
+
+.tab-content-inner .text-right {
+  text-align: right;
+}
+
+.tab-content-inner .mt-1 { margin-top: 0.25rem; }
+.tab-content-inner .mt-2 { margin-top: 0.5rem; }
+.tab-content-inner .mt-3 { margin-top: 1rem; }
+.tab-content-inner .mt-4 { margin-top: 1.5rem; }
+.tab-content-inner .mt-5 { margin-top: 2rem; }
+
+.tab-content-inner .mb-1 { margin-bottom: 0.25rem; }
+.tab-content-inner .mb-2 { margin-bottom: 0.5rem; }
+.tab-content-inner .mb-3 { margin-bottom: 1rem; }
+.tab-content-inner .mb-4 { margin-bottom: 1.5rem; }
+.tab-content-inner .mb-5 { margin-bottom: 2rem; }
+
+/* Sidebar Styles */
+.course-sidebar {
+  position: sticky;
+  top: 100px;
+}
+
+.sidebar-section {
+  margin-bottom: 2rem;
+}
+
+.sidebar-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #1a365d;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--primary-orange);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .course-main-title h1 {
+    font-size: 2rem;
+  }
+
+  .course-title-header {
+    padding: 1.5rem;
+  }
+
+  .tab-buttons {
+    flex-direction: column;
+  }
+
+  .tab-btn {
+    border-bottom: 1px solid #e9ecef;
+    border-right: none;
+  }
+
+  .tab-btn.active {
+    border-bottom-color: var(--primary-orange);
+  }
+
+  .tab-pane {
+    padding: 1.5rem;
+  }
+
+  .course-sidebar {
+    position: static;
+    margin-top: 2rem;
+  }
+
+  /* Mobile typography adjustments */
+  .tab-content-inner h1 {
+    font-size: 1.75rem;
+  }
+
+  .tab-content-inner h2 {
+    font-size: 1.25rem;
+  }
+
+  .tab-content-inner h3 {
+    font-size: 1.1rem;
+  }
+
+  .tab-content-inner ul,
+  .tab-content-inner ol {
+    padding-left: 1.25rem;
+  }
+
+  .tab-content-inner blockquote {
+    padding: 0.75rem;
+    margin: 1rem 0;
+  }
+
+  .tab-content-inner table th,
+  .tab-content-inner table td {
+    padding: 0.5rem;
+    font-size: 0.9rem;
+  }
+}

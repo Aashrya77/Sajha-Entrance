@@ -1,0 +1,114 @@
+.footer-wrapper {
+  height: auto;
+  background-image: url(/img/footer-bg.png);
+  background-size: contain;
+}
+
+.footer {
+  border-top: 2px solid var(--primary-orange);
+}
+
+@media only screen and (max-width: 992px) {
+  .footer {
+    margin-bottom: 100px;
+  }
+}
+
+.footer-links a {
+  margin-top: 0.7rem;
+  color: var(--primary-black);
+  font-weight: 500;
+}
+
+.footer-links a:hover {
+  color: var(--primary-orange);
+}
+
+.footer-social-btn {
+  margin-top: 0.7rem;
+  height: 50px;
+  width: 50px;
+  border-radius: 50%;
+  font-size: 18px;
+  color: white;
+  border: none;
+  text-align: center;
+  transition: all 0.2s ease-in-out;
+}
+
+.footer-social-btn:hover {
+  transform: scale(1.04);
+  background-color: var(--secondary-orange);
+}
+
+.newsletter {
+  background-image: url(/img/sb.jpg);
+  background-size: cover;
+  background-position: center;
+  height: auto;
+  border-radius: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.newsletter-input-section {
+  transition: all 0.2s ease-in-out;
+}
+
+.newsletter-input-section:hover {
+  transform: scale(1.05);
+}
+
+.newsletter-heading {
+  font-size: 36px;
+  font-weight: 700;
+  color: white;
+}
+
+.newsletter-subheading {
+  font-size: 17px;
+  font-weight: 500;
+  color: white;
+}
+
+.newsletter-input {
+  outline: none;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 2px solid white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem 0rem 0rem 0.5rem;
+  width: 400px;
+  color: white;
+}
+
+@media only screen and (max-width: 768px) {
+  .newsletter-input {
+    width: 100%;
+  }
+  .newsletter {
+    align-items: start;
+  }
+}
+
+.newsletter-input:hover,
+.newsletter-input:focus,
+.newsletter-input:focus-within {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.newsletter-button {
+  background-color: white;
+  border: 2px solid white;
+  padding: 0.85rem 1.5rem;
+  border-radius: 0rem 0.5rem 0.5rem 0rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  font-size: 14px;
+  color: black;
+}
+
+.newsletter-input::placeholder {
+  color: rgba(255, 255, 255, 0.75);
+}

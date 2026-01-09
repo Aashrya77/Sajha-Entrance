@@ -1,0 +1,125 @@
+<%- include('base/header') -%>
+<div class="blogs">
+  <div class="container">
+    <div class="row" style="padding-top: 4.5rem">
+      <div class="col-12">
+        <h3
+          class="text-uppercase mb-0 text-center"
+          style="font-weight: 900; color: var(--primary-orange)"
+        >
+          Search for
+          <span style="color: var(--primary-black)">a blog</span>
+        </h3>
+        <div class="d-flex justify-content-center">
+          <form
+            method="post"
+            action="/blog/search"
+            class="mt-4 d-flex flex-column"
+          >
+            <div>
+              <input
+                name="blogName"
+                placeholder="SEARCH FOR A BLOG"
+                class="searchInput"
+                value="<%= search %>"
+              /><button type="submit" class="searchButton">
+                <i class="fa-solid fa-magnifying-glass"></i>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="row mt-5">
+      <div class="col-12">
+        <div class="row">
+          <h3
+            class="text-uppercase mb-0 text-center"
+            style="font-weight: 900; color: var(--primary-orange)"
+          >
+            Read our
+            <span style="color: var(--primary-black)">recent blogs</span>
+          </h3>
+          <% for (items in blogs) { %>
+          <div class="col-12 col-md-6 col-lg-4 mt-4">
+            <a href="/blog/<%= blogs[items]._id %>">
+              <div class="blog-card-wrapper">
+                <% if (blogs[items].blogImage) { %>
+                <div class="blog-image-container">
+                  <img
+                    src="/blogs/<%= blogs[items].blogImage %>"
+                    alt="<%= blogs[items].blogTitle %>"
+                    class="blog-card-image"
+                  />
+                </div>
+                <% } %>
+                <div class="p-4">
+                  <div
+                    style="font-weight: 700; font-size: 20px"
+                    class="text-truncate"
+                  >
+                    <%= blogs[items].blogTitle %>
+                  </div>
+                  <div
+                    style="font-weight: 500; font-size: 14.5px"
+                    class="text-truncate mt-2"
+                  >
+                    <%= blogs[items].blogDescriptionUnformatted %>
+                  </div>
+                  <div class="mt-3 d-flex justify-content-between align-items-center">
+                    <span class="blog-date px-2"
+                      ><%= (blogs[items].createdAt).toLocaleDateString("en-US", {
+                      weekday: 'long', year: 'numeric', month: 'long', day:
+                      'numeric' }) %></span
+                    >
+                    <button class="btn-read-more">
+                      <i class="fa-solid fa-arrow-right me-1"></i>Read More
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </a>
+          </div>
+          <% } %>
+          <!-- Pagination Setup -->
+          <div class="d-flex justify-content-between mt-3 mx-2">
+            <div>
+              <% if(previousPage != 0) { %>
+              <button
+                class="pageButton d-flex align-items-center justify-content-center"
+                onclick="window.location.href='/blogs?page=<%= previousPage %>'"
+              >
+                <i class="fa-solid fa-angle-left"></i>
+              </button>
+              <% } %>
+            </div>
+            <div>
+              <% if(nextPage != 0) { %>
+              <button
+                class="pageButton d-flex align-items-center justify-content-center"
+                onclick="window.location.href='/blogs?page=<%= nextPage %>'"
+              >
+                <i class="fa-solid fa-angle-right"></i>
+              </button>
+              <% } %>
+            </div>
+          </div>
+          <!-- Pagination Setup End -->
+          <% if (advertisement) { %>
+            <a href="<%= advertisement.advertisementLink %>">
+              <div class="advertisement-div mt-4">
+                <img
+                  src="/advertisements/<%= advertisement.advertisementFile %>"
+                  alt="advertisement-image"
+                  class="advertisement-image"
+                />
+              </div>
+            </a>
+            <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('base/footer') -%>

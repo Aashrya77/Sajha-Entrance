@@ -1,0 +1,281 @@
+<%- include('base/header') -%>
+<div class="colleges">
+  <div class="container">
+    <div class="row" style="padding-top: 4.5rem">
+      <div class="col-12 col-lg-4">
+        <div>
+          <h3
+            class="text-uppercase mb-0 text-center"
+            style="font-weight: 900; color: var(--primary-orange)"
+          >
+            Search for
+            <span style="color: var(--primary-black)">a college</span>
+          </h3>
+        </div>
+        <div class="d-flex justify-content-center">
+          <form
+            method="post"
+            action="/college/search"
+            class="d-flex flex-column"
+          >
+            <div>
+              <input
+                name="collegeName"
+                placeholder="SEARCH FOR A COLLEGE"
+                class="searchInput"
+                value="<%= search %>"
+              /><button type="submit" class="searchButton">
+                <i class="fa-solid fa-magnifying-glass"></i>
+              </button>
+            </div>
+
+            <!-- Active Filters Display -->
+            <% if (search || location) { %>
+            <div class="active-filters mt-3 mb-3">
+              <div class="d-flex align-items-center justify-content-center gap-3 flex-wrap">
+                <% if (search) { %>
+                <span class="filter-tag">
+                  <i class="fa-solid fa-search"></i>
+                  "<%= search %>"
+                </span>
+                <% } %>
+                <% if (location) { %>
+                <span class="filter-tag">
+                  <i class="fa-solid fa-map-marker-alt"></i>
+                  <%= location.charAt(0).toUpperCase() + location.slice(1) %>
+                </span>
+                <% } %>
+                <a href="/colleges" class="btn-remove-filter">
+                  <i class="fa-solid fa-times"></i>
+                  Clear All
+                </a>
+              </div>
+            </div>
+            <% } %>
+
+            <h3
+              class="text-uppercase mb-0 mt-3"
+              style="
+                font-weight: 900;
+                color: var(--primary-orange);
+                font-size: 16px;
+              "
+            >
+              Location
+              <span style="color: var(--primary-black)">Filter</span>
+            </h3>
+            <div class="locationFilter mt-3">
+              <input
+                type="radio"
+                id="all"
+                name="location"
+                value=""
+                <%= !location ? 'checked' : '' %>
+              />
+              <label for="all">All Locations</label>
+            </div>
+            <div class="locationFilter">
+              <input
+                type="radio"
+                id="lalitpur"
+                name="location"
+                value="lalitpur"
+                <%= location === 'lalitpur' ? 'checked' : '' %>
+              />
+              <label for="lalitpur">Lalitpur</label>
+            </div>
+            <div class="locationFilter">
+              <input
+                type="radio"
+                id="bhaktapur"
+                name="location"
+                value="bhaktapur"
+                <%= location === 'bhaktapur' ? 'checked' : '' %>
+              />
+              <label for="bhaktapur">Bhaktapur</label>
+            </div>
+            <div class="locationFilter">
+              <input
+                type="radio"
+                id="kathmandu"
+                name="location"
+                value="kathmandu"
+                <%= location === 'kathmandu' ? 'checked' : '' %>
+              />
+              <label for="kathmandu">Kathmandu</label>
+            </div>
+          </form>
+        </div>
+        <div class="row d-none d-lg-block">
+          <h3
+            class="text-uppercase mb-4 mt-5 text-center"
+            style="font-weight: 900; color: var(--primary-orange)"
+          >
+            SOME OF THE
+            <span style="color: var(--primary-black)">COURSES</span>
+          </h3>
+          <% let courseCount = 0; %>
+          <% for (item in courses) { %>
+          <% if (courseCount < 3) { %>
+          <div class="col-12">
+            <a href="/course/<%= courses[item].id %>" class="course-card-link">
+              <div class="course-card-modern">
+                <!-- Course Content -->
+                <div class="course-card-content">
+                  <div class="course-title-section">
+                    <h3 class="course-title"><%= courses[item].fullForm ? courses[item].fullForm : courses[item].title %></h3>
+                  </div>
+
+                  <div class="course-university-section">
+                    <i class="fa-solid fa-building-columns university-icon"></i>
+                    <span class="university-name"><%= courses[item].universityName || 'University Affiliation' %></span>
+                  </div>
+
+                  <div class="course-duration-section">
+                    <i class="fa-solid fa-clock duration-icon"></i>
+                    <span class="duration-text"><%= courses[item].duration || 'Duration' %></span>
+                  </div>
+                </div>
+
+                <!-- Course Footer -->
+                <div class="course-card-footer">
+                  <div class="course-action">
+                    <span class="action-text">Learn More</span>
+                    <i class="fa-solid fa-arrow-right action-arrow"></i>
+                  </div>
+                </div>
+              </div>
+            </a>
+          </div>
+          <% courseCount++; %>
+          <% } %>
+          <% } %>
+
+          <!-- More Courses Button -->
+          <div class="text-center mt-4">
+            <a href="/courses" class="btn-primary">
+              <i class="fa-solid fa-plus me-2"></i>More Courses
+            </a>
+          </div>
+        </div>
+      </div>
+      <div class="col-12 col-lg-8">
+        <div class="px-2 px-lg-0">
+          <div class="row d-flex justify-content-center">
+            <h3
+              class="text-uppercase mb-4 text-center mt-5 mt-lg-4"
+              style="font-weight: 900; color: var(--primary-orange)"
+            >
+              Partnered
+              <span style="color: var(--primary-black)">Colleges</span>
+            </h3>
+            <% if (noResult == true) { %>
+            <h3
+              class="text-uppercase mb-0 mt-3 text-center"
+              style="
+                font-weight: 900;
+                color: var(--primary-orange);
+                font-size: 16px;
+              "
+            >
+              No Result
+              <span style="color: var(--primary-black)">Found</span>
+            </h3>
+            <% } %>
+            <div class="row g-4 mt-3">
+              <% for (item in colleges) { %>
+              <div class="col-6 col-lg-4">
+              <a href="/college/<%= colleges[item]._id %>" class="college-card-link">
+                <div class="college-card-modern">
+                  <!-- College Banner -->
+                  <div class="college-banner">
+                    <% if (colleges[item].collegeLogo) { %>
+                    <img
+                      src="/colleges/<%=
+                        typeof colleges[item].collegeLogo === 'string'
+                          ? colleges[item].collegeLogo
+                          : colleges[item].collegeLogo.filename ||
+                            colleges[item].collegeLogo.key ||
+                            colleges[item].collegeLogo
+                      %>"
+                      alt="college-banner"
+                      class="college-banner-image"
+                    />
+                    <% } else { %>
+                    <div class="college-banner-placeholder">
+                      <i class="fa-solid fa-building-columns college-banner-placeholder-icon"></i>
+                    </div>
+                    <% } %>
+                  </div>
+
+                  <!-- College Content -->
+                  <div class="college-content">
+                    <div class="college-name-section">
+                      <h3 class="college-name"><%= colleges[item].collegeName %></h3>
+                      <i class="fa-solid fa-circle-check verified-icon"></i>
+                    </div>
+
+                    <div class="college-university-section">
+                      <i class="fa-solid fa-building-columns university-icon"></i>
+                      <span class="university-name">
+                        <%= colleges[item].universityName || 'University Affiliation' %>
+                      </span>
+                    </div>
+
+                    <div class="college-location-section">
+                      <i class="fa-solid fa-location-dot location-icon"></i>
+                      <span class="location-text"><%= colleges[item].collegeAddress %></span>
+                    </div>
+                  </div>
+                </div>
+              </a>
+            </div>
+            <% } %>
+            </div>
+          </div>
+          <!-- Pagination Setup -->
+          <div class="d-flex justify-content-between mt-4 mx-2">
+            <div>
+              <% if(previousPage != 0) { %>
+              <button
+                class="pageButton d-flex align-items-center justify-content-center"
+                onclick="window.location.href='/colleges?page=<%= previousPage %>'"
+              >
+                <i class="fa-solid fa-angle-left"></i>
+              </button>
+              <% } %>
+            </div>
+            <div>
+              <% if(nextPage != 0) { %>
+              <button
+                class="pageButton d-flex align-items-center justify-content-center"
+                onclick="window.location.href='/colleges?page=<%= nextPage %>'"
+              >
+                <i class="fa-solid fa-angle-right"></i>
+              </button>
+              <% } %>
+            </div>
+          </div>
+          <!-- Pagination Setup End -->
+          <% if (advertisement) { %>
+          <a href="<%= advertisement.advertisementLink %>">
+            <div class="advertisement-div mt-4">
+              <img
+                src="/advertisements/<%= advertisement.advertisementFile %>"
+                alt="advertisement-image"
+                class="advertisement-image"
+              />
+            </div>
+          </a>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const myParam = urlParams.get("myParam");
+</script>
+<%- include('base/footer') -%>

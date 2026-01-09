@@ -1,0 +1,131 @@
+<%- include('../base/header') -%>
+
+<div class="profile-page-wrapper" style="min-height: calc(100vh - 87px); padding-top: 120px; padding-bottom: 60px;">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-12 col-md-8 col-lg-7">
+        <div class="profile-card">
+          <div class="profile-header text-center mb-4">
+            <div class="profile-avatar mb-3">
+              <i class="fa-solid fa-user-circle"></i>
+            </div>
+            <h2 class="profile-name"><%= student.name %></h2>
+            <p class="profile-subtitle">Student Dashboard</p>
+          </div>
+
+          <div class="profile-content">
+            <div class="profile-info-section mb-4">
+              <h4 class="section-title">
+                <i class="fa-solid fa-info-circle me-2"></i>Personal Information
+              </h4>
+              <div class="info-grid">
+                <div class="info-item">
+                  <div class="info-label">
+                    <i class="fa-solid fa-id-card me-2"></i>Student ID
+                  </div>
+                  <div class="info-value"><%= student.studentId %></div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">
+                    <i class="fa-solid fa-graduation-cap me-2"></i>Course
+                  </div>
+                  <div class="info-value"><%= student.course %></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="profile-info-section mb-4">
+              <h4 class="section-title">
+                <i class="fa-solid fa-credit-card me-2"></i>Account Status
+              </h4>
+              <div class="status-card">
+                <div class="status-header">
+                  <span class="status-badge status-<%= student.accountStatus.toLowerCase().replace(' ', '-') %>">
+                    <%= student.accountStatus %>
+                  </span>
+                </div>
+                <% if (student.accountStatus === 'Free Trial' && student.trialExpiryDate) { %>
+                  <div class="status-details mt-3">
+                    <div class="status-detail-item">
+                      <i class="fa-solid fa-calendar-alt me-2"></i>
+                      <strong>Trial Expiry Date:</strong>
+                      <span><%= new Date(student.trialExpiryDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></span>
+                    </div>
+                  </div>
+                <% } %>
+              </div>
+            </div>
+
+            <!-- My Live Classes Section -->
+            <div class="profile-info-section mb-4">
+              <h4 class="section-title">
+                <i class="fa-solid fa-chalkboard-user me-2"></i>My Live Classes
+              </h4>
+              <% if (typeof errorMessage !== 'undefined' && errorMessage) { %>
+                <div class="alert alert-danger" role="alert">
+                  <i class="fa-solid fa-exclamation-circle me-2"></i><%= errorMessage %>
+                </div>
+              <% } %>
+              <% if (typeof classes !== 'undefined' && classes && classes.length > 0) { %>
+                <div class="classes-list">
+                  <% classes.forEach(function(cls) { %>
+                    <div class="class-card">
+                      <div class="class-card-header">
+                        <h5 class="class-title"><%= cls.classTitle %></h5>
+                        <span class="class-status-badge status-<%= cls.status.toLowerCase().replace(' ', '-') %>">
+                          <%= cls.status %>
+                        </span>
+                      </div>
+                      <div class="class-card-body">
+                        <div class="class-info-item">
+                          <i class="fa-solid fa-book me-2"></i>
+                          <strong>Subject:</strong> <%= cls.subject %>
+                        </div>
+                        <div class="class-info-item">
+                          <i class="fa-solid fa-calendar-alt me-2"></i>
+                          <strong>Date & Time:</strong> 
+                          <span><%= new Date(cls.classDateTime).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %> at <%= new Date(cls.classDateTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) %></span>
+                        </div>
+                      </div>
+                      <div class="class-card-footer">
+                        <% if (typeof canAccessClasses !== 'undefined' && canAccessClasses && cls.status !== 'Completed') { %>
+                          <a href="/student/class/<%= cls.id %>/join" class="btn btn-primary btn-sm">
+                            <i class="fa-solid fa-video me-2"></i>Join Class
+                          </a>
+                        <% } else if (typeof canAccessClasses !== 'undefined' && !canAccessClasses) { %>
+                          <button class="btn btn-secondary btn-sm" disabled>
+                            <i class="fa-solid fa-lock me-2"></i>Join Class
+                          </button>
+                          <small class="text-muted ms-2"><%= typeof accessMessage !== 'undefined' ? accessMessage : 'Access restricted' %></small>
+                        <% } else { %>
+                          <span class="text-muted">Class completed</span>
+                        <% } %>
+                      </div>
+                    </div>
+                  <% }); %>
+                </div>
+              <% } else { %>
+                <div class="no-classes-message">
+                  <p class="text-muted">No classes scheduled at the moment.</p>
+                </div>
+              <% } %>
+            </div>
+
+            <div class="profile-actions mt-4">
+              <a href="/" class="btn btn-outline-primary me-2">
+                <i class="fa-solid fa-home me-2"></i>Go to Home
+              </a>
+              <form action="/student/logout" method="POST" class="d-inline">
+                <button type="submit" class="btn btn-outline-danger">
+                  <i class="fa-solid fa-sign-out-alt me-2"></i>Logout
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('../base/footer') -%>
