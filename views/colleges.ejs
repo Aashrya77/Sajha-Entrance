@@ -70,6 +70,7 @@
                 id="all"
                 name="location"
                 value=""
+                onchange="this.form.submit()"
                 <%= !location ? 'checked' : '' %>
               />
               <label for="all">All Locations</label>
@@ -80,6 +81,7 @@
                 id="lalitpur"
                 name="location"
                 value="lalitpur"
+                onchange="this.form.submit()"
                 <%= location === 'lalitpur' ? 'checked' : '' %>
               />
               <label for="lalitpur">Lalitpur</label>
@@ -90,6 +92,7 @@
                 id="bhaktapur"
                 name="location"
                 value="bhaktapur"
+                onchange="this.form.submit()"
                 <%= location === 'bhaktapur' ? 'checked' : '' %>
               />
               <label for="bhaktapur">Bhaktapur</label>
@@ -100,6 +103,7 @@
                 id="kathmandu"
                 name="location"
                 value="kathmandu"
+                onchange="this.form.submit()"
                 <%= location === 'kathmandu' ? 'checked' : '' %>
               />
               <label for="kathmandu">Kathmandu</label>

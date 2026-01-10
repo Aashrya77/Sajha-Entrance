@@ -108,68 +108,81 @@
     border-bottom: 3px solid #ff9800;
     display: inline-block;
   }
-
-  .college-admission-notice {
-    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
-    border-left: 5px solid #ff9800;
-    border-radius: 6px;
-    padding: 20px;
+  /* Admission Box Container */
+.college-admission-notice {
+    background: #ffffff;
+    border: 1px solid #e0e6ed;
+    border-radius: 12px;
+    padding: 24px;
     margin-bottom: 30px;
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    box-shadow: 0 2px 8px rgba(255, 152, 0, 0.15);
-  }
-
-  .college-admission-icon {
-    font-size: 32px;
-    color: #ff9800;
-    flex-shrink: 0;
-  }
-
-  .college-admission-text-section {
-    flex: 1;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     display: flex;
     flex-direction: column;
-    gap: 6px;
-  }
+    gap: 15px;
+}
 
-  .college-admission-text {
-    font-weight: 600;
-    color: #333;
-    font-size: 15px;
-  }
+/* Heading Text */
+.college-admission-text {
+    font-size: 18px;
+    font-weight: 700;
+    color: #2c3e50;
+    display: block;
+    line-height: 1.4;
+}
 
-  .college-admission-deadline {
-    font-size: 13px;
-    color: #666;
+/* Row for Button and Deadline */
+.college-admission-action-row {
     display: flex;
-    align-items: center;
-    gap: 6px;
-  }
+    align-items: center; /* Vertical center */
+    flex-wrap: wrap;
+    gap: 20px; /* Space between button and date */
+}
 
-  .college-btn-apply {
-    background-color: #ff9800;
-    color: white;
+/* Apply Now Button */
+.college-btn-apply {
+    background-color: #ff7422 !important; /* Screenshot ko blue */
+    color: white !important;
     padding: 10px 24px;
     border-radius: 6px;
-    text-decoration: none;
-    font-weight: 600;
+    font-weight: 700;
+    text-transform: uppercase;
+    text-decoration: none !important;
     font-size: 14px;
-    transition: all 0.3s ease;
-    border: none;
-    cursor: pointer;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-
-  .college-btn-apply:hover {
-    background-color: #f57c00;
+    display: inline-flex;
+    align-items: center;
+}
+.college-btn-apply:hover {
+    background-color: #ff7422 !important;
     text-decoration: none;
-    color: white;
+    color: white !important;
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.3);
-  }
+}
+
+/* Deadline Text */
+.college-admission-deadline {
+    font-size: 15px;
+    color: #5d6d7e;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.college-admission-deadline i {
+    color: #7f8c8d;
+}
+
+/* Mobile responsive */
+@media (max-width: 600px) {
+    .college-admission-action-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .college-btn-apply {
+        width: 100%;
+        justify-content: center;
+    }
+}
 
   .college-overview-content {
     color: #555;
@@ -282,7 +295,7 @@
     color: #1a1a1a;
     margin: 0 0 20px 0;
     padding-bottom: 12px;
-    border-bottom: 3px solid #ff9800;
+    border-bottom: 3px solid #ff7422;
     display: inline-block;
   }
 
@@ -298,7 +311,7 @@
 
   .college-contact-icon {
     font-size: 20px;
-    color: #ff9800;
+    color: #ff7422;
     width: 32px;
     height: 32px;
     display: flex;
@@ -386,12 +399,10 @@
     font-size: 13px;
     color: #666;
     line-height: 1.5;
-    max-height: 80px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
+    text-align: justify;
+    height: auto; 
+    overflow: visible;
+    display: block;
   }
 
   /* Location Map Section */
@@ -684,13 +695,13 @@
           <nav class="college-sidebar-nav sticky-top">
             <ul class="college-nav-list">
               <li class="college-nav-item">
-                <a href="#about" class="college-nav-link" onclick="setActiveNav(event)">
-                  <i class="fa-solid fa-circle-info"></i> About
+                <a href="#admission" class="college-nav-link" onclick="setActiveNav(event)">
+                  <i class="fa-solid fa-graduation-cap"></i> Admission
                 </a>
               </li>
               <li class="college-nav-item">
-                <a href="#admissions" class="college-nav-link" onclick="setActiveNav(event)">
-                  <i class="fa-solid fa-graduation-cap"></i> Admissions
+                <a href="#about" class="college-nav-link" onclick="setActiveNav(event)">
+                  <i class="fa-solid fa-circle-info"></i> About
                 </a>
               </li>
               <li class="college-nav-item">
@@ -731,11 +742,15 @@
         <div class="col-md-7">
           <div class="college-main-content">
             <!-- Admission Notice Bar -->
-            <% if (collegeData.admissionNotice) { %>
+           <% if (collegeData.admissionNotice) { %>
             <div class="college-admission-notice" id="admissions">
-              <i class="fa-solid fa-graduation-cap college-admission-icon"></i>
               <div class="college-admission-text-section">
                 <span class="college-admission-text"><%= collegeData.admissionNotice %></span>
+              </div>
+            
+               <div class="college-admission-action-row">
+                <a href="/contact" class="college-btn-apply">Apply Now</a>
+              
                 <% if (collegeData.admissionCloseDate) { %>
                 <span class="college-admission-deadline">
                   <i class="fa-solid fa-clock"></i>
@@ -747,11 +762,9 @@
                   }) %>
                 </span>
                 <% } %>
+                </div>
               </div>
-              <a href="/contact" class="college-btn-apply">Apply Now</a>
-            </div>
             <% } %>
-
             <!-- About Section -->
             <% if (collegeData.overview) { %>
             <div class="college-section" id="about">
@@ -928,7 +941,7 @@
 
           <!-- Chairman Preview Card -->
           <% if (collegeData.chairmanName || collegeData.chairmanMessage || collegeData.chairmanImage) { %>
-          <div class="college-chairman-preview">
+          <div class="college-chairman-preview" id="chairman">
             <div class="college-chairman-preview-title">Chairman</div>
             <% if (collegeData.chairmanImage) { %>
             <div class="college-chairman-image-container">
