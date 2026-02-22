@@ -1,0 +1,129 @@
+.blogs,
+.blog {
+  margin-top: 88px;
+}
+
+.blog-card-wrapper {
+  height: auto;
+  box-shadow: 0px 2px 20px rgb(1 41 112 /10%);
+  border-radius: 16px;
+  color: var(--primary-black);
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.2s ease-in-out;
+  overflow: hidden;
+  background: white;
+}
+
+.blog-card-wrapper:hover {
+  border: 1px solid var(--primary-orange);
+  transform: scale(1.05);
+}
+
+.blog-image-container {
+  width: 100%;
+  max-height: 200px;
+  min-height: 150px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.blog-card-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  background-color: #f8f9fa;
+  transition: transform 0.3s ease;
+}
+
+.blog-card-wrapper:hover .blog-card-image {
+  transform: scale(1.1);
+}
+
+/* Responsive adjustments for 3-column layout */
+@media (min-width: 992px) {
+  .blog-card-wrapper {
+    margin-bottom: 1rem;
+  }
+
+  .blog-image-container {
+    max-height: 180px;
+    min-height: 120px;
+  }
+
+  .blogs .container .row .col-lg-4 .blog-card-wrapper .p-4 {
+    padding: 1rem !important;
+  }
+
+  .blogs .container .row .col-lg-4 .blog-card-wrapper .p-4 div[style*="font-weight: 700"] {
+    font-size: 18px !important;
+  }
+
+  .blogs .container .row .col-lg-4 .blog-card-wrapper .p-4 div[style*="font-weight: 500"] {
+    font-size: 13px !important;
+  }
+}
+
+.btn-read-more {
+  background-color: var(--primary-orange);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+}
+
+.btn-read-more:hover {
+  background-color: var(--secondary-orange, #ff6b35);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(238, 124, 59, 0.3);
+}
+
+.blog-detail-image-container {
+  width: 100%;
+  max-height: 400px;
+  overflow: hidden;
+  border-radius: 12px;
+  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+  background-color: #f8f9fa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.blog-detail-image {
+  width: 100%;
+  height: auto;
+  max-height: 400px;
+  display: block;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.blog-date {
+  position: relative;
+  padding: 0.4rem;
+  background-color: var(--primary-orange);
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 0.25rem;
+}
+
+.blogDescription {
+  line-height: 1.75rem;
+}
+.blogDescription a {
+  color: var(--primary-orange) !important;
+}
+.blogDescription a:hover {
+  color: var(--secondary-orange) !important;
+}

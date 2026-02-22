@@ -1,0 +1,256 @@
+.page-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f8f9fa;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.main-card {
+  display: flex;
+  background: #fff;
+  border-radius: 25px;
+  overflow: hidden;
+  box-shadow: 0px 20px 40px rgba(0, 0, 0, 0.1);
+  max-width: 1000px;
+  width: 100%;
+  min-height: 600px;
+}
+
+.image-container {
+  flex: 1.1;
+  position: relative;
+  background: #ff7422;
+  overflow: hidden;
+}
+
+.bg-image {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 1;
+  transition: opacity 1s ease-in-out;
+}
+
+.bg-image.active { opacity: 1; }
+
+.image-overlay-text {
+  position: absolute;
+  bottom: 50px;
+  left: 40px;
+  z-index: 5;
+  color: white;
+}
+
+.form-container {
+  flex: 1;
+  padding: 50px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Title and Logo Styles */
+.form-logo {
+  height: 50px;
+  width: auto;
+  margin-bottom: 5px;
+  object-fit: contain;
+}
+
+.form-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 5px;
+}
+
+
+.form label { position: relative; width: 100%; }
+
+.form label .input {
+  width: 95%;
+  padding: 15px 12px;
+  outline: 0;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  font-size: 14px;
+}
+
+.form label .input + span {
+  position: absolute;
+  left: 12px;
+  top: 15px;
+  color: #999;
+  transition: 0.3s;
+  pointer-events: none;
+}
+
+.form label .input:focus + span,
+.form label .input:valid + span {
+  top: -10px;
+  font-size: 12px;
+  background: white;
+  padding: 0 5px;
+  color: #ff7422;
+  font-weight: 600;
+}
+
+.form label .input:focus { border-color: #ff7422; }
+
+.form label select.input {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 20px;
+  padding-right: 40px;
+  width: 100%;
+}
+
+.form label select.input:focus {
+  border-color: #ff7422;
+}
+
+.submit {
+  background: #ff7422;
+  color: white;
+  padding: 15px;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.submit:hover { background: #e6651a; transform: translateY(-2px); }
+
+/* Stepper Styles */
+.stepper-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 10px;
+}
+
+.stepper-circle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #e0e0e0;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  transition: all 0.3s ease;
+}
+
+.stepper-circle.active {
+  background: #ff7422;
+  color: white;
+}
+
+.stepper-line {
+  width: 60px;
+  height: 3px;
+  background: #e0e0e0;
+  transition: all 0.3s ease;
+}
+
+.stepper-line.active {
+  background: #ff7422;
+}
+
+.stepper-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 40px;
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: #666;
+  text-align: center;
+}
+
+.stepper-labels span {
+  flex: 1;
+}
+
+/* Form Steps */
+.form-step {
+  display: none;
+  animation: slideIn 0.3s ease;
+}
+
+.form-step.active {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Error Messages */
+.error-text {
+  color: #d32f2f;
+  font-size: 11px;
+  margin-top: 3px;
+  display: block;
+}
+
+.form label .error-text {
+  font-size: 10px;
+  color: #d32f2f;
+}
+
+/* Button Group */
+.button-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.back-btn {
+  flex: 1;
+  background: #e0e0e0;
+  color: #333;
+}
+
+.back-btn:hover {
+  background: #d0d0d0;
+}
+
+.signup-btn {
+  flex: 1;
+}
+
+.next-btn {
+  width: 100%;
+}
+
+.signin { font-size: 14px; text-align: center; color: #666; }
+.signin a { color: #ff7422; font-weight: 600; text-decoration: none; }
+
+@media (max-width: 850px) {
+  .image-container { display: none; }
+  .main-card { max-width: 450px; }
+}

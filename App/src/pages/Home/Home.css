@@ -1,0 +1,530 @@
+/* Stats Counter Section */
+.stats-section {
+  background: linear-gradient(135deg, #fff5eb 0%, #fff 50%, #fff5eb 100%);
+  padding: 60px 0;
+  margin-top: 40px;
+  position: relative;
+}
+
+.stats-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle, rgba(255,116,34,0.05) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+.stat-number {
+  font-size: 48px;
+  font-weight: 700;
+  color: #ff7422;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+  text-transform: uppercase;
+  margin-top: 10px;
+  letter-spacing: 1px;
+}
+
+/* Why Choose Us Section */
+.why-choose-section {
+  padding: 80px 0;
+  background: #fff;
+}
+
+.section-title {
+  font-size: 36px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.text-orange {
+  color: #ff7422;
+}
+
+.text-dark {
+  color: #1a1a1a;
+}
+
+.feature-card {
+  padding: 30px 20px;
+  background: #fff;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.feature-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #fff3e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  font-size: 32px;
+  color: #ff7422;
+}
+
+.feature-icon-yellow {
+  background: #fff9c4;
+  color: #f9a825;
+}
+
+.feature-icon-blue {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.feature-icon-green {
+  background: #e8f5e9;
+  color: #388e3c;
+}
+
+.feature-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #ff7422;
+  margin-bottom: 15px;
+}
+
+.feature-description {
+  font-size: 14px;
+  color: #666;
+  line-height: 1.7;
+}
+
+/* Quote Section */
+.quote-section {
+  padding: 60px 0;
+  background: #fff;
+}
+
+.quote-text {
+  font-size: 24px;
+  font-style: italic;
+  color: #ff7422;
+  font-family: 'Georgia', serif;
+  margin-bottom: 15px;
+}
+
+.quote-author {
+  font-size: 16px;
+  color: #333;
+  font-weight: 500;
+}
+
+/* Content Sections (Learn, Class Preference, Scholarship, Mock Tests) */
+.learn-best-section,
+.class-preference-section,
+.scholarship-section,
+.mock-tests-section {
+  padding: 80px 0;
+}
+
+.learn-best-section {
+  background: #fff;
+}
+
+.class-preference-section {
+  background: #fff5eb;
+}
+
+.scholarship-section {
+  background: #fff;
+}
+
+.mock-tests-section {
+  background: #fff5eb;
+}
+
+.section-heading {
+  font-size: 32px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 20px;
+  line-height: 1.3;
+}
+
+.section-text {
+  font-size: 16px;
+  color: #555;
+  line-height: 1.8;
+}
+
+.section-image {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+/* Popup Modal Styles */
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 20px;
+}
+
+.popup-modal {
+  background: #fff;
+  border-radius: 12px;
+  max-width: 500px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: popupSlideIn 0.3s ease;
+}
+
+.popup-image-modal {
+  background: transparent;
+  max-width: 600px;
+}
+
+.popup-image {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 12px;
+}
+
+.popup-text-content {
+  padding: 30px;
+  text-align: center;
+}
+
+.popup-heading {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 15px;
+}
+
+.popup-description {
+  font-size: 16px;
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.popup-button {
+  display: inline-block;
+  background: #ff7422;
+  color: #fff;
+  padding: 12px 30px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.popup-button:hover {
+  background: #e96f28;
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+@keyframes popupSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.popup-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 30px;
+  height: 30px;
+  border: none;
+  background: #f0f0f0;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: #666;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.popup-close:hover {
+  background: #ff7422;
+  color: #fff;
+}
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.popup-logo {
+  width: 60px;
+  height: auto;
+}
+
+.popup-header-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.popup-subtitle {
+  font-size: 12px;
+  color: #666;
+  line-height: 1.4;
+}
+
+.popup-content {
+  padding: 25px;
+}
+
+.popup-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 20px;
+  line-height: 1.3;
+}
+
+.popup-body {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 20px;
+}
+
+.popup-courses {
+  flex: 1;
+}
+
+.popup-courses h4 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+.popup-course-list {
+  display: flex;
+  gap: 30px;
+}
+
+.popup-course-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.popup-course-col label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #333;
+  cursor: default;
+}
+
+.popup-course-col input[type="checkbox"] {
+  accent-color: #ff7422;
+  width: 16px;
+  height: 16px;
+}
+
+.popup-qr {
+  text-align: center;
+}
+
+.qr-label {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.qr-image {
+  width: 100px;
+  height: 100px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+}
+
+.qr-placeholder {
+  width: 100px;
+  height: 100px;
+  border: 1px solid #eee;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+  font-size: 48px;
+  color: #333;
+}
+
+.popup-note {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 15px;
+}
+
+.popup-contact {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.popup-whatsapp {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #25d366;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.popup-whatsapp:hover {
+  color: #128c7e;
+}
+
+.popup-or {
+  color: #999;
+  font-size: 14px;
+}
+
+.popup-call {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #ff7422;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.popup-call:hover {
+  color: #e96f28;
+}
+
+.popup-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 25px;
+  background: #f8f9fa;
+  border-top: 1px solid #eee;
+}
+
+.popup-location,
+.popup-phone {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #333;
+}
+
+.popup-location i,
+.popup-phone i {
+  color: #ff7422;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .stat-number {
+    font-size: 32px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+  }
+
+  .section-title {
+    font-size: 28px;
+  }
+
+  .section-heading {
+    font-size: 24px;
+  }
+
+  .quote-text {
+    font-size: 18px;
+  }
+
+  .popup-body {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .popup-qr {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .popup-footer {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .learn-best-section,
+  .class-preference-section,
+  .scholarship-section,
+  .mock-tests-section {
+    padding: 50px 0;
+  }
+
+  .section-image {
+    margin-top: 30px;
+  }
+}
+
+@media (max-width: 576px) {
+  .popup-modal {
+    margin: 10px;
+  }
+
+  .popup-title {
+    font-size: 20px;
+  }
+
+  .popup-course-list {
+    flex-direction: column;
+    gap: 10px;
+  }
+}

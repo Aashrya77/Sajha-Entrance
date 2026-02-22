@@ -1,0 +1,119 @@
+/* Container to keep everything centered */
+.loader-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 20px;
+}
+
+.loader {
+  width: fit-content;
+  display: flex;
+  flex-direction: column; 
+  align-items: center;
+  justify-content: center;
+  gap: 15px; 
+}
+
+.truckWrapper {
+  width: 200px;
+  height: 100px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  align-items: center;
+  justify-content: flex-end;
+  overflow: visible; /* Changed from hidden to show lamppost better */
+}
+
+/* Truck upper body */
+.truckBody {
+  width: 130px;
+  height: fit-content;
+  margin-bottom: 6px;
+  animation: motion 1s linear infinite;
+}
+
+/* Truck suspension animation */
+@keyframes motion {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(3px); }
+}
+
+/* Truck's tires */
+.truckTires {
+  width: 130px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0px 10px;
+  position: absolute;
+  bottom: 0;
+  z-index: 2;
+}
+
+.truckTires svg {
+  width: 24px;
+}
+
+.road {
+  width: 100%;
+  height: 1.5px;
+  background-color: #282828;
+  position: relative;
+  bottom: 0;
+  border-radius: 3px;
+}
+
+.road::before, .road::after {
+  content: "";
+  position: absolute;
+  height: 100%;
+  background-color: #282828;
+  border-radius: 3px;
+  animation: roadAnimation 1.4s linear infinite;
+}
+
+.road::before {
+  width: 20px;
+  right: -50%;
+  border-left: 10px solid white;
+}
+
+.road::after {
+  width: 10px;
+  right: -65%;
+  border-left: 4px solid white;
+}
+
+.lampPost {
+  position: absolute;
+  bottom: 0;
+  right: -90%;
+  height: 90px;
+  animation: roadAnimation 1.4s linear infinite;
+}
+
+/* --- FIXED TEXT SECTION --- */
+.loadingText {
+  font-family: 'Arial', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: #282828;
+  text-align: center;
+  margin: 0;
+  width: 100%;
+  animation: pulseText 1.5s infinite ease-in-out;
+}
+
+@keyframes pulseText {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes roadAnimation {
+  0% { transform: translateX(100px); } /* Adjusted starting point */
+  100% { transform: translateX(-350px); }
+}

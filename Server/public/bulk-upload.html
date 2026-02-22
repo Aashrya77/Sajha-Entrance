@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bulk Upload Student Results</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #f4f5f7;
+      color: #1e1e2f;
+      min-height: 100vh;
+    }
+    .navbar {
+      background: #1e1e2f;
+      color: #fff;
+      padding: 14px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .navbar a {
+      color: #a5b4fc;
+      text-decoration: none;
+      font-size: 14px;
+    }
+    .navbar a:hover { text-decoration: underline; }
+    .container {
+      max-width: 820px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+    h1 {
+      font-size: 26px;
+      margin-bottom: 8px;
+    }
+    .subtitle {
+      color: #6b7280;
+      margin-bottom: 28px;
+      font-size: 14px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      padding: 28px;
+      margin-bottom: 24px;
+    }
+    .card h2 {
+      font-size: 16px;
+      margin-bottom: 12px;
+      color: #374151;
+    }
+    .format-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 8px;
+      overflow-x: auto;
+      display: block;
+    }
+    .format-table th, .format-table td {
+      border: 1px solid #e5e7eb;
+      padding: 6px 10px;
+      text-align: left;
+      white-space: nowrap;
+    }
+    .format-table th {
+      background: #f9fafb;
+      font-weight: 600;
+      color: #4b5563;
+    }
+    .format-table td { color: #6b7280; }
+    .info-box {
+      background: #eff6ff;
+      border-left: 4px solid #3b82f6;
+      padding: 12px 16px;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #1e40af;
+      margin-top: 12px;
+      line-height: 1.6;
+    }
+    .upload-area {
+      border: 2px dashed #d1d5db;
+      border-radius: 8px;
+      padding: 32px;
+      text-align: center;
+      transition: border-color 0.2s, background 0.2s;
+      cursor: pointer;
+      position: relative;
+    }
+    .upload-area:hover, .upload-area.dragover {
+      border-color: #6366f1;
+      background: #f5f3ff;
+    }
+    .upload-area input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+    .upload-area .icon { font-size: 36px; margin-bottom: 8px; }
+    .upload-area .label { font-size: 14px; color: #6b7280; }
+    .file-name {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #4b5563;
+      font-weight: 600;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 24px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 16px;
+    }
+    .btn-primary {
+      background: #6366f1;
+      color: #fff;
+    }
+    .btn-primary:hover { background: #4f46e5; }
+    .btn-primary:disabled {
+      background: #a5b4fc;
+      cursor: not-allowed;
+    }
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #374151;
+    }
+    .btn-secondary:hover { background: #d1d5db; }
+    .result-box {
+      padding: 16px;
+      border-radius: 6px;
+      margin-top: 20px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .result-success {
+      background: #ecfdf5;
+      border: 1px solid #6ee7b7;
+      color: #065f46;
+    }
+    .result-error {
+      background: #fef2f2;
+      border: 1px solid #fca5a5;
+      color: #991b1b;
+    }
+    .error-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 12px;
+    }
+    .error-table th, .error-table td {
+      border: 1px solid #fecaca;
+      padding: 6px 10px;
+      text-align: left;
+    }
+    .error-table th {
+      background: #fee2e2;
+      font-weight: 600;
+    }
+    .spinner {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 2px solid #fff;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .download-link {
+      display: inline-block;
+      margin-top: 12px;
+      color: #6366f1;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .download-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <span style="font-weight:700; font-size:16px;">Sajha Admin — Bulk Upload</span>
+    <a href="/admin/resources/StudentResult">← Back to Student Results</a>
+  </div>
+
+  <div class="container">
+    <h1>Bulk Upload Student Results</h1>
+    <p class="subtitle">Upload an Excel file (.xlsx / .xls) to import multiple student results at once.</p>
+
+    <!-- Format Guide -->
+    <div class="card">
+      <h2>📋 Required Excel Format</h2>
+      <div style="overflow-x:auto;">
+        <table class="format-table">
+          <thead>
+            <tr>
+              <th>symbolNumber</th>
+              <th>studentName</th>
+              <th>course</th>
+              <th>examDate</th>
+              <th>subject1_name</th>
+              <th>subject1_fullMarks</th>
+              <th>subject1_passMarks</th>
+              <th>subject1_obtainedMarks</th>
+              <th>subject2_name</th>
+              <th>subject2_fullMarks</th>
+              <th>subject2_passMarks</th>
+              <th>subject2_obtainedMarks</th>
+              <th>...</th>
+              <th>remarks</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>12345</td>
+              <td>Ram Sharma</td>
+              <td>BIT</td>
+              <td>2025-06-15</td>
+              <td>English</td>
+              <td>100</td>
+              <td>40</td>
+              <td>75</td>
+              <td>Computer</td>
+              <td>100</td>
+              <td>40</td>
+              <td>82</td>
+              <td>...</td>
+              <td>Good</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="info-box">
+        <strong>Course values:</strong> BIT, BCA, CMAT, CSIT<br>
+        <strong>BIT</strong> → 3 subjects: English, Computer, Math<br>
+        <strong>BCA</strong> → 3 subjects: English, GK, Math<br>
+        <strong>CMAT</strong> → 4 subjects: English, GK, Math, Logical Reasoning<br>
+        <strong>CSIT</strong> → 4 subjects: Physics, English, Math, Chemistry<br>
+        <strong>examDate</strong> format: YYYY-MM-DD &nbsp;|&nbsp; <strong>remarks</strong> is optional<br>
+        Totals, percentage, and pass/fail are <strong>auto-calculated</strong>.
+      </div>
+      <a class="download-link" href="#" id="downloadTemplate">⬇ Download Sample Template (.xlsx)</a>
+    </div>
+
+    <!-- Upload Area -->
+    <div class="card">
+      <h2>📤 Upload File</h2>
+      <div class="upload-area" id="dropZone">
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" />
+        <div class="icon">📁</div>
+        <div class="label">Click or drag & drop your Excel file here</div>
+        <div class="file-name" id="fileName"></div>
+      </div>
+
+      <button class="btn btn-primary" id="uploadBtn" disabled>
+        <span id="btnText">Upload & Import</span>
+      </button>
+
+      <div id="resultArea"></div>
+    </div>
+  </div>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const fileName = document.getElementById('fileName');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const btnText = document.getElementById('btnText');
+    const resultArea = document.getElementById('resultArea');
+    const dropZone = document.getElementById('dropZone');
+
+    let selectedFile = null;
+
+    fileInput.addEventListener('change', (e) => {
+      selectedFile = e.target.files[0];
+      if (selectedFile) {
+        fileName.textContent = selectedFile.name;
+        uploadBtn.disabled = false;
+      }
+    });
+
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('dragover');
+    });
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      if (e.dataTransfer.files.length) {
+        selectedFile = e.dataTransfer.files[0];
+        fileName.textContent = selectedFile.name;
+        uploadBtn.disabled = false;
+      }
+    });
+
+    uploadBtn.addEventListener('click', async () => {
+      if (!selectedFile) return;
+
+      uploadBtn.disabled = true;
+      btnText.innerHTML = '<span class="spinner"></span> Uploading...';
+      resultArea.innerHTML = '';
+
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      try {
+        const res = await fetch('/api/results/bulk-upload', {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          let html = `<div class="result-box result-success">
+            <strong>Upload Complete!</strong><br>
+            Inserted: <strong>${data.inserted}</strong> result(s) out of ${data.total} row(s).`;
+          if (data.skipped > 0) {
+            html += `<br>Skipped: <strong>${data.skipped}</strong> row(s) due to errors.`;
+          }
+          html += `</div>`;
+
+          if (data.errors && data.errors.length > 0) {
+            html += renderErrors(data.errors);
+          }
+          resultArea.innerHTML = html;
+        } else {
+          let html = `<div class="result-box result-error">
+            <strong>Upload Failed:</strong> ${data.error || 'Unknown error'}
+          </div>`;
+          if (data.errors && data.errors.length > 0) {
+            html += renderErrors(data.errors);
+          }
+          resultArea.innerHTML = html;
+        }
+      } catch (err) {
+        resultArea.innerHTML = `<div class="result-box result-error">
+          <strong>Network Error:</strong> ${err.message}
+        </div>`;
+      } finally {
+        uploadBtn.disabled = false;
+        btnText.textContent = 'Upload & Import';
+      }
+    });
+
+    function renderErrors(errors) {
+      let html = `<table class="error-table">
+        <thead><tr><th>Row</th><th>Error</th></tr></thead><tbody>`;
+      errors.forEach(e => {
+        html += `<tr><td>${e.row}</td><td>${e.message}</td></tr>`;
+      });
+      html += `</tbody></table>`;
+      return html;
+    }
+
+    // Generate and download a sample template
+    document.getElementById('downloadTemplate').addEventListener('click', (e) => {
+      e.preventDefault();
+      const headers = [
+        'symbolNumber', 'studentName', 'course', 'examDate',
+        'subject1_name', 'subject1_fullMarks', 'subject1_passMarks', 'subject1_obtainedMarks',
+        'subject2_name', 'subject2_fullMarks', 'subject2_passMarks', 'subject2_obtainedMarks',
+        'subject3_name', 'subject3_fullMarks', 'subject3_passMarks', 'subject3_obtainedMarks',
+        'remarks'
+      ];
+      const sample = [
+        '12345', 'Ram Sharma', 'BIT', '2025-06-15',
+        'English', '100', '40', '75',
+        'Computer', '100', '40', '82',
+        'Math', '100', '40', '68',
+        'Good student'
+      ];
+      const csv = headers.join(',') + '\n' + sample.join(',') + '\n';
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'student_results_template.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,458 @@
+.results-page {
+  min-height: calc(100vh - 200px);
+  padding-bottom: 60px;
+}
+
+/* Search Card */
+.result-search-card {
+  background: white;
+  border-radius: 12px;
+  padding: 40px 30px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+.search-icon-wrapper {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f85606, #ff8c42);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  color: white;
+  font-size: 28px;
+}
+
+.result-search-card h3 {
+  font-weight: 700;
+  color: #333;
+}
+
+.result-search-card .form-select {
+  border: 2px solid #e0e0e0;
+  font-size: 16px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  color: #333;
+}
+
+.result-search-card .form-select:focus {
+  border-color: #f85606;
+  box-shadow: none;
+}
+
+.result-search-card .form-control {
+  border: 2px solid #e0e0e0;
+  border-right: none;
+  font-size: 16px;
+  padding: 12px 16px;
+  border-radius: 8px 0 0 8px;
+}
+
+.result-search-card .form-control:focus {
+  border-color: #f85606;
+  box-shadow: none;
+}
+
+.btn-search {
+  background-color: #f85606;
+  color: white;
+  border: 2px solid #f85606;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 0 8px 8px 0;
+  transition: all 0.3s ease;
+}
+
+.btn-search:hover {
+  background-color: #d64906;
+  border-color: #d64906;
+  color: white;
+}
+
+.btn-search:disabled {
+  background-color: #ccc;
+  border-color: #ccc;
+}
+
+/* Result Card */
+.result-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  margin-bottom: 30px;
+}
+
+.result-card-header {
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+  color: white;
+  padding: 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.result-student-name {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.result-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.result-meta-item {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.result-meta-item strong {
+  color: #ff8c42;
+}
+
+.result-badge {
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.result-badge-pass {
+  background-color: #28a745;
+  color: white;
+}
+
+.result-badge-fail {
+  background-color: #dc3545;
+  color: white;
+}
+
+/* Result Table */
+.result-table-wrapper {
+  padding: 0;
+  overflow-x: auto;
+}
+
+.result-table {
+  margin-bottom: 0;
+  font-size: 15px;
+}
+
+.result-table thead {
+  background-color: #f8f9fa;
+}
+
+.result-table thead th {
+  font-weight: 700;
+  color: #333;
+  padding: 14px 16px;
+  border-bottom: 2px solid #dee2e6;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.result-table tbody td {
+  padding: 12px 16px;
+  vertical-align: middle;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.subject-name {
+  font-weight: 500;
+}
+
+.subject-pass {
+  background-color: transparent;
+}
+
+.subject-fail {
+  background-color: #fff5f5;
+}
+
+.status-pass {
+  color: #28a745;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.status-fail {
+  color: #dc3545;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.total-row {
+  background-color: #f8f9fa;
+}
+
+.total-row td {
+  padding: 14px 16px;
+  border-top: 2px solid #dee2e6;
+  font-size: 16px;
+}
+
+/* Result Summary */
+.result-summary {
+  display: flex;
+  justify-content: space-around;
+  padding: 24px 30px;
+  background-color: #f8f9fa;
+  border-top: 1px solid #e0e0e0;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.summary-item {
+  text-align: center;
+}
+
+.summary-label {
+  display: block;
+  font-size: 13px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.summary-value {
+  display: block;
+  font-size: 24px;
+  font-weight: 700;
+  color: #333;
+}
+
+/* Remarks */
+.result-remarks {
+  padding: 16px 30px;
+  background-color: #fff8e1;
+  border-top: 1px solid #ffe082;
+  font-size: 14px;
+  color: #555;
+}
+
+/* Footer */
+.result-footer {
+  padding: 12px 30px;
+  border-top: 1px solid #f0f0f0;
+  text-align: right;
+}
+
+/* Top 10 Leaderboard */
+.top-results-section {
+  margin-bottom: 50px;
+}
+
+.course-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.course-tab {
+  padding: 10px 28px;
+  border: 2px solid #e0e0e0;
+  border-radius: 30px;
+  background: white;
+  font-weight: 700;
+  font-size: 15px;
+  color: #555;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.course-tab:hover {
+  border-color: #f85606;
+  color: #f85606;
+}
+
+.course-tab.active {
+  background: #f85606;
+  border-color: #f85606;
+  color: white;
+}
+
+.leaderboard-card {
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.leaderboard-table thead {
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
+}
+
+.leaderboard-table thead th {
+  color: white;
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 14px 16px;
+  border: none;
+}
+
+.leaderboard-table tbody td {
+  padding: 14px 16px;
+  vertical-align: middle;
+  border-bottom: 1px solid #f0f0f0;
+  font-size: 15px;
+}
+
+.leaderboard-table tbody tr:hover {
+  background-color: #fef7f2;
+}
+
+.top-rank.rank-1 {
+  background-color: #fffbeb;
+}
+
+.top-rank.rank-2 {
+  background-color: #f8f9fa;
+}
+
+.top-rank.rank-3 {
+  background-color: #fef4ee;
+}
+
+.rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 14px;
+  background: #f0f0f0;
+  color: #555;
+}
+
+.rank-1-badge {
+  background: linear-gradient(135deg, #f5a623, #f7c948);
+  color: white;
+  width: 36px;
+  height: 36px;
+  font-size: 15px;
+  box-shadow: 0 2px 8px rgba(245, 166, 35, 0.4);
+}
+
+.rank-2-badge {
+  background: linear-gradient(135deg, #a0a0a0, #c0c0c0);
+  color: white;
+  width: 34px;
+  height: 34px;
+}
+
+.rank-3-badge {
+  background: linear-gradient(135deg, #cd7f32, #e8a862);
+  color: white;
+  width: 34px;
+  height: 34px;
+}
+
+.percentage-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.top-rank.rank-1 .percentage-badge {
+  background-color: #fff3e0;
+  color: #e65100;
+}
+
+/* Responsive */
+@media screen and (max-width: 768px) {
+  .result-card-header {
+    padding: 20px;
+    flex-direction: column;
+  }
+
+  .result-student-name {
+    font-size: 22px;
+  }
+
+  .result-meta {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .result-summary {
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+
+  .summary-value {
+    font-size: 20px;
+  }
+
+  .result-search-card {
+    padding: 30px 20px;
+  }
+
+  .result-table {
+    font-size: 13px;
+  }
+
+  .result-table thead th {
+    font-size: 12px;
+    padding: 10px 8px;
+  }
+
+  .result-table tbody td {
+    padding: 10px 8px;
+  }
+
+  .leaderboard-table thead th {
+    font-size: 11px;
+    padding: 10px 8px;
+  }
+
+  .leaderboard-table tbody td {
+    padding: 10px 8px;
+    font-size: 13px;
+  }
+
+  .course-tab {
+    padding: 8px 20px;
+    font-size: 13px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .search-icon-wrapper {
+    width: 56px;
+    height: 56px;
+    font-size: 22px;
+  }
+
+  .result-search-card .form-control {
+    font-size: 14px;
+    padding: 10px 12px;
+  }
+
+  .btn-search {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+}
