@@ -392,7 +392,7 @@
   align-items: center;
   gap: 8px;
   background: var(--primary-orange);
-  color: #fff;
+  color: #ffffff;
   padding: 14px 32px;
   border-radius: 50px;
   font-size: 15px;
@@ -403,10 +403,9 @@
 }
 
 .courses-cta-btn:hover {
-  background: #e05a00;
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(255, 116, 34, 0.35);
-  color: #fff;
+  color: #ffffff !important;
+
 }
 
 

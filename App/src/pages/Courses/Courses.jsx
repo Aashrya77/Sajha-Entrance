@@ -149,11 +149,9 @@ const Courses = () => {
                   <div key={course._id} className="col-12 col-sm-6 col-lg-4">
                     <Link to={`/course/${course._id}`} className="cp-card-link">
                       <div className="cp-card">
-                        <div className="cp-card-accent" style={{ background: gradient }}></div>
+                      
                         <div className="cp-card-body">
-                          <div className="cp-card-icon-wrap" style={{ background: gradient }}>
-                            <i className={`fa-solid ${icon}`}></i>
-                          </div>
+                        
                           <div className="cp-card-title-wrap">
                             <h3 className="cp-card-title">{course.title}</h3>
                             <p className="cp-card-fullform">{course.fullForm || ''}</p>
