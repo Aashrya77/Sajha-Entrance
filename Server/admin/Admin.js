@@ -5,17 +5,17 @@ import * as AdminJSMongoose from "@adminjs/mongoose";
 import session from "express-session";
 import { default as MongoDBSession } from "connect-mongodb-session";
 import dotenv from "dotenv";
-import componentLoader from "./ComponentLoader.js";
+import componentLoader, { Components } from "./ComponentLoader.js";
 
 dotenv.config();
 
 const MongoStore = MongoDBSession(session);
 
 import Notice from "../models/Notice.js";
-import { CollegeFileModel } from "../models/College.js";
+import CollegeModel, { CollegeFileModel } from "../models/College.js";
 import Course from "../models/Course.js";
 import { AdvertisementFileModel } from "../models/Advertisement.js";
-import { BlogFileModel } from "../models/Blog.js";
+import BlogModel, { BlogFileModel } from "../models/Blog.js";
 import NewsletterModel from "../models/Newsletter.js";
 import { PopupFileModel } from "../models/Popup.js";
 import ContactModel from "../models/Contact.js";
@@ -501,6 +501,100 @@ const startAdminPanel = async () => {
     },
   };
 
+  const dashboardHandler = async () => {
+    try {
+      const sixMonthsAgo = new Date();
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+      const [
+        studentsCount,
+        paidStudentsCount,
+        coursesCount,
+        blogsCount,
+        collegesCount,
+        contactsCount,
+        newslettersCount,
+        onlineClassesCount,
+        recordedClassesCount,
+        noticesCount,
+        resultsCount,
+        studentsByCourse,
+        paymentsByStatus,
+        registrationsTrend,
+        resultStats,
+        revenueAgg,
+        recentPayments,
+        recentContacts,
+        upcomingClasses,
+      ] = await Promise.all([
+        Student.countDocuments(),
+        Student.countDocuments({ accountStatus: "Paid" }),
+        Course.countDocuments(),
+        BlogModel.countDocuments(),
+        CollegeModel.countDocuments(),
+        ContactModel.countDocuments(),
+        NewsletterModel.countDocuments(),
+        OnlineClass.countDocuments(),
+        RecordedClass.countDocuments(),
+        Notice.countDocuments(),
+        StudentResult.countDocuments(),
+        Student.aggregate([{ $group: { _id: "$course", count: { $sum: 1 } } }, { $sort: { count: -1 } }]),
+        Payment.aggregate([{ $group: { _id: "$status", count: { $sum: 1 } } }]),
+        Student.aggregate([
+          { $match: { createdAt: { $gte: sixMonthsAgo } } },
+          {
+            $group: {
+              _id: { year: { $year: "$createdAt" }, month: { $month: "$createdAt" } },
+              count: { $sum: 1 },
+            },
+          },
+          { $sort: { "_id.year": 1, "_id.month": 1 } },
+        ]),
+        StudentResult.aggregate([{ $group: { _id: "$result", count: { $sum: 1 } } }]),
+        Payment.aggregate([
+          { $match: { status: "completed" } },
+          { $group: { _id: null, total: { $sum: "$totalAmount" } } },
+        ]),
+        Payment.find().sort({ createdAt: -1 }).limit(5).lean(),
+        ContactModel.find().sort({ submittedAt: -1 }).limit(5).lean(),
+        OnlineClass.find({ classDateTime: { $gte: new Date() } }).sort({ classDateTime: 1 }).limit(5).lean(),
+      ]);
+
+      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+      const formattedTrend = registrationsTrend.map((item) => ({
+        month: `${monthNames[item._id.month - 1]} ${item._id.year}`,
+        count: item.count,
+      }));
+
+      return {
+        counts: {
+          students: studentsCount,
+          paidStudents: paidStudentsCount,
+          courses: coursesCount,
+          blogs: blogsCount,
+          colleges: collegesCount,
+          contacts: contactsCount,
+          newsletters: newslettersCount,
+          onlineClasses: onlineClassesCount,
+          recordedClasses: recordedClassesCount,
+          notices: noticesCount,
+          results: resultsCount,
+        },
+        studentsByCourse,
+        paymentsByStatus,
+        registrationsTrend: formattedTrend,
+        resultStats,
+        revenueTotal: revenueAgg.length > 0 ? revenueAgg[0].total : 0,
+        recentPayments,
+        recentContacts,
+        upcomingClasses,
+      };
+    } catch (error) {
+      console.error("Dashboard handler error:", error);
+      return { error: error.message };
+    }
+  };
+
   const adminOptions = {
     resources: [
       BlogFileModel,
@@ -519,6 +613,10 @@ const startAdminPanel = async () => {
     ],
     rootPath: "/admin",
     componentLoader,
+    dashboard: {
+      component: Components.Dashboard,
+      handler: dashboardHandler,
+    },
   };
 
   const admin = new AdminJS(adminOptions);

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { homeAPI } from '../../api/services';
 import { getImageUrl } from '../../utils/imageHelper';
 import Loader from '../../components/Loader/Loader';
+import LandingPage from '../../components/LandingPage/Landingpage';
 import './Home.css';
 
 const Home = () => {
@@ -56,51 +57,9 @@ const Home = () => {
 
   return (
     <>
-      <div className="hero d-flex align-items-center justify-content-center p-2">
-        <div className="container">
-          <div className="row align-items-center justify-content-center">
-            <div className="col">
-              <div className="d-flex flex-column">
-                <span className="hero-text-primary">
-                  Confused After P<span style={{borderBottom: '4px solid #ee7c3b'}}>lus 2 ??</span>
-                </span>
-                <span className="hero-text-primary-2 mt-2">
-                  Don't Worry !! We got you covered !
-                </span>
-                <span className="hero-text-secondary mt-3">
-                  Join our entrance preparation classes and get access to lots of
-                  learning materials, counselling from experts, as well as scholarship
-                  for deserving candidates.
-                </span>
-                
-                <button className="btn-primary mt-4" onClick={() => window.location.href='./student/profile'}>
-                  <span className="pulse-icon"></span>
-                  <i className="fa-solid fa-video me-2"></i> Join Online Entrance Preparation Classes
-                </button>
+      <LandingPage />
 
-                <p className="mt-3 mb-0" style={{color: '#d32f2f', fontSize: '13px', fontWeight: 500}}>
-                  *Note:please register first. Our team will provide your ID & Password to
-                </p>
-                <div className="d-flex align-items-center gap-3 mt-2">
-                  <span style={{color: '#ff7422', fontSize: '13px', fontWeight: 500}}>
-                    join the live classes.
-                  </span>
-                  <button
-                    className="btn-primary"
-                    onClick={() => window.location.href='/contact'}>
-                    <i className="fa-solid fa-lock me-2"></i>BOOK YOUR SEAT
-                  </button>
-                </div>
-              </div>
-            </div>
-            <div className="col d-none d-lg-block">
-              <img src="/img/hero-img.png" alt="hero-image" className="hero-img" />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="courses mt-2" id="courses">
+      <div className="courses mt-5" id="courses">
         <div className="container">
           <h1
             className="text-uppercase mb-4 text-center"
