@@ -21,75 +21,69 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
 
   return (
     <>
-      <nav className="navbar navbar-expand-lg fixed-top navbar-shadow" id="navbar">
-        <div className="container align-items-center justify-content-center">
-          <Link to="/">
-            <img src="/img/logo-main.png" className="navbar-logo" alt="Sajha Entrance" />
+      <nav className="navbar navbar-expand-lg fixed-top" id="navbar" style={{backgroundColor: '#fff', boxShadow: '0 2px 4px rgba(0,0,0,0.08)', padding: '19px 0', zIndex: 1030}}>
+        <div className="container">
+          <Link to="/" className="d-flex align-items-center text-decoration-none">
+            <img src="/img/logo-main.png" className="navbar-logo" alt="Sajha Entrance" style={{height: '80px'}} />
+            {/* <div style={{lineHeight: '1.2'}}>
+              <div style={{fontSize: '11px', color: '#666', fontWeight: 500}}>सबैको विश्वास यहीं</div>
+              <div style={{fontSize: '11px', color: '#666', fontWeight: 500}}>सबै <span style={{color: '#ff6b35', fontWeight: 700}}>ENTRANCE</span> !</div>
+            </div> */}
           </Link>
-          <div className="collapse navbar-collapse ms-5">
-            <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+          <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span className="navbar-toggler-icon"></span>
+          </button>
+          <div className="collapse navbar-collapse" id="navbarContent">
+            <ul className="navbar-nav mx-auto mb-2 mb-lg-0">
               <li className="nav-item">
-                <Link to="/" className={parentGroup === 'Home' ? 'nav-link active' : 'nav-link'}>HOME</Link>
+                <Link to="/" className="nav-link" style={{color: parentGroup === 'Home' ? '#ff6b35' : '#333', fontWeight: parentGroup === 'Home' ? 700 : 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>HOME</Link>
               </li>
               <li className="nav-item">
-                <Link to="/colleges" className={parentGroup === 'College' ? 'nav-link active' : 'nav-link'}>COLLEGES</Link>
+                <Link to="/colleges" className="nav-link" style={{color: parentGroup === 'College' ? '#ff6b35' : '#333', fontWeight: parentGroup === 'College' ? 700 : 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>COLLEGES</Link>
               </li>
               <li className="nav-item">
-                <Link to="/courses" className={parentGroup === 'Course' ? 'nav-link active' : 'nav-link'}>COURSES</Link>
+                <Link to="/courses" className="nav-link" style={{color: parentGroup === 'Course' ? '#ff6b35' : '#333', fontWeight: parentGroup === 'Course' ? 700 : 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>COURSES</Link>
               </li>
               <li className="nav-item">
-                <Link to="/books" className={parentGroup === 'Books' ? 'nav-link active' : 'nav-link'}>BOOKS</Link>
+                <Link to="/books" className="nav-link" style={{color: parentGroup === 'Books' ? '#ff6b35' : '#333', fontWeight: parentGroup === 'Books' ? 700 : 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>BOOKS</Link>
               </li>
               <li className="nav-item dropdown">
-                <button className="nav-link dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" style={{background: 'none', border: 'none', cursor: 'pointer'}}>
+                <button className="nav-link dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" style={{background: 'none', border: 'none', cursor: 'pointer', color: '#333', fontWeight: 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>
                   MORE
                 </button>
-                <ul className="dropdown-menu" aria-labelledby="moreDropdown">
-                  <li><Link className="dropdown-item" to="/about" style={parentGroup === 'About' ? {color: 'var(--primary-orange)', fontWeight: 600} : {}}>ABOUT</Link></li>
-                  <li><Link className="dropdown-item" to="/blogs" style={parentGroup === 'Blogs' ? {color: 'var(--primary-orange)', fontWeight: 600} : {}}>BLOGS</Link></li>
-                  <li><Link className="dropdown-item" to="/services" style={parentGroup === 'Services' ? {color: 'var(--primary-orange)', fontWeight: 600} : {}}>SERVICES</Link></li>
-                  <li><Link className="dropdown-item" to="/results" style={parentGroup === 'Results' ? {color: 'var(--primary-orange)', fontWeight: 600} : {}}>RESULTS</Link></li>
+                <ul className="dropdown-menu">
+                  <li><Link className="dropdown-item" to="/about" style={parentGroup === 'About' ? {color: '#ff6b35', fontWeight: 600} : {color: '#333'}}>ABOUT</Link></li>
+                  <li><Link className="dropdown-item" to="/blogs" style={parentGroup === 'Blogs' ? {color: '#ff6b35', fontWeight: 600} : {color: '#333'}}>BLOGS</Link></li>
+                  <li><Link className="dropdown-item" to="/services" style={parentGroup === 'Services' ? {color: '#ff6b35', fontWeight: 600} : {color: '#333'}}>SERVICES</Link></li>
+                  <li><Link className="dropdown-item" to="/results" style={parentGroup === 'Results' ? {color: '#ff6b35', fontWeight: 600} : {color: '#333'}}>RESULTS</Link></li>
                 </ul>
               </li>
             </ul>
-            <div className="d-flex align-items-center">
-              <Link to="/cart" className="btn btn-link text-decoration-none position-relative me-3" style={{color: '#333', fontSize: '20px'}}>
+            <div className="d-flex align-items-center" style={{gap: '8px'}}>
+              <Link to="/cart" className="btn btn-link text-decoration-none position-relative" style={{color: '#333', fontSize: '18px', padding: '4px 8px'}}>
                 <i className="fa-solid fa-cart-shopping"></i>
                 {cartCount > 0 && (
-                  <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style={{fontSize: '10px'}}>
+                  <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style={{fontSize: '9px'}}>
                     {cartCount}
                   </span>
                 )}
               </Link>
               {isAuthenticated && studentData ? (
                 <>
-                  {/* <Link to="/student/profile" className="btn-primary me-2" style={{textDecoration:'none'}}>
-                    <i className="fa-solid fa-chalkboard-user me-2"></i>DASHBOARD
-                  </Link> */}
-                  <div className="dropdown profile-dropdown">
-                    <button className="btn btn-link text-decoration-none profile-btn" type="button" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                      <i className="fa-solid fa-user-circle me-2"></i>
-                      <span className="d-none d-md-inline">{studentData.name}</span>
-                      <i className="fa-solid fa-chevron-down ms-2" style={{fontSize: '12px'}}></i>
-                    </button>
-                    <ul className="dropdown-menu dropdown-menu-end profile-dropdown-menu" aria-labelledby="profileDropdown">
-                      <li><h6 className="dropdown-header">{studentData.name}</h6></li>
-                      <li><hr className="dropdown-divider" /></li>
-                      <li><span className="dropdown-item-text"><strong>Student ID:</strong> {studentData.studentId}</span></li>
-                      <li><span className="dropdown-item-text"><strong>Course:</strong> {studentData.course}</span></li>
-                      <li><hr className="dropdown-divider" /></li>
-                      <li><Link className="dropdown-item" to="/student/profile"><i className="fa-solid fa-user me-2"></i>My Profile</Link></li>
-                      <li><Link className="dropdown-item" to="/student/profile"><i className="fa-solid fa-sign-out-alt me-2"></i>Dashboard</Link></li>
-                    </ul>
-                  </div>
+                  <Link to="/student/profile" className="btn btn-link text-decoration-none" style={{color: '#555', fontSize: '13px', fontWeight: 500, padding: '4px 8px', transition: 'color 0.2s ease'}}>
+                    For Students <i className="fa-solid fa-chevron-right" style={{fontSize: '10px', marginLeft: '4px'}}></i>
+                  </Link>
                 </>
               ) : (
                 <>
-                  <Link to="/student/login" className="btn-primary me-2" style={{textDecoration:'none'}}>
-                    <i className="fa-solid fa-right-to-bracket me-2"></i>LOGIN
+                  <Link to="/student/login" className="btn" style={{border: '1.5px solid #ff6b35', color: '#ff6b35', backgroundColor: 'transparent', fontWeight: 600, fontSize: '13px', padding: '6px 16px', borderRadius: '5px', textDecoration: 'none', transition: 'all 0.2s ease'}}>
+                    Login
                   </Link>
-                  <Link to="/student/register" className="btn-primary" style={{textDecoration:'none', background:'#333'}}>
-                    <i className="fa-solid fa-user-plus me-2"></i>REGISTER
+                  <Link to="/student/register" className="btn" style={{backgroundColor: '#ff6b35', color: '#fff', fontWeight: 600, fontSize: '13px', padding: '6px 16px', borderRadius: '5px', border: 'none', textDecoration: 'none', transition: 'all 0.2s ease'}}>
+                    Register
+                  </Link>
+                  <Link to="/student/profile" className="btn btn-link text-decoration-none d-none d-lg-block" style={{color: '#555', fontSize: '13px', fontWeight: 500, padding: '4px 8px', transition: 'color 0.2s ease'}}>
+                    For Students <i className="fa-solid fa-chevron-right" style={{fontSize: '10px', marginLeft: '4px'}}></i>
                   </Link>
                 </>
               )}
@@ -98,12 +92,12 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
         </div>
       </nav>
       
-      {/* <div className="notice text-center p-2">
+      <div className="notice-bar" style={{backgroundColor: '#ff6b35', color: '#fff', padding: '8px 0', position: 'fixed', top: '76px', left: 0, right: 0, zIndex: 1029}}>
         <div className="container d-flex align-items-center justify-content-center">
-          <span className="badge bg-dark me-2">NOTICE</span>
-          <div className="notice-text text-truncate">
+          <span className="badge" style={{backgroundColor: '#333', color: '#fff', fontSize: '11px', fontWeight: 600, padding: '4px 10px', marginRight: '12px', borderRadius: '4px'}}>NOTICE</span>
+          <div className="notice-text" style={{fontSize: '14px', fontWeight: 500, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis'}}>
             {notice?.url ? (
-              <a className="notice-link" href={notice.url}>
+              <a href={notice.url} style={{color: '#fff', textDecoration: 'none'}}>
                 {notice.title || 'Hello this is Sajha Entrance'}
               </a>
             ) : (
@@ -111,7 +105,7 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
             )}
           </div>
         </div>
-      </div> */}
+      </div>
       
       <MobileNav />
     </>

@@ -6,7 +6,8 @@
 }
 
 .landing-container {
-  padding: 60px 6% 40px;
+  margin-top: 60px;
+  padding: 80px 10% 40px;
   background-color: #fafafa;
   min-height: auto;
   font-family: 'Inter', sans-serif;

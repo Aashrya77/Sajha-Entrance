@@ -20,7 +20,7 @@ const LandingPage = () => {
         {/* Left Section */}
         <div className="hero-left">
           <div className="hero-text">
-            <h4 className="sub-heading">WELCOME TO SARAL SHIKSHYA ACADEMY</h4>
+            <h4 className="sub-heading">WELCOME TO SAJHA ENTRANCE</h4>
             <h1 className="main-title">Pathway to Educational Excellence</h1>
             <p className="description">Explore Diverse Academic Opportunities: Colleges, Courses, and Examinations</p>
           </div>
