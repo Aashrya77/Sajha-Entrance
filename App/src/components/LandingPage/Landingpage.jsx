@@ -6,12 +6,14 @@ const LandingPage = () => {
   const [location, setLocation] = useState('All Locations');
   const [showDropdown, setShowDropdown] = useState(false);
 
-  const locations = ['Kathmandu', 'Lalitpur', 'Bhaktapur', 'Pokhara', 'Chitwan', 'Butwal'];
+  const locations = ['Kathmandu', 'Lalitpur', 'Bhaktapur'];
 
   // Logo Array (Yo list lai update garna sajilo huncha)
   const logos = [
-    "./public/college1.png", "./public/college2.png", "./public/college3.png",
-    "./public/college4.png", "./public/college6.png"
+    "/CollegeImage/Techspire.jpg", "/CollegeImage/lbef.jpg", "/CollegeImage/pcps.jpg",
+    "/CollegeImage/maharshi.jpg", "/CollegeImage/iims.jpg", "/CollegeImage/kathfoard.jpg",
+    "/CollegeImage/kcc.jpg", "/CollegeImage/nagarjuna.jpg", "/CollegeImage/samriddhi.jpg",
+    "/CollegeImage/texas.jpg", "/CollegeImage/sagarmatha.jpg", "/CollegeImage/shikshyalaya.jpg",
   ];
 
   return (
@@ -68,16 +70,16 @@ const LandingPage = () => {
 
         {/* Right Section: Ads */}
         <aside className="ads-column">
-          <div className="ad-box"><img src="./public/entrance1.gif" alt="Ad 1" /></div>
-          <div className="ad-box"><img src="./public/entrance2.jpg" alt="Ad 2" /></div>
-          <div className="ad-box"><img src="./public/entrance3.gif" alt="Ad 3" /></div>
-          <div className="ad-box"><img src="./public/entrance4.gif" alt="Ad 4" /></div>
+          <div className="ad-box"><img src="/RightAds/entrance1.gif" alt="Ad 1" /></div>
+          <div className="ad-box"><img src="/RightAds/entrance2.jpg" alt="Ad 2" /></div>
+          <div className="ad-box"><img src="/RightAds/entrance3.gif" alt="Ad 3" /></div>
+          <div className="ad-box"><img src="/RightAds/entrance4.gif" alt="Ad 4" /></div>
         </aside>
       </main>
 
       {/* Marquee Footer (Updated for Seamless Loop) */}
       <div className="partner-marquee">
-        <p className="partner-title">Top Employers & Partners</p>
+        <p className="partner-title"> <span style={{color: '#ff7422'}}>Top Colleges </span>in Nepal</p>
         <div className="marquee-wrapper">
           <div className="marquee-content">
             {/* Pahilo Set */}
