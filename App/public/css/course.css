@@ -368,8 +368,12 @@
 
 /* CTA Section */
 .courses-cta-section {
+  width: 95%;
+  margin: 0 auto;
   padding: 60px 0;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-radius: 12px!important;
+  background: linear-gradient(135deg, var(--primary-black) 100%);
+
 }
 
 .courses-cta-title {

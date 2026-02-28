@@ -6,7 +6,10 @@
 }
 
 .landing-container {
-  margin-top: 60px;
+  width: 95% !important;
+  margin: 80px auto !important;
+  padding-left: 0;
+  padding-right: 0;
   padding: 80px 10% 40px;
   background-color: #fafafa;
   min-height: auto;
@@ -539,14 +542,12 @@
 .marquee-wrapper { 
   overflow: hidden; 
   background: white; 
-  border-radius: 12px; 
-  width: 100vw;
-  position: relative;
-  left: 50%;
-  right: 50%;
-  margin-left: -50vw;
-  margin-right: -50vw;
+  width: 95% !important;   
+  margin: 20px auto !important; 
+  border-radius: 15px;
   padding: 20px 0; 
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
 
 .marquee-content {

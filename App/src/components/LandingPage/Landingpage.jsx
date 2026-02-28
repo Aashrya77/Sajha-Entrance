@@ -17,7 +17,7 @@ const LandingPage = () => {
   ];
 
   return (
-    <div className="landing-container">
+    <div className="landing-container container-fluid px-lg-5">
       <main className="main-content">
         {/* Left Section */}
         <div className="hero-left">
@@ -78,8 +78,8 @@ const LandingPage = () => {
       </main>
 
       {/* Marquee Footer (Updated for Seamless Loop) */}
-      <div className="partner-marquee">
-        <p className="partner-title"> <span style={{color: '#ff7422'}}>Top Colleges </span>in Nepal</p>
+      <div className="partner-marquee container-fluid px-0 ">
+        <h1 className="partner-title" style={{fontWeight: 900, color: 'var(--primary-orange)'}}> TOP COLLEGES <span style={{color: 'var(--primary-black)'}}>IN NEPAL</span></h1>
         <div className="marquee-wrapper">
           <div className="marquee-content">
             {/* Pahilo Set */}

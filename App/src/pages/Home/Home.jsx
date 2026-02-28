@@ -60,7 +60,7 @@ const Home = () => {
       <LandingPage />
 
       <div className="courses mt-5" id="courses">
-        <div className="container">
+        <div className="container-fluid">
           <h1
             className="text-uppercase mb-4 text-center"
             style={{fontWeight: 900, color: 'var(--primary-orange)'}}
@@ -109,7 +109,7 @@ const Home = () => {
       </div>
 
       <div className="courses mt-5" id="colleges">
-        <div className="container">
+        <div className="container-fluid">
           <h1
             className="text-uppercase mb-4 text-center"
             style={{fontWeight: 900, color: 'var(--primary-orange)'}}
@@ -171,7 +171,7 @@ const Home = () => {
 
       {/* Stats Counter Section */}
       <div className="stats-section">
-        <div className="container">
+        <div className="container-fluid">
           <div className="row text-center">
             <div className="col-6 col-md-3">
               <div className="stat-item">
@@ -203,7 +203,7 @@ const Home = () => {
 
       {/* Why Choose Us Section */}
       <div className="why-choose-section">
-        <div className="container">
+        <div className="container-fluid">
           <h2 className="section-title text-center">
             <span className="text-orange">WHY CHOOSE</span> <span className="text-dark">US ?</span>
           </h2>
@@ -258,7 +258,7 @@ const Home = () => {
 
       {/* Quote Section */}
       <div className="quote-section">
-        <div className="container text-center">
+        <div className="container-fluid text-center">
           <p className="quote-text">
             "education is the passport to the future, for tomorrow belongs to those who prepare for it today"
           </p>
@@ -268,7 +268,7 @@ const Home = () => {
 
       {/* Learn from the Best Section */}
       <div className="learn-best-section">
-        <div className="container">
+        <div className="container-fluid">
           <div className="row align-items-center">
             <div className="col-lg-6">
               <h2 className="section-heading">
@@ -287,7 +287,7 @@ const Home = () => {
 
       {/* Class Preference Section */}
       <div className="class-preference-section">
-        <div className="container">
+        <div className="container-fluid">
           <div className="row align-items-center">
             <div className="col-lg-6 order-lg-1 order-2">
               <img src="/img/online.png" alt="Class as per your preference" className="section-image" />
@@ -306,7 +306,7 @@ const Home = () => {
 
       {/* Scholarship Section */}
       <div className="scholarship-section">
-        <div className="container">
+        <div className="container-fluid">
           <div className="row align-items-center">
             <div className="col-lg-6">
               <h2 className="section-heading">
@@ -325,7 +325,7 @@ const Home = () => {
 
       {/* Mock Tests Section */}
       <div className="mock-tests-section">
-        <div className="container">
+        <div className="container-fluid">
           <div className="row align-items-center">
             <div className="col-lg-6 order-lg-1 order-2">
               <img src="/img/exam.png" alt="Mock Tests" className="section-image" />

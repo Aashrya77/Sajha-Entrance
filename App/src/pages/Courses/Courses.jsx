@@ -133,7 +133,7 @@ const Courses = () => {
 
       {/* Course Cards */}
       <div className="courses-listing-section">
-        <div className="container">
+        <div className="container-fluid">
           {filteredCourses.length === 0 ? (
             <div className="courses-empty">
               <i className="fa-solid fa-face-sad-tear"></i>
@@ -196,8 +196,8 @@ const Courses = () => {
       </div>
 
       {/* CTA Section */}
-      <div className="courses-cta-section">
-        <div className="container text-center">
+      <div className="courses-cta-section ">
+        <div className="container-fluid text-center">
           <h2 className="courses-cta-title">Not sure which course to choose?</h2>
           <p className="courses-cta-text">
             Our counselors can help you pick the right program based on your interests and career goals.

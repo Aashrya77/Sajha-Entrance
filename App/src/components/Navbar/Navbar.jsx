@@ -22,7 +22,7 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
   return (
     <>
       <nav className="navbar navbar-expand-lg fixed-top" id="navbar" style={{backgroundColor: '#fff', boxShadow: '0 2px 4px rgba(0,0,0,0.08)', padding: '19px 0', zIndex: 1030}}>
-        <div className="container">
+        <div className="container-fluid">
           <Link to="/" className="d-flex align-items-center text-decoration-none">
             <img src="/img/logo-main.png" className="navbar-logo" alt="Sajha Entrance" style={{height: '80px'}} />
             {/* <div style={{lineHeight: '1.2'}}>

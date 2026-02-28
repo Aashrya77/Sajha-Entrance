@@ -37,7 +37,7 @@ const BlogDetail = () => {
 
   return (
     <div className="blog-detail mt-5 pt-5">
-      <div className="container">
+      <div className="container-fluid">
         <div className="row">
           <div className="col-lg-8">
             <article className="blog-article">

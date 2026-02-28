@@ -68,7 +68,7 @@ const Colleges = () => {
 
   return (
     <div className="colleges">
-      <div className="container">
+      <div className="container-fluid ">
         <div className="row" style={{paddingTop: '4.5rem'}}>
           {/* Left Sidebar */}
           <div className="col-12 col-lg-4">

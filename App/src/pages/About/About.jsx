@@ -25,7 +25,7 @@ const About = () => {
 
   return (
     <div className="about-page mt-5 pt-5">
-      <div className="container">
+      <div className="container-fluid">
         <h1 className="text-uppercase mb-4 text-center" style={{fontWeight: 900, color: 'var(--primary-orange)'}}>
           ABOUT <span style={{color: 'var(--primary-black)'}}>US</span>
         </h1>

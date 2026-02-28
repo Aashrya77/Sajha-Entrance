@@ -21,7 +21,7 @@ const Footer = () => {
   return (
     <>
       <div className="newsletter-wrapper mt-5">
-        <div className="container">
+        <div className="container-fluid">
           <div className="newsletter p-4 p-md-5">
             <span className="newsletter-heading text-uppercase">Subscribe to our newsletter</span>
             <span className="newsletter-subheading mt-2 text-md-center px-0 px-md-5" style={{lineHeight: '1.85rem'}}>We send you promotional mails, test notifications and news update to our students, clients for discounts offers, university updates and other mock test as well as university results.</span>
@@ -45,7 +45,7 @@ const Footer = () => {
       
       <div className="footer-wrapper">
         <footer className="footer mt-5">
-          <div className="container">
+          <div className="container-fluid">
             <div className="row pb-5 align-items-start justify-content-center">
               <div className="col-12 col-md-4 d-flex flex-column justify-content-center align-items-center align-items-md-start mt-5">
                 <h2 className="text-uppercase mb-0" style={{fontWeight: 900, color: 'var(--primary-orange)'}}>ABOUT <span style={{color: 'var(--primary-black)'}}>US</span></h2>

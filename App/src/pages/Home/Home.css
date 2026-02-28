@@ -528,3 +528,13 @@
     gap: 10px;
   }
 }
+
+.container-fluid {
+    width: 95% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+
+.mt-3{
+  margin-top: 3rem !important;
+}

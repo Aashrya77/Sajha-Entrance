@@ -42,7 +42,7 @@ const CourseDetail = () => {
   if (!courseData || !courseData.courseData) {
     return (
       <div className="cd-not-found">
-        <div className="container text-center">
+        <div className="container-fluid text-center">
           <i className="fa-solid fa-circle-exclamation"></i>
           <h2>Course Not Found</h2>
           <p>The course you're looking for doesn't exist or has been removed.</p>
