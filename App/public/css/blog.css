@@ -1,6 +1,6 @@
 .blogs,
 .blog {
-  margin-top: 88px;
+  margin-top: 88px !important;
 }
 
 .blog-card-wrapper {
@@ -126,4 +126,7 @@
 }
 .blogDescription a:hover {
   color: var(--secondary-orange) !important;
+}
+.blog-detail{
+  margin-top: 88px !important;
 }

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { blogAPI } from '../../api/services';
 import Loader from '../../components/Loader/Loader';
+import '../../../public/css/blog.css';
 
 const Blogs = () => {
   const [blogs, setBlogs] = useState([]);
@@ -41,7 +42,7 @@ const Blogs = () => {
   }
 
   return (
-    <div className="blogs mt-5 pt-5">
+    <div className="blogs mt-5 pt-5" >
       <div className="container-fluid">
         <h1 className="text-uppercase mb-4 text-center" style={{fontWeight: 900, color: 'var(--primary-orange)'}}>
           OUR <span style={{color: 'var(--primary-black)'}}>BLOGS</span>

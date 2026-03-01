@@ -277,15 +277,17 @@
 
 .college-info-header {
   margin-left: 180px;
-  color: white;
-  margin-bottom: 20px;
+  color: rgb(0, 0, 0);
+  margin-bottom: -55px;
+
 }
 
 .college-name-row {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 15px;
+  color: #ffffff;
 }
 
 .college-profile-name {

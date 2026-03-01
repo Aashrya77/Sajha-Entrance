@@ -1,5 +1,5 @@
 .dashboard {
-  padding-top: 5.5rem;
+  padding-top: 8.5rem;
   padding-bottom: 3rem;
   min-height: 100vh;
   background: #f8f9fa;
@@ -242,7 +242,7 @@
 .join-btn:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(255,116,34,0.3);
-  color: #fff;
+  color: #ffffff !important;
 }
 
 .join-btn:disabled, .join-btn.locked {

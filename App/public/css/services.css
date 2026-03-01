@@ -1,25 +1,61 @@
-.services {
-  margin-top: 88px;
+.services-page {
+  margin-top: 100px !important; /* Navbar gap */
+  background-color: #fcfcfc;
+  padding-bottom: 50px;
 }
-
-.our-services-card {
-  padding: 1.5rem;
-  border-radius: 0.25rem;
-  box-shadow: 0px 2px 20px rgb(1 41 112 /10%);
+/* Card Container */
+.service-card {
+  background: #ffffff;
+  border-radius: 15px; /* Thora rounded modern look */
+  overflow: hidden; /* Image ko corners card sangai cut huna ko lagi */
+  height: 100%;
   display: flex;
   flex-direction: column;
-  align-items: start;
-  justify-content: center;
-  transition: all 0.2s ease-in-out;
-  max-height: 650px;
+  transition: all 0.3s ease-in-out;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Rectangle Image Section (Full Width) */
+.service-image-wrapper {
+  width: 100%;
+  height: 200px; /* Rectangle height - yeslai change garna saknu huncha */
+  overflow: hidden;
+}
+
+.service-full-img {
+  width: 100%;
   height: 100%;
+  object-fit: cover; /* Image lai stretch nabhai rectangle area bhitra fit garcha */
+  transition: transform 0.5s ease;
 }
 
-.our-services-card:hover {
-  transform: scale(1.04);
+/* Content Area */
+.service-content {
+  padding: 1.5rem;
+  text-align: left; /* Left align premium dekhincha rectangle image sanga */
 }
 
-.services-img {
-  max-height: 100%;
-  max-width: 100%;
+.service-content h4 {
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: var(--primary-black);
+}
+
+.service-content p {
+  color: #666;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: 0;
+}
+
+/* Hover Effect */
+.service-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 25px rgba(238, 124, 59, 0.2);
+  border-color: var(--primary-orange);
+}
+
+.service-card:hover .service-full-img {
+  transform: scale(1.08); /* Subtle zoom */
 }

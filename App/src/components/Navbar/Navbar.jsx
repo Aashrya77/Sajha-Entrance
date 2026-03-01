@@ -79,7 +79,7 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
                   <Link to="/student/login" className="btn" style={{border: '1.5px solid #ff6b35', color: '#ff6b35', backgroundColor: 'transparent', fontWeight: 600, fontSize: '13px', padding: '6px 16px', borderRadius: '5px', textDecoration: 'none', transition: 'all 0.2s ease'}}>
                     Login
                   </Link>
-                  <Link to="/student/register" className="btn" style={{backgroundColor: '#ff6b35', color: '#fff', fontWeight: 600, fontSize: '13px', padding: '6px 16px', borderRadius: '5px', border: 'none', textDecoration: 'none', transition: 'all 0.2s ease'}}>
+                  <Link to="/student/register" className="btn btn-register" style={{backgroundColor: '#ff6b35', color: '#fff', fontWeight: 600, fontSize: '13px', padding: '6px 16px', borderRadius: '5px', border: 'none', textDecoration: 'none', transition: 'all 0.2s ease'}}>
                     Register
                   </Link>
                   <Link to="/student/profile" className="btn btn-link text-decoration-none d-none d-lg-block" style={{color: '#555', fontSize: '13px', fontWeight: 500, padding: '4px 8px', transition: 'color 0.2s ease'}}>

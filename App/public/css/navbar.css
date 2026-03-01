@@ -237,3 +237,7 @@
 .navbar-nav .dropdown-toggle::after {
   margin-left: 6px;
 }
+
+.btn-register:hover {
+    color: white !important;
+}
