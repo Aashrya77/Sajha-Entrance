@@ -6,6 +6,29 @@ import Loader from '../../components/Loader/Loader';
 import LandingPage from '../../components/LandingPage/Landingpage';
 import './Home.css';
 
+const Counter = ({ end, duration = 2000 }) => {
+  const [count, setCount] = React.useState(0);
+
+  React.useEffect(() => {
+    let start = 0;
+    const increment = end / (duration / 10);
+    
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= end) {
+        setCount(end);
+        clearInterval(timer);
+      } else {
+        setCount(Math.floor(start));
+      }
+    }, 10);
+
+    return () => clearInterval(timer);
+  }, [end, duration]);
+
+  return <span>{count}</span>;
+};
+
 const Home = () => {
   const [courses, setCourses] = useState([]);
   const [colleges, setColleges] = useState([]);
@@ -169,37 +192,7 @@ const Home = () => {
         </div>
       </div>
 
-      {/* Stats Counter Section */}
-      <div className="stats-section">
-        <div className="container-fluid">
-          <div className="row text-center">
-            <div className="col-6 col-md-3">
-              <div className="stat-item">
-                <span className="stat-number">16 +</span>
-                <span className="stat-label">STAFF TEAM</span>
-              </div>
-            </div>
-            <div className="col-6 col-md-3">
-              <div className="stat-item">
-                <span className="stat-number">24 +</span>
-                <span className="stat-label">TEACHERS</span>
-              </div>
-            </div>
-            <div className="col-6 col-md-3">
-              <div className="stat-item">
-                <span className="stat-number">6000 +</span>
-                <span className="stat-label">STUDENTS</span>
-              </div>
-            </div>
-            <div className="col-6 col-md-3">
-              <div className="stat-item">
-                <span className="stat-number">35 +</span>
-                <span className="stat-label">COLLEGES</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      
 
       {/* Why Choose Us Section */}
       <div className="why-choose-section">
@@ -255,6 +248,37 @@ const Home = () => {
           </div>
         </div>
       </div>
+              {/* Stats Counter Section */}
+        <div className="stats-section">
+          <div className="container-fluid">
+            <div className="row text-center">
+              <div className="col-6 col-md-3">
+                <div className="stat-item">
+                  <span className="stat-number"><Counter end={16} /> +</span>
+                  <span className="stat-label">STAFF TEAM</span>
+                </div>
+              </div>
+              <div className="col-6 col-md-3">
+                <div className="stat-item">
+                  <span className="stat-number"><Counter end={24} /> +</span>
+                  <span className="stat-label">TEACHERS</span>
+                </div>
+              </div>
+              <div className="col-6 col-md-3">
+                <div className="stat-item">
+                  <span className="stat-number"><Counter end={6000} /> +</span>
+                  <span className="stat-label">STUDENTS</span>
+                </div>
+              </div>
+              <div className="col-6 col-md-3">
+                <div className="stat-item">
+                  <span className="stat-number"><Counter end={35} /> +</span>
+                  <span className="stat-label">COLLEGES</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
       {/* Quote Section */}
       <div className="quote-section">

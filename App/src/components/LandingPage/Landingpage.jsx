@@ -2,11 +2,38 @@ import React, { useState } from 'react';
 import './LandingPage.css';
 import { Search, Building2, MapPin } from 'lucide-react';
 
+const Counter = ({ end, duration = 2000 }) => {
+  const [count, setCount] = React.useState(0);
+
+  React.useEffect(() => {
+    let start = 0;
+    const increment = end / (duration / 10);
+    
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= end) {
+        setCount(end);
+        clearInterval(timer);
+      } else {
+        setCount(Math.floor(start));
+      }
+    }, 10);
+
+    return () => clearInterval(timer);
+  }, [end, duration]);
+
+  return <span>{count}</span>;
+};
+
 const LandingPage = () => {
   const [location, setLocation] = useState('All Locations');
   const [showDropdown, setShowDropdown] = useState(false);
 
   const locations = ['Kathmandu', 'Lalitpur', 'Bhaktapur'];
+
+  // ... अरु state को तल यो थप्नुहोस्
+  const [category, setCategory] = useState('College');
+  const [showCatDropdown, setShowCatDropdown] = useState(false);
 
   // Logo Array (Yo list lai update garna sajilo huncha)
   const logos = [
@@ -22,19 +49,30 @@ const LandingPage = () => {
         {/* Left Section */}
         <div className="hero-left">
           <div className="hero-text">
-            <h4 className="sub-heading">WELCOME TO SAJHA ENTRANCE</h4>
+            <h2 className="sub-heading">WELCOME TO SAJHA ENTRANCE</h2>
             <h1 className="main-title">Pathway to Educational Excellence</h1>
             <p className="description">Explore Diverse Academic Opportunities: Colleges, Courses, and Examinations</p>
           </div>
 
           <div className="search-card">
             <div className="search-row">
-              <select className="category-select">
-                <Building2 size={20} className="icon" />
-                <option>College</option>
-                <option>University</option>
-                <option>Course</option>
-              </select>
+                              {/* नयाँ Category Dropdown */}
+                <div className="category-wrapper" style={{ position: 'relative' }}>
+                  <div className="category-selector" onClick={() => setShowCatDropdown(!showCatDropdown)}>
+                    <Building2 size={18} className="icon" />
+                    <span>{category}</span>
+                  </div>
+                  
+                  {showCatDropdown && (
+                    <ul className="custom-dropdown">
+                      {['College', 'University', 'Course'].map((cat) => (
+                        <li key={cat} onClick={() => { setCategory(cat); setShowCatDropdown(false); }}>
+                          {cat}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               
               <input type="text" placeholder="Search colleges, courses..." className="main-search-input" />
               
@@ -44,7 +82,7 @@ const LandingPage = () => {
                   <span> {location}</span>
                 </div>
                 {showDropdown && (
-                  <ul className="location-dropdown">
+                  <ul className="location-dropdown custom-dropdown">
                     {locations.map((loc) => (
                       <li key={loc} onClick={() => { setLocation(loc); setShowDropdown(false); }}>
                         {loc}
@@ -61,9 +99,18 @@ const LandingPage = () => {
             </div>
             
             <div className="stats-bar">
-              <div className="stat"><h3>500+</h3><p>Colleges</p></div>
-              <div className="stat"><h3>1000+</h3><p>Programs</p></div>
-              <div className="stat"><h3>50k+</h3><p>Students Helped</p></div>
+                <div className="stat">
+                  <h3><Counter end={500} />+</h3>
+                  <p>Colleges</p>
+                </div>
+                <div className="stat">
+                  <h3><Counter end={1000} />+</h3>
+                  <p>Programs</p>
+                </div>
+                <div className="stat">
+                  <h3><Counter end={50} />k+</h3>
+                  <p>Students Helped</p>
+                </div>
             </div>
           </div>
         </div>

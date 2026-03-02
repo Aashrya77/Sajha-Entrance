@@ -372,20 +372,19 @@
   margin: 0 auto;
   padding: 60px 0;
   border-radius: 12px!important;
-  background: linear-gradient(135deg, var(--primary-black) 100%);
 
 }
 
 .courses-cta-title {
   font-size: 2rem;
   font-weight: 700;
-  color: #fff;
+  color: #000000;
   margin-bottom: 12px;
 }
 
 .courses-cta-text {
   font-size: 1.05rem;
-  color: rgba(255, 255, 255, 0.65);
+  color: rgba(0, 0, 0, 0.65);
   max-width: 500px;
   margin: 0 auto 28px;
   line-height: 1.6;
@@ -393,10 +392,10 @@
 
 .courses-cta-btn {
   display: inline-flex;
+  color: white!important; ;
   align-items: center;
   gap: 8px;
   background: var(--primary-orange);
-  color: #ffffff;
   padding: 14px 32px;
   border-radius: 50px;
   font-size: 15px;
@@ -408,7 +407,7 @@
 
 .courses-cta-btn:hover {
   transform: translateY(-2px);
-  color: #ffffff !important;
+  color: #000000 !important;
 
 }
 

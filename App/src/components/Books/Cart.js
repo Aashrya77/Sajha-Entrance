@@ -29,7 +29,7 @@ const Cart = ({ cartItems, removeFromCart, updateQuantity }) => {
           <div className="empty-cart-icon">🛒</div>
           <h2>Your Cart is Empty</h2>
           <p>Add some books to your cart to see them here.</p>
-          <button className="btn btn-primary" onClick={() => navigate('/books')}>
+          <button className="btn btn-primary cartbutton" onClick={() => navigate('/books')}>
             Continue Shopping
           </button>
         </div>
@@ -53,12 +53,12 @@ const Cart = ({ cartItems, removeFromCart, updateQuantity }) => {
                 <h3 className="cart-item-title" onClick={() => navigate(`/book/${item.id}`)}>
                   {item.title}
                 </h3>
-                <p className="cart-item-author">by {item.author}</p>
+               
                 
                 <div className="cart-item-price-info">
-                  <span className="cart-item-price">₹{item.price}</span>
+                  <span className="cart-item-price">Rs.{item.price}</span>
                   {item.originalPrice > item.price && (
-                    <span className="cart-item-original-price">₹{item.originalPrice}</span>
+                    <span className="cart-item-original-price">Rs.{item.originalPrice}</span>
                   )}
                   {item.discount > 0 && (
                     <span className="cart-item-discount">{item.discount}% OFF</span>
@@ -104,13 +104,13 @@ const Cart = ({ cartItems, removeFromCart, updateQuantity }) => {
             
             <div className="summary-row">
               <span>Subtotal ({cartItems.length} {cartItems.length === 1 ? 'item' : 'items'})</span>
-              <span>₹{calculateSubtotal().toLocaleString()}</span>
+              <span>Rs.{calculateSubtotal().toLocaleString()}</span>
             </div>
 
             {calculateSavings() > 0 && (
               <div className="summary-row savings">
                 <span>Total Savings</span>
-                <span className="savings-amount">- ₹{calculateSavings().toLocaleString()}</span>
+                <span className="savings-amount">- Rs.{calculateSavings().toLocaleString()}</span>
               </div>
             )}
 
@@ -123,7 +123,7 @@ const Cart = ({ cartItems, removeFromCart, updateQuantity }) => {
 
             <div className="summary-row total">
               <span>Total</span>
-              <span>₹{calculateSubtotal().toLocaleString()}</span>
+              <span>Rs.{calculateSubtotal().toLocaleString()}</span>
             </div>
 
             <button className="checkout-btn">

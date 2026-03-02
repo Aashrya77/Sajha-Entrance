@@ -81,7 +81,6 @@ const BookDetail = ({ books, addToCart }) => {
           <div className="book-detail-info">
             <span className="book-category-badge">{book.category}</span>
             <h1 className="book-detail-title">{book.title}</h1>
-            <p className="book-detail-author">by <strong>{book.author}</strong></p>
 
             <div className="book-rating-section">
               <div className="rating-stars">
@@ -93,11 +92,11 @@ const BookDetail = ({ books, addToCart }) => {
 
             <div className="price-section">
               <div className="price-main">
-                <span className="detail-current-price">₹{book.price}</span>
+                <span className="detail-current-price">Rs.{book.price}</span>
                 {book.originalPrice > book.price && (
                   <>
-                    <span className="detail-original-price">₹{book.originalPrice}</span>
-                    <span className="savings-text">Save ₹{book.originalPrice - book.price}</span>
+                    <span className="detail-original-price">Rs.{book.originalPrice}</span>
+                    <span className="savings-text">Save Rs.{book.originalPrice - book.price}</span>
                   </>
                 )}
               </div>

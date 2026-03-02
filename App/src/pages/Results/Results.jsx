@@ -71,7 +71,7 @@ const Results = () => {
 
   return (
     <div className="results-page mt-5 pt-5">
-      <div className="container">
+      <div className="container-fluid results-container">
         <h1 className="text-uppercase mb-2 text-center" style={{ fontWeight: 900, color: 'var(--primary-orange)' }}>
           EXAM <span style={{ color: 'var(--primary-black)' }}>RESULTS</span>
         </h1>

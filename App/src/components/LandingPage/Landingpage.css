@@ -21,7 +21,12 @@
   gap: 30px;
 }
 
-.hero-left { flex: 2.5; }
+.hero-left { 
+  flex: 2.5; 
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
 
 .sub-heading { color: var(--sajha-orange); font-size: 0.9rem; margin-bottom: 10px; }
 .main-title { font-size: 3.2rem; color: var(--dark-text); margin: 0; }
@@ -83,13 +88,9 @@
   
 }
 
-.search-row:focus-within {
-  border-color: var(--sajha-orange);
-}
-
 .category-select {
   border: none;
-  background: linear-gradient(135deg, #fff8f3 0%, #fffaf6 100%);
+ 
   padding: 14px 18px;
   outline: none;
   font-weight: 600;
@@ -102,7 +103,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  border: 1.5px solid rgba(255,116,34,0.2);
+
 }
 
 .category-select .icon {
@@ -112,10 +113,9 @@
 }
 
 .category-select:hover {
-  background: linear-gradient(135deg, #ffe4d2 0%, #fff0e6 100%);
+  
   color: #ff5c00;
-  border-color: var(--sajha-orange);
-  box-shadow: 0 4px 12px rgba(255,116,34,0.15);
+  
 }
 
 .category-select:hover .icon {
@@ -161,7 +161,7 @@
   font-size: 0.95rem;
   transition: all 0.3s ease;
   border-radius: 12px;
-  border: 1.5px solid rgba(0,0,0,0.08);
+  
 }
 
 .location-selector .icon {
@@ -172,7 +172,7 @@
 }
 
 .location-selector:hover {
-  background: linear-gradient(135deg, #ffe4d2 0%, #fff0e6 100%);
+  
   color: #ff5c00;
   
 }
@@ -341,9 +341,9 @@
 
 .search-btn-small {
   background: linear-gradient(135deg, var(--sajha-orange) 0%, #ff5c00 100%);
-  color: white;
+  color: white !important;
   border: none;
-  padding: 14px 15px;
+  padding: 10px 12px;
   border-radius: 12px;
   cursor: pointer;
   font-weight: 700;
@@ -362,6 +362,7 @@
 .search-btn-small .icon {
   flex-shrink: 0;
   transition: all 0.3s ease;
+  color: white !important;
 }
 
 .search-btn-small::before {
@@ -376,10 +377,6 @@
   z-index: 1;
 }
 
-.search-btn-small:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 14px 32px rgba(255,116,34,0.4);
-}
 
 .search-btn-small:hover::before {
   left: 100%;
@@ -567,4 +564,108 @@
 @keyframes slide {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); } /* Jumps back when half-way for perfect loop */
+}
+/* Wrapper for both dropdowns */
+.location-wrapper, .category-wrapper {
+    position: relative;
+    cursor: pointer;
+    min-width: 130px;
+}
+
+/* Selector Box Styles */
+.location-selector, .category-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 15px;
+    font-weight: 500;
+    color: #444;
+    transition: all 0.3s ease;
+}
+
+.location-selector:hover, .category-selector:hover {
+    color: var(--primary-orange);
+}
+
+.icon {
+    color: var(--primary-orange);
+}
+
+/* Common Dropdown Menu Style */
+.location-dropdown, .custom-dropdown {
+    position: absolute;
+    top: 110%; /* Search bar भन्दा अलि तल */
+    left: 0;
+    width: 180px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12); /* Modern Shadow */
+    list-style: none;
+    padding: 8px 0;
+    margin: 0;
+    z-index: 1000;
+    border: 1px solid #f0f0f0;
+    overflow: hidden;
+    animation: fadeIn 0.2s ease-out;
+}
+
+/* Dropdown Animation */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Dropdown Items */
+.location-dropdown li, .custom-dropdown li {
+    padding: 10px 20px;
+    font-size: 14px;
+    color: #555;
+    transition: all 0.2s;
+}
+
+.location-dropdown li:hover, .custom-dropdown li:hover {
+    background-color: #fff5f0; /* Light orange background */
+    color: var(--primary-orange);
+    padding-left: 25px; /* Hover गर्दा हल्का सर्ने effect */
+}
+
+/* Search Row मा Divider थप्न (Optional तर राम्रो देखिन्छ) */
+.search-row {
+    display: flex;
+    align-items: center;
+    background: white;
+    border-radius: 10px; /* Capsule shape */
+    padding: 5px 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+}
+
+.main-search-input {
+    border: none;
+    border-left: 1px solid #eee; /* Divider */
+    border-right: 1px solid #eee; /* Divider */
+    padding: 0 20px;
+    flex-grow: 1;
+}
+.stats-bar {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 30px;
+    padding: 20px;
+    background: #fff;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+.stat h3 {
+    font-size: 2rem;
+    color: var(--primary-orange);
+    margin-bottom: 5px;
+    font-weight: 800;
+}
+
+.stat p {
+    color: #666;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }

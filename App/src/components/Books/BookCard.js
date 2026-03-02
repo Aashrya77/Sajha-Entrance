@@ -49,8 +49,7 @@ const BookCard = ({ book, addToCart }) => {
       
       <div className="book-card-content">
         <h3 className="book-card-title">{book.title}</h3>
-        <p className="book-card-author">by {book.author}</p>
-        
+       
         <div className="book-card-rating">
           <div className="stars">
             {renderStars(book.rating)}
@@ -59,9 +58,9 @@ const BookCard = ({ book, addToCart }) => {
         </div>
 
         <div className="book-card-price">
-          <span className="current-price">₹{book.price}</span>
+          <span className="current-price">Rs.{book.price}</span>
           {book.originalPrice > book.price && (
-            <span className="original-price">₹{book.originalPrice}</span>
+            <span className="original-price">Rs.{book.originalPrice}</span>
           )}
         </div>
 

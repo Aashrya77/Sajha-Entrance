@@ -2,6 +2,11 @@
   min-height: calc(100vh - 200px);
   padding-bottom: 60px;
 }
+.results-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 30px 20px;
+}
 
 /* Search Card */
 .result-search-card {
