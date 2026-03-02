@@ -39,6 +39,9 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
                 <Link to="/" className="nav-link" style={{color: parentGroup === 'Home' ? '#ff6b35' : '#333', fontWeight: parentGroup === 'Home' ? 700 : 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>HOME</Link>
               </li>
               <li className="nav-item">
+                <Link to="/university" className="nav-link" style={{color: parentGroup === 'University' ? '#ff6b35' : '#333', fontWeight: parentGroup === 'University' ? 700 : 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>UNIVERSITY</Link>
+              </li>
+              <li className="nav-item">
                 <Link to="/colleges" className="nav-link" style={{color: parentGroup === 'College' ? '#ff6b35' : '#333', fontWeight: parentGroup === 'College' ? 700 : 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>COLLEGES</Link>
               </li>
               <li className="nav-item">

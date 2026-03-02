@@ -5,17 +5,16 @@ import './Aboutpage.css';
 
 const About = () => {
   const [loading, setLoading] = useState(true);
-  // --- यो लाइन छुटेको थियो, यसलाई थप्नुहोस् ---
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
 
+  // React मा public folder भित्रको path दिँदा सिधै /sajhaphoto बाट सुरु गर्नुहोला
   const allImages = [
-    "/public/sajhaphoto/mocktest1.jpg", "/public/sajhaphoto/mocktest2.jpg", "/public/sajhaphoto/mocktest3.jpg",
-    "/public/sajhaphoto/mock.jpg", "/public/sajhaphoto/studenthall.jpg", "/public/sajhaphoto/student3.jpg",
-    "/public/sajhaphoto/program.jpg", "/public/sajhaphoto/program1.jpg", "/public/sajhaphoto/mukesh.jpeg",
-    "/public/sajhaphoto/aaramva.jpg", "/public/sajhaphoto/nirjalapanta.jpg", "/public/sajhaphoto/mocktestgift.jpg"
+    "/sajhaphoto/mocktest1.jpg", "/sajhaphoto/mocktest2.jpg", "/sajhaphoto/mocktest3.jpg",
+    "/sajhaphoto/mock.jpg", "/sajhaphoto/studenthall.jpg", "/sajhaphoto/student3.jpg",
+    "/sajhaphoto/program.jpg", "/sajhaphoto/program1.jpg", "/sajhaphoto/mukesh.jpeg",
+    "/sajhaphoto/aaramva.jpg", "/sajhaphoto/nirjalapanta.jpg", "/sajhaphoto/mocktestgift.jpg"
   ];
 
-  // Elfsight Script loading
   useEffect(() => {
     const script = document.createElement('script');
     script.src = "https://elfsightcdn.com/platform.js";
@@ -29,42 +28,41 @@ const About = () => {
     };
   }, []);
 
-  // Rank Holders Data
   const rankHolders = [
     {
       id: 1,
       name: "Aramva Acharya",
       rank: "CSIT Rank 1 (2082 Batch)",
-      image: "/public/sajhaphoto/aaramva.jpg",
+      image: "/sajhaphoto/aaramva.jpg",
       thought: "Sajha Entrance provided me the best environment and resources. The teachers are very supportive and the mock tests helped me gain confidence."
     },
-     {
+    {
       id: 2,
       name: "Chhiring Gyalbu Lama",
       rank: "CSIT Rank 15 (2082 Batch)",
-      image: "/public/sajhaphoto/chhiring.jpg",
+      image: "/sajhaphoto/chhiring.jpg",
       thought: "The study materials were very comprehensive. I highly recommend Sajha Entrance for anyone serious about their career."
     },
-     {
+    {
       id: 3,
       name: "Arpit Ghimire",
       rank: "CSIT Rank 30 (2082 Batch)",
-      image: "/public/sajhaphoto/arpit.jpg",
-      thought: "The guidance and support from the faculty at Sajha Entrance helped me improve my performance significantly. The mock tests were especially helpful in preparing for the actual exam."
+      image: "/sajhaphoto/arpit.jpg",
+      thought: "The guidance and support from the faculty at Sajha Entrance helped me improve my performance significantly."
     },
     {
       id: 4,
       name: "Nirjala Panta",
       rank: "CSIT Rank 93 (2082 Batch)",
-      image: "/public/sajhaphoto/nirjalapanta.jpg",
-      thought: "Sajha Entrance is a great place for entrance preparation. The teachers are very knowledgeable and the study materials are top-notch. I am grateful for their support throughout my preparation."
+      image: "/sajhaphoto/nirjalapanta.jpg",
+      thought: "Sajha Entrance is a great place for entrance preparation. The teachers are very knowledgeable."
     },
     {
       id: 5,
-      name: "biwash Parajuli",
+      name: "Biwash Parajuli",
       rank: "CSIT Rank 125 (2081 Batch)",
-      image: "/public/sajhaphoto/biwasparajuli.jpg",
-      thought: "Sajha Entrance provided me with the right guidance and resources to succeed. The mock tests were very helpful in identifying my weaknesses and improving my performance."
+      image: "/sajhaphoto/biwasparajuli.jpg",
+      thought: "Sajha Entrance provided me with the right guidance and resources to succeed."
     }
   ];
 
@@ -96,18 +94,22 @@ const About = () => {
         <div className="row align-items-center mt-5">
           <div className="col-lg-6">
             <h2 className="section-title">Welcome to Sajha Entrance</h2>
+            <div className="title-underline"></div>
             <p className="mt-4 about-text">
-              Sajha Entrance is a leading IT-based educational hub dedicated to preparing students for competitive entrance examinations and building strong technical careers.We specialize in <strong>IOE, BSc.CSIT, BIT, BCA, CMAT & BCS.IT entrance preparation</strong> , providing both online and physical classes with structured courses, weekly mock tests, and performance-based rewards.
+              Sajha Entrance is a leading IT-based educational hub dedicated to preparing students for competitive entrance examinations and building strong technical careers.
+              We specialize in <strong>BSc.CSIT, BIT, BCA, CMAT & BCS.IT</strong> entrance preparation, providing both online and physical classes with structured courses, weekly mock tests, and performance-based rewards.
             </p>
-            <p className="about-text">
-              Our institution is run by passionate IT graduates who understand the real challenges students face. We focus on:
-              <li>Concept-based learning</li>
-              <li>Chapter-wise revision & model question practice</li>
-              <li>Career counselling & guidance</li>
-              <li>Scholarship support after +2</li>
-              <li>Practical IT training programs</li> <br />
-              At Sajha Entrance, we believe success starts with the right guidance. Our mission is to empower students with knowledge, confidence, and skills               to achieve their academic and professional goals.
-            </p>
+            <div className="about-text">
+             <strong>Our institution is run by passionate IT graduates who focus on:</strong> 
+              <ol>
+                <li>Concept-based learning</li>
+                <li>Chapter-wise revision & model question practice</li>
+                <li>Career counselling & guidance</li>
+                <li>Scholarship support after +2</li>
+                <li>Practical IT training programs</li>
+              </ol>
+             At Sajha Entrance, we believe success starts with the right guidance. Our mission is to empower students with knowledge, confidence, and skills to achieve their academic and professional goals.
+            </div>
           </div>
 
           <div className="col-lg-6">
@@ -129,13 +131,13 @@ const About = () => {
           </div>
         </div>
 
-        {/* --- MODAL SECTION --- */}
+        {/* MODAL SECTION */}
         {isGalleryOpen && (
           <div className="gallery-modal-overlay" onClick={() => setIsGalleryOpen(false)}>
             <div className="modal-content-wrapper" onClick={(e) => e.stopPropagation()}>
               <button className="close-modal" onClick={() => setIsGalleryOpen(false)}>&times;</button>
               <div className="modal-scroll-area">
-                <h3 className="text-white text-center mb-4">Our Campus Gallery</h3>
+                <h3 className="text-white text-center mb-4">Our Sajha Gallery</h3>
                 <div className="modal-image-grid">
                   {allImages.map((img, index) => (
                     <div key={index} className="modal-img-card">
@@ -149,9 +151,9 @@ const About = () => {
         )}
 
         {/* Features Section */}
-        <div className="row mt-5 pt-5">
+        <div className="row mt-5 pt-5 text-center">
           {[
-            { icon: 'fa-award', title: 'Excellence', desc: 'Committed to providing quality education and guidance.' },
+            { icon: 'fa-award', title: 'Excellence', desc: 'Committed to providing quality education.' },
             { icon: 'fa-users', title: 'Expert Faculty', desc: 'Learn from experienced teachers.' },
             { icon: 'fa-chart-line', title: 'Proven Results', desc: 'Track record of successful students.' }
           ].map((f, i) => (
@@ -192,6 +194,46 @@ const About = () => {
             WHAT OUR <span style={{ color: 'var(--primary-orange)' }}>STUDENTS SAY</span>
           </h2>
           <div className="elfsight-app-2f4ada3b-37d2-430b-b61d-568abcefef6b" data-elfsight-app-lazy></div>
+        </div>
+
+        {/* CONTACT & MAP SECTION */}
+        <div className="contact-map-section mt-5 pt-5 pb-5">
+          <div className="row g-0 shadow-lg rounded-4 overflow-hidden">
+            <div className="col-lg-6 bg-white p-5">
+              <h3 className="fw-bold mb-4">Get in <span className="text-orange">Touch</span></h3>
+              <form className="inquiry-form">
+                <div className="row g-3">
+                  <div className="col-md-6"><input type="text" className="form-control custom-input" placeholder="Full Name" required /></div>
+                  <div className="col-md-6"><input type="tel" className="form-control custom-input" placeholder="Contact Number" required /></div>
+                  <div className="col-12"><input type="text" className="form-control custom-input" placeholder="Address" required /></div>
+                  <div className="col-12">
+                    <select className="form-select custom-input text-muted">
+                      <option defaultValue>Preferred Course</option>
+                      <option value="ioe">IOE</option>
+                      <option value="csit">BSc. CSIT</option>
+                      <option value="bit">BIT</option>
+                      <option value="cmat">CMAT</option>
+                      <option value="bca">BCA</option>
+                    </select>
+                  </div>
+                  <div className="col-12"><textarea className="form-control custom-input" rows="4" placeholder="Your Message"></textarea></div>
+                  <div className="col-12 mt-4"><button type="submit" className="btn btn-orange w-100 py-3 fw-bold text-white text-uppercase">Send Inquiry</button></div>
+                </div>
+              </form>
+            </div>
+            <div className="col-lg-6">
+              <div className="map-container h-100">
+                <iframe 
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3532.4828359288117!2d85.32130547618451!3d27.702400757618451!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39eb190137b7aff5%3A0x3b10d30307ca3e78!2sSajha%20Entrance!5e0!3m2!1sen!2snp!4v1709400000000!5m2!1sen!2snp" 
+                  width="100%" 
+                  height="100%" 
+                  style={{ border: 0, minHeight: '450px' }} 
+                  allowFullScreen="" 
+                  loading="lazy">
+                </iframe>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Mission */}

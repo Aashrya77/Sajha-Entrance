@@ -2,6 +2,12 @@
   margin-top: 88px;
 }
 
+.contact-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  margin-top: 50px;
+}
+
 .contact-form {
   box-shadow: 0px 2px 20px rgb(1 41 112 /10%);
   height: auto;

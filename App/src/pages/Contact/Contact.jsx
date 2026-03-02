@@ -43,7 +43,7 @@ const Contact = () => {
 
   return (
     <div className="contact-page mt-5 pt-5">
-      <div className="container-fluid">
+      <div className="container-fluid contact-container">
         <h1 className="text-uppercase mb-4 text-center" style={{fontWeight: 900, color: 'var(--primary-orange)'}}>
           CONTACT <span style={{color: 'var(--primary-black)'}}>US</span>
         </h1>

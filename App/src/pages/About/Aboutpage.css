@@ -241,6 +241,60 @@ a[href*="elfsight.com/google-reviews-widget"] {
     width: 100%;
 }
 
+.contact-map-section {
+    background: #fdfdfd;
+}
+
+/* Custom Input Styling */
+.custom-input {
+    border: 1px solid #eee !important;
+    padding: 12px 15px !important;
+    border-radius: 8px !important;
+    font-size: 0.95rem;
+    background-color: #f9f9f9 !important;
+    transition: all 0.3s ease;
+}
+
+.custom-input:focus {
+    background-color: #fff !important;
+    border-color: var(--primary-orange) !important;
+    box-shadow: 0 0 0 4px rgba(255, 111, 0, 0.1) !important;
+    outline: none;
+}
+
+/* Button Styling */
+.btn-orange {
+    background-color: var(--primary-orange);
+    border: none;
+    border-radius: 8px;
+    letter-spacing: 1px;
+    transition: 0.3s;
+}
+
+.btn-orange:hover {
+    background-color: #e65100;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 111, 0, 0.3);
+}
+
+.map-container iframe {
+    display: block;
+}
+
+.text-orange {
+    color: var(--primary-orange);
+}
+
+/* Mobile Responsive */
+@media (max-width: 991px) {
+    .map-container iframe {
+        min-height: 350px !important;
+    }
+    .contact-map-section .p-5 {
+        padding: 30px !important;
+    }
+}
+
 /* ==========================================================================
    6. Responsive Design
    ========================================================================== */
