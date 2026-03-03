@@ -301,11 +301,14 @@ const Home = () => {
                 Learn from the <span className="text-orange">best</span>
               </h2>
               <p className="section-text">
-                We have a range of expert teachers of each faculty for different courses. Students who wants to join are free to interact with any teachers and TU professionals and highly experienced teachers faculty are maintained to solve students query during teaching period.
+                We have a range of expert teachers from each faculty for different courses. Students who wish to join are free to interact with any teacher and TU professionals. Our highly experienced faculty members are always available to solve students' queries during the teaching period and provide proper academic guidance. <br /> <br />
+
+                <span  style={{fontWeight: 500, color: 'var(--primary-orange)'}} >In 2082, we successfully produced the Nepal Top Rank 1 in CSIT.</span> Many of our students secured positions within the Top 100, and                 several students were selected for government scholarships. We are truly grateful for the trust of our students, the dedication of our                teachers, and the continuous effort of our management team that made these achievements possible.
+                <span  style={{fontWeight: 500, color: 'var(--primary-orange)'}} >We warmly invite you to visit us once after your +2 for future academic guidance and professional IT training.</span>
               </p>
             </div>
             <div className="col-lg-6">
-              <img src="/img/learn.png" alt="Learn from the best" className="section-image" />
+              <img src="/sajhaphoto/sajhastudents.jpg" alt="Learn from the best" className="section-image img-fluid" />
             </div>
           </div>
         </div>

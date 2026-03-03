@@ -341,14 +341,9 @@
   font-size: 15px;
   color: #555;
   line-height: 1.6;
+  border-left: none !important;
 }
 
-.feature-icon {
-  color: #28a745;
-  font-weight: bold;
-  font-size: 18px;
-  flex-shrink: 0;
-}
 
 .not-found {
   text-align: center;

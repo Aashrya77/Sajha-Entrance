@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { blogAPI } from '../../api/services';
 import { getImageUrl } from '../../utils/imageHelper';
 import Loader from '../../components/Loader/Loader';
@@ -7,6 +7,7 @@ import '../../../public/css/blog.css';
 
 const BlogDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [blogData, setBlogData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [shareModal, setShareModal] = useState({ isOpen: false, blogTitle: '', blogUrl: '' });
@@ -88,7 +89,16 @@ const BlogDetail = () => {
 
   return (
     <div className="blog-detail mt-5 pt-5">
-      <div className="container">
+      <div className="container-fluid">
+        <div className="mb-4">
+          <button 
+            onClick={() => navigate(-1)} 
+            className="btn-back-to-blogs"
+          >
+            <i className="fa-solid fa-arrow-left me-2"></i>
+            Back to Blogs
+          </button>
+        </div>
         <div className="row">
           <div className="col-lg-8">
             <article className="blog-article">

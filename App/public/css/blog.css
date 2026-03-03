@@ -378,6 +378,28 @@
   color: white;
 }
 
+/* Back Button Styling */
+.btn-back-to-blogs {
+    background-color: transparent;
+    color: var(--primary-black);
+    border: 1px solid var(--light-gray);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: var(--transition-cubic);
+    display: inline-flex;
+    align-items: center;
+}
+
+.btn-back-to-blogs:hover {
+    background-color: var(--light-gray);
+    color: var(--primary-orange);
+    border-color: var(--primary-orange);
+    transform: translateX(-5px); /* थोरै देब्रेतिर सर्छ */
+}
+
 /* ===== 7. MEDIA QUERIES ===== */
 @media (min-width: 992px) {
   .blog-card-image { height: 220px; }

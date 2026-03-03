@@ -167,7 +167,6 @@ const BookDetail = ({ books, addToCart }) => {
             <ul className="features-list">
               {book.features.map((feature, index) => (
                 <li key={index} className="feature-item">
-                  <span className="feature-icon">✓</span>
                   {feature}
                 </li>
               ))}

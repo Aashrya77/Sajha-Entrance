@@ -19,6 +19,7 @@
   display: grid;
   grid-template-columns: 1fr 400px;
   gap: 30px;
+  margin-top: 80px;
 }
 
 .cart-items-section {
