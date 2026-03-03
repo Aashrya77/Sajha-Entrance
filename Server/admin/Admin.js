@@ -24,6 +24,8 @@ import OnlineClass from "../models/OnlineClass.js";
 import RecordedClass from "../models/RecordedClass.js";
 import StudentResult from "../models/StudentResult.js";
 import Payment from "../models/Payment.js";
+import UniversityModel, { UniversityFileModel } from "../models/University.js";
+import LandingAdModel, { LandingAdFileModel } from "../models/LandingAd.js";
 
 
 // Helper function to extract YouTube video ID from URL
@@ -518,6 +520,7 @@ const startAdminPanel = async () => {
         recordedClassesCount,
         noticesCount,
         resultsCount,
+        universitiesCount,
         studentsByCourse,
         paymentsByStatus,
         registrationsTrend,
@@ -538,6 +541,7 @@ const startAdminPanel = async () => {
         RecordedClass.countDocuments(),
         Notice.countDocuments(),
         StudentResult.countDocuments(),
+        UniversityModel.countDocuments(),
         Student.aggregate([{ $group: { _id: "$course", count: { $sum: 1 } } }, { $sort: { count: -1 } }]),
         Payment.aggregate([{ $group: { _id: "$status", count: { $sum: 1 } } }]),
         Student.aggregate([
@@ -579,6 +583,7 @@ const startAdminPanel = async () => {
           recordedClasses: recordedClassesCount,
           notices: noticesCount,
           results: resultsCount,
+          universities: universitiesCount,
         },
         studentsByCourse,
         paymentsByStatus,
@@ -601,6 +606,8 @@ const startAdminPanel = async () => {
       Notice,
       AdvertisementFileModel,
       CollegeFileModel,
+      UniversityFileModel,
+      LandingAdFileModel,
       courseResource,
       NewsletterModel,
       ContactModel,

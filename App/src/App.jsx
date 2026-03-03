@@ -20,6 +20,8 @@ import StudentRegister from './pages/StudentRegister/StudentRegister';
 import StudentProfile from './pages/StudentProfile/StudentProfile';
 import NotFound from './pages/NotFound/NotFound';
 import Results from './pages/Results/Results';
+import Universities from './pages/Universities/Universities';
+import UniversityDetail from './pages/UniversityDetail/UniversityDetail';
 import ForgotPasswordForm from './components/FormDesign/ForgotPasswordForm';
 import Popup from './components/Popup/Popup';
 import BookList from './components/Books/BookList';
@@ -115,6 +117,8 @@ function App() {
         <Route path="/course/:id" element={<CourseDetail />} />
         <Route path="/colleges" element={<Colleges />} />
         <Route path="/college/:id" element={<CollegeDetail />} />
+        <Route path="/universities" element={<Universities />} />
+        <Route path="/university/:id" element={<UniversityDetail />} />
         <Route path="/blogs" element={<Blogs />} />
         <Route path="/blog/:id" element={<BlogDetail />} />
         <Route path="/contact" element={<Contact />} />

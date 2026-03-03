@@ -35,6 +35,7 @@ const Home = () => {
   const [loading, setLoading] = useState(true);
   const [showPopup, setShowPopup] = useState(false);
   const [popupData, setPopupData] = useState(null);
+  const [landingAds, setLandingAds] = useState([]);
 
   useEffect(() => {
     fetchHomeData();
@@ -66,6 +67,7 @@ const Home = () => {
         setCourses(response.data.data.courses || []);
         setColleges(response.data.data.colleges || []);
         setPopupData(response.data.data.popup || null);
+        setLandingAds(response.data.data.landingAds || []);
       }
       setLoading(false);
     } catch (error) {
@@ -80,7 +82,7 @@ const Home = () => {
 
   return (
     <>
-      <LandingPage />
+      <LandingPage landingAds={landingAds} />
 
       <div className="courses mt-5" id="courses">
         <div className="container-fluid">

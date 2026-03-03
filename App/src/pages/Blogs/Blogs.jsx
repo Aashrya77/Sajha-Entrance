@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { blogAPI } from '../../api/services';
+import { getImageUrl } from '../../utils/imageHelper';
 import Loader from '../../components/Loader/Loader';
 import '../../../public/css/blog.css';
 
@@ -113,7 +114,7 @@ const Blogs = () => {
                 <div className="blog-card">
                   <div className="blog-card-image">
                     <img 
-                      src={blog.blogImage || '/default-blog.jpg'} 
+                      src={blog.blogImage ? getImageUrl(blog.blogImage, 'blogs') : 'https://placehold.co/400x240?text=No+Image'} 
                       alt={blog.blogTitle} 
                       onError={(e) => { e.target.src = 'https://placehold.co/400x240?text=No+Image'; }}
                     />
@@ -122,7 +123,7 @@ const Blogs = () => {
                   <div className="blog-card-content">
                     <h5 className="blog-title">{blog.blogTitle}</h5>
                     <p className="blog-excerpt">
-                      {blog.blogContent ? blog.blogContent.replace(/<[^>]*>?/gm, '').substring(0, 90) + '...' : ''}
+                      {(blog.blogDescriptionUnformatted || (blog.blogDescriptionFormatted ? blog.blogDescriptionFormatted.replace(/<[^>]*>?/gm, '') : '')).substring(0, 90)}{((blog.blogDescriptionUnformatted || blog.blogDescriptionFormatted || '').length > 90) ? '...' : ''}
                     </p>
                     
                     {/* Meta Row: Date Left, Share Right */}

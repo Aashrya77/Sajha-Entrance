@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { blogAPI } from '../../api/services';
+import { getImageUrl } from '../../utils/imageHelper';
 import Loader from '../../components/Loader/Loader';
 import '../../../public/css/blog.css';
 
@@ -115,10 +116,10 @@ const BlogDetail = () => {
               </div>
 
               {blog.blogImage && (
-                <img src={blog.blogImage} alt={blog.blogTitle} className="img-fluid mb-4 rounded" />
+                <img src={getImageUrl(blog.blogImage, 'blogs')} alt={blog.blogTitle} className="img-fluid mb-4 rounded" />
               )}
 
-              <div className="blog-content" dangerouslySetInnerHTML={{ __html: blog.blogContent }} />
+              <div className="blog-content" dangerouslySetInnerHTML={{ __html: blog.blogDescriptionFormatted || blog.blogDescriptionUnformatted || '' }} />
             </article>
           </div>
 
@@ -132,7 +133,7 @@ const BlogDetail = () => {
                       <Link to={`/blog/${relatedBlog._id}`} className="text-decoration-none">
                         <div className="card">
                           {relatedBlog.blogImage && (
-                            <img src={relatedBlog.blogImage} className="card-img-top" alt={relatedBlog.blogTitle} />
+                            <img src={getImageUrl(relatedBlog.blogImage, 'blogs')} className="card-img-top" alt={relatedBlog.blogTitle} />
                           )}
                           <div className="card-body">
                             <h6 className="card-title">{relatedBlog.blogTitle}</h6>

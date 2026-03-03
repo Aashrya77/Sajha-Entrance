@@ -3,6 +3,7 @@ import Course from "../models/Course.js";
 import College from "../models/College.js";
 import Blog from "../models/Blog.js";
 import Popup from "../models/Popup.js";
+import LandingAd from "../models/LandingAd.js";
 import dotenv from "dotenv";
 import { MailHandler } from "./MailHandler.js";
 import NewsletterModel from "../models/Newsletter.js";
@@ -16,6 +17,7 @@ const HomeDetails = async (req, res) => {
     const courses = await Course.find().limit(4).exec();
     const colleges = await College.find().limit(4).exec();
     const popup = await Popup.findOne({ isActive: true }).exec();
+    const landingAds = await LandingAd.find({ isActive: true }).sort({ position: 1 }).exec();
     res.json({
       success: true,
       data: {
@@ -23,6 +25,7 @@ const HomeDetails = async (req, res) => {
         courses,
         colleges,
         popup,
+        landingAds,
       }
     });
   } catch (error) {

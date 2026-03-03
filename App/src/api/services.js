@@ -27,6 +27,18 @@ export const collegeAPI = {
   getCollegeById: (id) => API.get(`/college/${id}`),
 };
 
+// University API
+export const universityAPI = {
+  getAllUniversities: (page = 1, search = '', location = '') => {
+    const params = new URLSearchParams();
+    params.append('page', page);
+    if (search) params.append('searchUniversity', search);
+    if (location) params.append('location', location);
+    return API.get(`/universities?${params.toString()}`);
+  },
+  getUniversityById: (id) => API.get(`/university/${id}`),
+};
+
 // Blog API
 export const blogAPI = {
   getAllBlogs: (page = 1, search = '') => {

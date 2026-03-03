@@ -25,7 +25,7 @@ const Counter = ({ end, duration = 2000 }) => {
   return <span>{count}</span>;
 };
 
-const LandingPage = () => {
+const LandingPage = ({ landingAds = [] }) => {
   const [location, setLocation] = useState('All Locations');
   const [showDropdown, setShowDropdown] = useState(false);
 
@@ -117,10 +117,26 @@ const LandingPage = () => {
 
         {/* Right Section: Ads */}
         <aside className="ads-column">
-          <div className="ad-box"><img src="/RightAds/entrance1.gif" alt="Ad 1" /></div>
-          <div className="ad-box"><img src="/RightAds/entrance2.jpg" alt="Ad 2" /></div>
-          <div className="ad-box"><img src="/RightAds/entrance3.gif" alt="Ad 3" /></div>
-          <div className="ad-box"><img src="/RightAds/entrance4.gif" alt="Ad 4" /></div>
+          {landingAds.length > 0 ? (
+            landingAds.map((ad, index) => (
+              <div className="ad-box" key={ad._id || index}>
+                {ad.adLink ? (
+                  <a href={ad.adLink} target="_blank" rel="noopener noreferrer">
+                    <img src={ad.adImage && (ad.adImage.startsWith('http') ? ad.adImage : `http://localhost:5000/landingads/${ad.adImage}`)} alt={ad.title || `Ad ${index + 1}`} />
+                  </a>
+                ) : (
+                  <img src={ad.adImage && (ad.adImage.startsWith('http') ? ad.adImage : `http://localhost:5000/landingads/${ad.adImage}`)} alt={ad.title || `Ad ${index + 1}`} />
+                )}
+              </div>
+            ))
+          ) : (
+            <>
+              <div className="ad-box"><img src="/RightAds/entrance1.gif" alt="Ad 1" /></div>
+              <div className="ad-box"><img src="/RightAds/entrance2.jpg" alt="Ad 2" /></div>
+              <div className="ad-box"><img src="/RightAds/entrance3.gif" alt="Ad 3" /></div>
+              <div className="ad-box"><img src="/RightAds/entrance4.gif" alt="Ad 4" /></div>
+            </>
+          )}
         </aside>
       </main>
 
