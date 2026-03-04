@@ -60,6 +60,7 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
                   <li><Link className="dropdown-item" to="/blogs" style={parentGroup === 'Blogs' ? {color: '#ff6b35', fontWeight: 600} : {color: '#333'}}>BLOGS</Link></li>
                   <li><Link className="dropdown-item" to="/services" style={parentGroup === 'Services' ? {color: '#ff6b35', fontWeight: 600} : {color: '#333'}}>SERVICES</Link></li>
                   <li><Link className="dropdown-item" to="/results" style={parentGroup === 'Results' ? {color: '#ff6b35', fontWeight: 600} : {color: '#333'}}>RESULTS</Link></li>
+                  <li><Link className="dropdown-item" to="/contact" style={parentGroup === 'Contact' ? {color: '#ff6b35', fontWeight: 600} : {color: '#333'}}>CONTACT</Link></li>
                 </ul>
               </li>
             </ul>
