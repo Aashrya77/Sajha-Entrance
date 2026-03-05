@@ -22,6 +22,10 @@ import NotFound from './pages/NotFound/NotFound';
 import Results from './pages/Results/Results';
 import Universities from './pages/Universities/Universities';
 import UniversityDetail from './pages/UniversityDetail/UniversityDetail';
+import MockTests from './pages/MockTests/MockTests';
+import MockTestExam from './pages/MockTestExam/MockTestExam';
+import MockTestResult from './pages/MockTestResult/MockTestResult';
+import MockTestResults from './pages/MockTestResults/MockTestResults';
 import ForgotPasswordForm from './components/FormDesign/ForgotPasswordForm';
 import Popup from './components/Popup/Popup';
 import BookList from './components/Books/BookList';
@@ -119,6 +123,10 @@ function App() {
         <Route path="/college/:id" element={<CollegeDetail />} />
         <Route path="/universities" element={<Universities />} />
         <Route path="/university/:id" element={<UniversityDetail />} />
+        <Route path="/mocktests" element={<MockTests isAuthenticated={isAuthenticated} />} />
+        <Route path="/mocktest/:id" element={<MockTestExam />} />
+        <Route path="/mocktest-result/:attemptId" element={<MockTestResult />} />
+        <Route path="/mocktest-results" element={<MockTestResults />} />
         <Route path="/blogs" element={<Blogs />} />
         <Route path="/blog/:id" element={<BlogDetail />} />
         <Route path="/contact" element={<Contact />} />

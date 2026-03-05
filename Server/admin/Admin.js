@@ -26,6 +26,8 @@ import StudentResult from "../models/StudentResult.js";
 import Payment from "../models/Payment.js";
 import UniversityModel, { UniversityFileModel } from "../models/University.js";
 import LandingAdModel, { LandingAdFileModel } from "../models/LandingAd.js";
+import MockTestModel, { MockTestFileModel } from "../models/MockTest.js";
+import { MockTestAttemptModel } from "../models/MockTest.js";
 
 
 // Helper function to extract YouTube video ID from URL
@@ -608,6 +610,8 @@ const startAdminPanel = async () => {
       CollegeFileModel,
       UniversityFileModel,
       LandingAdFileModel,
+      MockTestFileModel,
+      { resource: MockTestAttemptModel, options: { id: 'MockTestAttempt', properties: { student: { type: 'reference' }, mockTest: { type: 'reference' } } } },
       courseResource,
       NewsletterModel,
       ContactModel,

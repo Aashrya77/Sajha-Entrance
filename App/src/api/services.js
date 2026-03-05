@@ -71,6 +71,20 @@ export const paymentAPI = {
   verifyPayment: (transactionUuid) => API.post(`/payment/verify/${transactionUuid}`),
 };
 
+// MockTest API
+export const mockTestAPI = {
+  getAllMockTests: (search = '', course = '') => {
+    const params = new URLSearchParams();
+    if (search) params.append('search', search);
+    if (course) params.append('course', course);
+    return API.get(`/mocktests?${params.toString()}`);
+  },
+  getMockTestForExam: (id) => API.get(`/mocktest/${id}`),
+  submitMockTest: (id, data) => API.post(`/mocktest/${id}/submit`, data),
+  getMyAttempts: () => API.get('/mocktest-attempts'),
+  getAttemptResult: (attemptId) => API.get(`/mocktest-attempt/${attemptId}`),
+};
+
 // Result API
 export const resultAPI = {
   searchResult: (course, symbolNumber) => API.get(`/results?course=${encodeURIComponent(course)}&symbolNumber=${encodeURIComponent(symbolNumber)}`),
