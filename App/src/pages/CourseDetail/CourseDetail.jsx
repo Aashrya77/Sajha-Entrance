@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { courseAPI } from '../../api/services';
 import Loader from '../../components/Loader/Loader';
 import EsewaPayment from '../../components/Payment/EsewaPayment';
+import InquiryButton from '../../components/InquiryForm/InquiryButton';
 
 const TABS = [
   { key: 'about', label: 'About', icon: 'fa-info-circle' },
@@ -251,6 +252,9 @@ const CourseDetail = () => {
             </div>
           </div>
         </div>
+
+        {/* Floating Inquiry Button */}
+        <InquiryButton collegeName={`${course.title} (${course.universityName || 'Program'})`} position="bottom-right" courses={[course]} />
       </div>
     </div>
   );

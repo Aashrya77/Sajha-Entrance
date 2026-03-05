@@ -4,6 +4,7 @@ import { collegeAPI } from '../../api/services';
 import { getImageUrl } from '../../utils/imageHelper';
 import './CollegeDetail.css';
 import Loader from '../../components/Loader/Loader';
+import InquiryButton from '../../components/InquiryForm/InquiryButton';
 
 const CollegeDetail = () => {
   const { id } = useParams();
@@ -446,6 +447,9 @@ const CollegeDetail = () => {
             </div>
           </div>
         </div>
+
+        {/* Floating Inquiry Button */}
+        <InquiryButton collegeName={college.collegeName} position="bottom-right" courses={courses || []} />
       </div>
     </div>
   );

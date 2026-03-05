@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import './LandingPage.css';
-import { Search, Building2, MapPin } from 'lucide-react';
+import { Search, Building2, MapPin, GraduationCap, BookOpen } from 'lucide-react';
 
 const Counter = ({ end, duration = 2000 }) => {
   const [count, setCount] = React.useState(0);
@@ -29,11 +29,25 @@ const LandingPage = ({ landingAds = [] }) => {
   const [location, setLocation] = useState('All Locations');
   const [showDropdown, setShowDropdown] = useState(false);
 
-  const locations = ['Kathmandu', 'Lalitpur', 'Bhaktapur'];
+  const locations = ['All Locations','Kathmandu', 'Lalitpur', 'Bhaktapur'];
 
   // ... अरु state को तल यो थप्नुहोस्
   const [category, setCategory] = useState('College');
   const [showCatDropdown, setShowCatDropdown] = useState(false);
+
+
+  const getCategoryIcon = () => {
+  switch (category) {
+    case 'College':
+      return <Building2 size={18} className="icon" />;
+    case 'University':
+      return <GraduationCap size={18} className="icon" />;
+    case 'Course':
+      return <BookOpen size={18} className="icon" />;
+    default:
+      return <Building2 size={18} className="icon" />;
+  }
+};
 
   // Logo Array (Yo list lai update garna sajilo huncha)
   const logos = [
@@ -59,7 +73,7 @@ const LandingPage = ({ landingAds = [] }) => {
                               {/* नयाँ Category Dropdown */}
                 <div className="category-wrapper" style={{ position: 'relative' }}>
                   <div className="category-selector" onClick={() => setShowCatDropdown(!showCatDropdown)}>
-                    <Building2 size={18} className="icon" />
+                   {getCategoryIcon()}
                     <span>{category}</span>
                   </div>
                   

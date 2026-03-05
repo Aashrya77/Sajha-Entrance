@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { collegeAPI, courseAPI } from '../../api/services';
 import { getImageUrl } from '../../utils/imageHelper';
 import Loader from '../../components/Loader/Loader';
+import InquiryButton from '../../components/InquiryForm/InquiryButton';
 
 const Colleges = () => {
   const [colleges, setColleges] = useState([]);
@@ -286,6 +287,9 @@ const Colleges = () => {
           </div>
         </div>
       </div>
+
+      {/* Floating Inquiry Button */}
+      <InquiryButton collegeName="Colleges & Programs" position="bottom-right" courses={courses || []} />
     </div>
   );
 };

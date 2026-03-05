@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { universityAPI } from '../../api/services';
 import { getImageUrl } from '../../utils/imageHelper';
 import Loader from '../../components/Loader/Loader';
+import InquiryButton from '../../components/InquiryForm/InquiryButton';
 
 const UniversityDetail = () => {
   const { id } = useParams();
@@ -526,6 +527,9 @@ const UniversityDetail = () => {
             </div>
           </div>
         </div>
+
+        {/* Floating Inquiry Button */}
+        <InquiryButton collegeName={university.universityName} position="bottom-right" courses={courses || []} />
       </div>
     </div>
   );

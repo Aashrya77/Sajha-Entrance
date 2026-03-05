@@ -1,0 +1,157 @@
+/* Floating Action Button (FAB) Styles */
+
+.inquiry-fab {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FF7A30 0%, #ff6b1a 100%);
+  color: white;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(255, 122, 48, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 998;
+  font-size: 14px;
+  font-weight: 600;
+  gap: 8px;
+}
+
+.inquiry-fab:hover {
+  transform: scale(1.1) translateY(-4px);
+  box-shadow: 0 12px 32px rgba(255, 122, 48, 0.45);
+}
+
+.inquiry-fab:active {
+  transform: scale(0.95);
+}
+
+.fab-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.fab-label {
+  display: none;
+}
+
+/* Desktop: Show label with icon */
+@media (min-width: 769px) {
+  .inquiry-fab {
+    width: auto;
+    padding: 12px 18px;
+    border-radius: 50px;
+    gap: 10px;
+  }
+
+  .fab-label {
+    display: inline;
+  }
+}
+
+/* Position Variations */
+.inquiry-fab-bottom-right {
+  bottom: 30px;
+  right: 30px;
+}
+
+.inquiry-fab-bottom-left {
+  bottom: 30px;
+  left: 30px;
+  right: auto;
+}
+
+.inquiry-fab-top-right {
+  top: 30px;
+  bottom: auto;
+  right: 30px;
+}
+
+.inquiry-fab-top-left {
+  top: 30px;
+  bottom: auto;
+  left: 30px;
+  right: auto;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .inquiry-fab {
+    bottom: 20px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+  }
+
+  .inquiry-fab-bottom-left {
+    left: 20px;
+  }
+
+  .inquiry-fab-top-right {
+    right: 20px;
+    top: 80px; /* Below mobile header if any */
+  }
+
+  .inquiry-fab-top-left {
+    left: 20px;
+    top: 80px;
+  }
+}
+
+@media (max-width: 480px) {
+  .inquiry-fab {
+    bottom: 16px;
+    right: 16px;
+    width: 52px;
+    height: 52px;
+  }
+
+  .inquiry-fab-bottom-left {
+    left: 16px;
+  }
+
+  .inquiry-fab-top-right {
+    right: 16px;
+  }
+
+  .inquiry-fab-top-left {
+    left: 16px;
+  }
+}
+
+/* Smooth entrance animation */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(100px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.inquiry-fab {
+  animation: slideInUp 0.5s ease-out;
+}
+
+/* Pulse animation (optional - can uncomment if desired) */
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 8px 24px rgba(255, 122, 48, 0.35);
+  }
+  50% {
+    box-shadow: 0 12px 36px rgba(255, 122, 48, 0.5);
+  }
+}
+
+/* Uncomment below to enable pulse animation */
+/* .inquiry-fab {
+  animation: slideInUp 0.5s ease-out, pulse 2s ease-in-out infinite;
+} */

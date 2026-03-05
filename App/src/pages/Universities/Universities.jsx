@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { universityAPI } from '../../api/services';
 import { getImageUrl } from '../../utils/imageHelper';
 import Loader from '../../components/Loader/Loader';
+import InquiryButton from '../../components/InquiryForm/InquiryButton';
 
 const UNI_GRADIENTS = {
   0: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -281,6 +282,9 @@ const Universities = () => {
             Get Free Counseling
           </Link>
         </div>
+
+        {/* Floating Inquiry Button */}
+        <InquiryButton collegeName="Universities & Programs" position="bottom-right" />
       </div>
     </div>
   );

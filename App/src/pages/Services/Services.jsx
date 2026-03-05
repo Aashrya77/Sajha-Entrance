@@ -1,5 +1,6 @@
 import React from 'react';
 import '../../../public/css/services.css';
+import InquiryButton from '../../components/InquiryForm/InquiryButton';
 
 const Services = () => {
   return (
@@ -79,6 +80,9 @@ const Services = () => {
           
           
         </div>
+
+        {/* Floating Inquiry Button */}
+        <InquiryButton collegeName="Sajha Entrance Services" position="bottom-right" />
       </div>
     </div>
   );
