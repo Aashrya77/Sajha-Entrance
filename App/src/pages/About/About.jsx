@@ -6,6 +6,40 @@ import './Aboutpage.css';
 const About = () => {
   const [loading, setLoading] = useState(true);
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
+  const [contactLoading, setContactLoading] = useState(false);
+  const [contactForm, setContactForm] = useState({
+    name: '',
+    phone: '',
+    address: 'Kathmandu',
+    email: '',
+    course: '',
+    college: '',
+    message: ''
+  });
+
+  const handleContactChange = (e) => {
+    setContactForm({ ...contactForm, [e.target.name]: e.target.value });
+  };
+
+  const handleContactSubmit = async (e) => {
+    e.preventDefault();
+    setContactLoading(true);
+    const submissionData = {
+      ...contactForm,
+      message: `College: ${contactForm.college} | Message: ${contactForm.message}`
+    };
+    try {
+      const response = await homeAPI.sendContact(submissionData);
+      if (response.data.success) {
+        alert("Message sent successfully!");
+        setContactForm({ name: '', phone: '', address: 'Kathmandu', email: '', course: '', college: '', message: '' });
+      }
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      alert(error.response?.data?.error || 'Failed to send message. Please check all fields.');
+    }
+    setContactLoading(false);
+  };
 
   // React मा public folder भित्रको path दिँदा सिधै /sajhaphoto बाट सुरु गर्नुहोला
   const allImages = [
@@ -200,24 +234,39 @@ const About = () => {
         <div className="contact-map-section mt-5 pt-5 pb-5">
           <div className="row g-0 shadow-lg rounded-4 overflow-hidden">
             <div className="col-lg-6 bg-white p-5">
-              <h3 className="fw-bold mb-4">Get in <span className="text-orange">Touch</span></h3>
-              <form className="inquiry-form">
+              <h3 className="fw-bold mb-4">Contact <span className="text-orange">Us</span></h3>
+              <form onSubmit={handleContactSubmit}>
                 <div className="row g-3">
-                  <div className="col-md-6"><input type="text" className="form-control custom-input" placeholder="Full Name" required /></div>
-                  <div className="col-md-6"><input type="tel" className="form-control custom-input" placeholder="Contact Number" required /></div>
-                  <div className="col-12"><input type="text" className="form-control custom-input" placeholder="Address" required /></div>
+                  <div className="col-md-6">
+                    <input type="text" className="form-control custom-input" name="name" value={contactForm.name} onChange={handleContactChange} placeholder="Full Name" required />
+                  </div>
+                  <div className="col-md-6">
+                    <input type="text" className="form-control custom-input" name="college" value={contactForm.college} onChange={handleContactChange} placeholder="+2 College Name" required />
+                  </div>
+                  <div className="col-md-6">
+                    <input type="tel" className="form-control custom-input" name="phone" value={contactForm.phone} onChange={handleContactChange} placeholder="Phone Number" required />
+                  </div>
+                  <div className="col-md-6">
+                    <input type="email" className="form-control custom-input" name="email" value={contactForm.email} onChange={handleContactChange} placeholder="Email Address" required />
+                  </div>
                   <div className="col-12">
-                    <select className="form-select custom-input text-muted">
-                      <option defaultValue>Preferred Course</option>
-                      <option value="ioe">IOE</option>
-                      <option value="csit">BSc. CSIT</option>
-                      <option value="bit">BIT</option>
-                      <option value="cmat">CMAT</option>
-                      <option value="bca">BCA</option>
+                    <select className="form-select custom-input" name="course" value={contactForm.course} onChange={handleContactChange} required>
+                      <option value="">Select Course</option>
+                      <option value="IOE">IOE</option>
+                      <option value="BSc.CSIT">BSc. CSIT</option>
+                      <option value="BIT">BIT</option>
+                      <option value="BCA">BCA</option>
+                      <option value="CMAT">CMAT</option>
                     </select>
                   </div>
-                  <div className="col-12"><textarea className="form-control custom-input" rows="4" placeholder="Your Message"></textarea></div>
-                  <div className="col-12 mt-4"><button type="submit" className="btn btn-orange w-100 py-3 fw-bold text-white text-uppercase">Send Inquiry</button></div>
+                  <div className="col-12">
+                    <textarea className="form-control custom-input" rows="4" name="message" value={contactForm.message} onChange={handleContactChange} placeholder="Your Message" required></textarea>
+                  </div>
+                  <div className="col-12 mt-4">
+                    <button type="submit" className="btn btn-orange w-100 py-3 fw-bold text-white text-uppercase" disabled={contactLoading}>
+                      {contactLoading ? 'Sending...' : 'Send Message'}
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>

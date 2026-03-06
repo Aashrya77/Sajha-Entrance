@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { blogAPI } from '../../api/services';
 import { getImageUrl } from '../../utils/imageHelper';
 import Loader from '../../components/Loader/Loader';
-import '../../../public/css/blog.css';
+import '../../styles/blog.css';
 
 const BlogDetail = () => {
   const { id } = useParams();
@@ -126,7 +126,9 @@ const BlogDetail = () => {
               </div>
 
               {blog.blogImage && (
-                <img src={getImageUrl(blog.blogImage, 'blogs')} alt={blog.blogTitle} className="img-fluid mb-4 rounded" />
+                <div className="blog-detail-image-container">
+                  <img src={getImageUrl(blog.blogImage, 'blogs')} alt={blog.blogTitle} className="blog-detail-image" />
+                </div>
               )}
 
               <div className="blog-content" dangerouslySetInnerHTML={{ __html: blog.blogDescriptionFormatted || blog.blogDescriptionUnformatted || '' }} />
@@ -143,7 +145,9 @@ const BlogDetail = () => {
                       <Link to={`/blog/${relatedBlog._id}`} className="text-decoration-none">
                         <div className="card">
                           {relatedBlog.blogImage && (
-                            <img src={getImageUrl(relatedBlog.blogImage, 'blogs')} className="card-img-top" alt={relatedBlog.blogTitle} />
+                            <div style={{ width: '100%', aspectRatio: '5/3', overflow: 'hidden', background: '#f5f5f5' }}>
+                              <img src={getImageUrl(relatedBlog.blogImage, 'blogs')} className="card-img-top" alt={relatedBlog.blogTitle} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            </div>
                           )}
                           <div className="card-body">
                             <h6 className="card-title">{relatedBlog.blogTitle}</h6>

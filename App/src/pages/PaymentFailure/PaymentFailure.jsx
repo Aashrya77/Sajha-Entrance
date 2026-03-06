@@ -15,6 +15,8 @@ const PaymentFailure = () => {
   const [searchParams] = useSearchParams();
   const reason = searchParams.get('reason') || 'payment_failed';
   const uuid = searchParams.get('uuid');
+  const type = searchParams.get('type');
+  const isBookOrder = type === 'book';
 
   const reasonMessage = FAILURE_REASONS[reason] || FAILURE_REASONS.payment_failed;
 
@@ -43,10 +45,17 @@ const PaymentFailure = () => {
         )}
 
         <div className="payment-result-actions">
-          <Link to="/courses" className="payment-result-btn primary">
-            <i className="fa-solid fa-rotate-right me-2"></i>
-            Try Again
-          </Link>
+          {isBookOrder ? (
+            <Link to="/cart" className="payment-result-btn primary">
+              <i className="fa-solid fa-rotate-right me-2"></i>
+              Try Again
+            </Link>
+          ) : (
+            <Link to="/courses" className="payment-result-btn primary">
+              <i className="fa-solid fa-rotate-right me-2"></i>
+              Try Again
+            </Link>
+          )}
           <Link to="/contact" className="payment-result-btn secondary">
             <i className="fa-solid fa-headset me-2"></i>
             Contact Support

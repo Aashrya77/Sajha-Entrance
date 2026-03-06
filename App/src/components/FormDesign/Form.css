@@ -61,10 +61,11 @@
 
 /* Title and Logo Styles */
 .form-logo {
-  height: 50px;
-  width: auto;
+  height: 100px;
+  width: 250px;
   margin-bottom: 5px;
-  object-fit: contain;
+  object-fit: fill;
+  margin: auto;
 }
 
 .form-title {

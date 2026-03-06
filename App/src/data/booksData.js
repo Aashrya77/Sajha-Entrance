@@ -7,7 +7,7 @@ export const booksData = [
     discount: 33.29,
     rating: 4.5,
     reviews: 2341,
-    image: "/public/bookimage/csitnew.jpg",
+    image: "/bookimage/csitnew.jpg",
     description: "Comprehensive guide covering all topics of BSc.CSIT Entrance with detailed explanations, solved examples, and practice problems. This book is designed to help students.",
     features: [
       "Chapter-wise detailed theory & Questions",
@@ -28,7 +28,7 @@ export const booksData = [
     discount: 49.29,
     rating: 4.5,
     reviews: 2341,
-    image: "/public/bookimage/bcacmat.jpg",
+    image: "/bookimage/bcacmat.jpg",
     description: "Comprehensive guide covering all topics of BSc.CSIT Entrance with detailed explanations, solved examples, and practice problems. This book is designed to help students.",
     features: [
       "Chapter-wise detailed theory & Questions",
@@ -48,7 +48,7 @@ export const booksData = [
     discount: 33.29,
     rating: 4.5,
     reviews: 2341,
-    image: "/public/bookimage/bcacmat.jpg",
+    image: "/bookimage/bcacmat.jpg",
     description: "Comprehensive guide covering all topics of BSc.CSIT Entrance with detailed explanations, solved examples, and practice problems. This book is designed to help students.",
     features: [
       "Chapter-wise detailed theory & Questions",
@@ -69,7 +69,7 @@ export const booksData = [
     discount: 31,
     rating: 4.8,
     reviews: 987,
-    image: "/public/bookimage/orderedbook.jpg",
+    image: "/bookimage/orderedbook.jpg",
     description: "Complete guide for UPSC Civil Services Preliminary examination covering all subjects of General Studies Paper I and II. Includes current affairs and practice sets.",
     features: [
     "Chapter-wise detailed theory & Questions",

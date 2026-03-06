@@ -12,6 +12,8 @@ import ResultRoutes from "./routes/Result.js";
 import PaymentRoutes from "./routes/Payment.js";
 import UniversityRoutes from "./routes/University.js";
 import MockTestRoutes from "./routes/MockTest.js";
+import BlogUploadRoutes from "./routes/BlogUpload.js";
+import BookPaymentRoutes from "./routes/BookPayment.js";
 import { startAdminPanel } from "./admin/Admin.js";
 import { NotFoundHandler } from "./controllers/Home.js";
 
@@ -61,6 +63,8 @@ const startServer = async () => {
     app.use('/api', PaymentRoutes);
     app.use('/api', UniversityRoutes);
     app.use('/api', MockTestRoutes);
+    app.use('/api', BlogUploadRoutes);
+    app.use('/api', BookPaymentRoutes);
 
     // 404 handler for API routes
     app.use('/api/*', (req, res) => {

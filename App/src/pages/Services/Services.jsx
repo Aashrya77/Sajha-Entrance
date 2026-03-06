@@ -1,5 +1,5 @@
 import React from 'react';
-import '../../../public/css/services.css';
+import '../../styles/services.css';
 import InquiryButton from '../../components/InquiryForm/InquiryButton';
 
 const Services = () => {

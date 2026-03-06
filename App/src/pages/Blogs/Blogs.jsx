@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { blogAPI } from '../../api/services';
 import { getImageUrl } from '../../utils/imageHelper';
 import Loader from '../../components/Loader/Loader';
-import '../../../public/css/blog.css';
+import '../../styles/blog.css';
 
 const Blogs = () => {
   const [blogs, setBlogs] = useState([]);

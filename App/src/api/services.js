@@ -85,6 +85,12 @@ export const mockTestAPI = {
   getAttemptResult: (attemptId) => API.get(`/mocktest-attempt/${attemptId}`),
 };
 
+// Book Payment API
+export const bookPaymentAPI = {
+  initiatePayment: (data) => API.post('/book-payment/initiate', data),
+  getPaymentStatus: (transactionUuid) => API.get(`/book-payment/status/${transactionUuid}`),
+};
+
 // Result API
 export const resultAPI = {
   searchResult: (course, symbolNumber) => API.get(`/results?course=${encodeURIComponent(course)}&symbolNumber=${encodeURIComponent(symbolNumber)}`),

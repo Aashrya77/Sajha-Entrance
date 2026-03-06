@@ -391,3 +391,76 @@
     font-size: 24px;
   }
 }
+
+/* ===== Checkout Form ===== */
+.checkout-form-section {
+  margin-top: 10px;
+}
+
+.checkout-form-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.checkout-field {
+  margin-bottom: 14px;
+}
+
+.checkout-field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #555;
+  margin-bottom: 5px;
+}
+
+.checkout-field input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  background: #fafafa;
+}
+
+.checkout-field input:focus {
+  outline: none;
+  border-color: #f85606;
+  box-shadow: 0 0 0 3px rgba(248, 86, 6, 0.1);
+  background: #fff;
+}
+
+.checkout-error {
+  background: #fff3f3;
+  color: #dc3545;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 14px;
+  border: 1px solid #ffe0e0;
+}
+
+.esewa-pay-btn {
+  background-color: #60bb46 !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.esewa-pay-btn:hover {
+  background-color: #4fa338 !important;
+  box-shadow: 0 4px 12px rgba(96, 187, 70, 0.4) !important;
+}
+
+.esewa-pay-btn:disabled {
+  background-color: #a5d89a !important;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}

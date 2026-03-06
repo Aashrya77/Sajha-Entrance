@@ -28,6 +28,7 @@ import UniversityModel, { UniversityFileModel } from "../models/University.js";
 import LandingAdModel, { LandingAdFileModel } from "../models/LandingAd.js";
 import MockTestModel, { MockTestFileModel } from "../models/MockTest.js";
 import { MockTestAttemptModel } from "../models/MockTest.js";
+import BookOrderModel from "../models/BookOrder.js";
 
 
 // Helper function to extract YouTube video ID from URL
@@ -621,6 +622,56 @@ const startAdminPanel = async () => {
       recordedClassResource,
       studentResultResource,
       paymentResource,
+      {
+        resource: BookOrderModel,
+        options: {
+          navigation: { name: "Book Orders", icon: "ShoppingCart" },
+          listProperties: [
+            "customerName",
+            "email",
+            "phone",
+            "totalAmount",
+            "status",
+            "deliveryStatus",
+            "createdAt",
+          ],
+          showProperties: [
+            "customerName",
+            "email",
+            "phone",
+            "address",
+            "items",
+            "amount",
+            "totalAmount",
+            "transactionUuid",
+            "transactionCode",
+            "status",
+            "deliveryStatus",
+            "paidAt",
+            "createdAt",
+          ],
+          editProperties: ["deliveryStatus", "status"],
+          properties: {
+            status: {
+              availableValues: [
+                { value: "pending", label: "Pending" },
+                { value: "completed", label: "Completed" },
+                { value: "failed", label: "Failed" },
+                { value: "refunded", label: "Refunded" },
+                { value: "canceled", label: "Canceled" },
+              ],
+            },
+            deliveryStatus: {
+              availableValues: [
+                { value: "pending", label: "Pending" },
+                { value: "processing", label: "Processing" },
+                { value: "shipped", label: "Shipped" },
+                { value: "delivered", label: "Delivered" },
+              ],
+            },
+          },
+        },
+      },
     ],
     rootPath: "/admin",
     componentLoader,

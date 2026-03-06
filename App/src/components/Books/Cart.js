@@ -1,9 +1,21 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { bookPaymentAPI } from '../../api/services';
 import './Cart.css';
 
-const Cart = ({ cartItems, removeFromCart, updateQuantity }) => {
+const Cart = ({ cartItems, removeFromCart, updateQuantity, clearCart }) => {
   const navigate = useNavigate();
+  const esewaFormRef = useRef(null);
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState('');
+  const [esewaData, setEsewaData] = useState(null);
+  const [customerInfo, setCustomerInfo] = useState({
+    customerName: '',
+    email: '',
+    phone: '',
+    address: '',
+  });
 
   const calculateSubtotal = () => {
     return cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
@@ -20,6 +32,47 @@ const Cart = ({ cartItems, removeFromCart, updateQuantity }) => {
     if (newQuantity >= 0) {
       updateQuantity(bookId, newQuantity);
     }
+  };
+
+  const handleCustomerInfoChange = (e) => {
+    setCustomerInfo({ ...customerInfo, [e.target.name]: e.target.value });
+  };
+
+  const handleCheckout = async (e) => {
+    e.preventDefault();
+    setCheckoutLoading(true);
+    setCheckoutError('');
+
+    try {
+      const response = await bookPaymentAPI.initiatePayment({
+        ...customerInfo,
+        items: cartItems.map(item => ({
+          id: item.id,
+          title: item.title,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image,
+        })),
+      });
+
+      if (response.data.success) {
+        const { esewaParams, esewaPaymentUrl } = response.data.data;
+        setEsewaData({ esewaParams, esewaPaymentUrl });
+
+        // Auto-submit the hidden eSewa form after state update
+        setTimeout(() => {
+          if (esewaFormRef.current) {
+            esewaFormRef.current.submit();
+          }
+        }, 100);
+      } else {
+        setCheckoutError(response.data.message || 'Failed to initiate payment');
+      }
+    } catch (error) {
+      console.error('Checkout error:', error);
+      setCheckoutError(error.response?.data?.message || 'Failed to initiate payment. Please try again.');
+    }
+    setCheckoutLoading(false);
   };
 
   if (cartItems.length === 0) {
@@ -92,7 +145,7 @@ const Cart = ({ cartItems, removeFromCart, updateQuantity }) => {
               </div>
 
               <div className="cart-item-total">
-                ₹{(item.price * item.quantity).toLocaleString()}
+                Rs.{(item.price * item.quantity).toLocaleString()}
               </div>
             </div>
           ))}
@@ -126,16 +179,104 @@ const Cart = ({ cartItems, removeFromCart, updateQuantity }) => {
               <span>Rs.{calculateSubtotal().toLocaleString()}</span>
             </div>
 
-            <button className="checkout-btn">
-              Proceed to Checkout
-            </button>
-
-            <button className="continue-shopping-btn" onClick={() => navigate('/books')}>
-              Continue Shopping
-            </button>
+            {!showCheckout ? (
+              <>
+                <button className="checkout-btn" onClick={() => setShowCheckout(true)}>
+                  Proceed to Checkout
+                </button>
+                <button className="continue-shopping-btn" onClick={() => navigate('/books')}>
+                  Continue Shopping
+                </button>
+              </>
+            ) : (
+              <div className="checkout-form-section">
+                <h3 className="checkout-form-title">Delivery Details</h3>
+                {checkoutError && (
+                  <div className="checkout-error">{checkoutError}</div>
+                )}
+                <form onSubmit={handleCheckout}>
+                  <div className="checkout-field">
+                    <label>Full Name *</label>
+                    <input
+                      type="text"
+                      name="customerName"
+                      value={customerInfo.customerName}
+                      onChange={handleCustomerInfoChange}
+                      required
+                      placeholder="Your full name"
+                    />
+                  </div>
+                  <div className="checkout-field">
+                    <label>Email *</label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={customerInfo.email}
+                      onChange={handleCustomerInfoChange}
+                      required
+                      placeholder="your@email.com"
+                    />
+                  </div>
+                  <div className="checkout-field">
+                    <label>Phone *</label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={customerInfo.phone}
+                      onChange={handleCustomerInfoChange}
+                      required
+                      placeholder="98XXXXXXXX"
+                    />
+                  </div>
+                  <div className="checkout-field">
+                    <label>Delivery Address *</label>
+                    <input
+                      type="text"
+                      name="address"
+                      value={customerInfo.address}
+                      onChange={handleCustomerInfoChange}
+                      required
+                      placeholder="Your delivery address"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="checkout-btn esewa-pay-btn"
+                    disabled={checkoutLoading}
+                  >
+                    {checkoutLoading ? (
+                      <span>Processing...</span>
+                    ) : (
+                      <span>Pay Rs.{calculateSubtotal().toLocaleString()} with eSewa</span>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    className="continue-shopping-btn"
+                    onClick={() => setShowCheckout(false)}
+                  >
+                    Back
+                  </button>
+                </form>
+              </div>
+            )}
           </div>
         </div>
       </div>
+
+      {/* Hidden eSewa form — auto-submitted after payment initiation */}
+      {esewaData && (
+        <form
+          ref={esewaFormRef}
+          action={esewaData.esewaPaymentUrl}
+          method="POST"
+          style={{ display: 'none' }}
+        >
+          {Object.entries(esewaData.esewaParams).map(([key, value]) => (
+            <input key={key} type="hidden" name={key} value={value} />
+          ))}
+        </form>
+      )}
     </div>
   );
 };

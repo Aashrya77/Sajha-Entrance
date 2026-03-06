@@ -77,8 +77,9 @@ const Results = () => {
         </h1>
         <p className="text-center text-muted mb-5">Check your entrance exam results by entering your symbol number</p>
 
-        <div className="row justify-content-center">
-          <div className="col-lg-6 col-md-8">
+        <div className="row g-4">
+          {/* Left Side: Search */}
+          <div className="col-lg-5">
             <div className="result-search-card">
               <div className="search-icon-wrapper">
                 <i className="fa-solid fa-magnifying-glass"></i>
@@ -119,83 +120,81 @@ const Results = () => {
                   </button>
                 </div>
               </form>
+
+              {error && searched && (
+                <div className="alert alert-warning text-center mt-3 mb-0">
+                  <i className="fa-solid fa-circle-exclamation me-2"></i>
+                  {error}
+                </div>
+              )}
             </div>
           </div>
-        </div>
 
-        {error && searched && (
-          <div className="row justify-content-center mt-4">
-            <div className="col-lg-8">
-              <div className="alert alert-warning text-center">
-                <i className="fa-solid fa-circle-exclamation me-2"></i>
-                {error}
+          {/* Right Side: Top 10 Leaderboard */}
+          <div className="col-lg-7">
+            <div className="top-results-section">
+              <h2 className="text-center mb-4" style={{ fontWeight: 800 }}>
+                <i className="fa-solid fa-trophy me-2" style={{ color: '#f5a623' }}></i>
+                TOP <span style={{ color: 'var(--primary-orange)' }}>10</span> RESULTS
+              </h2>
+
+              <div className="course-tabs">
+                {COURSES.map((course) => (
+                  <button
+                    key={course}
+                    className={`course-tab ${activeCourse === course ? 'active' : ''}`}
+                    onClick={() => setActiveCourse(course)}
+                  >
+                    {course}
+                  </button>
+                ))}
               </div>
+
+              {topLoading ? (
+                <div className="text-center py-5">
+                  <div className="spinner-border" style={{ color: 'var(--primary-orange)' }} role="status">
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                </div>
+              ) : topResults[activeCourse] && topResults[activeCourse].length > 0 ? (
+                <div className="leaderboard-card">
+                  <table className="table leaderboard-table mb-0">
+                    <thead>
+                      <tr>
+                        <th>Rank</th>
+                        <th>Student Name</th>
+                        <th>Symbol No.</th>
+                        <th className="text-center">Marks</th>
+                        <th className="text-center">Percentage</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {topResults[activeCourse].map((student, index) => (
+                        <tr key={student.symbolNumber} className={index < 3 ? `top-rank rank-${index + 1}` : ''}>
+                          <td>
+                            <span className={`rank-badge ${index < 3 ? `rank-${index + 1}-badge` : ''}`}>
+                              {index === 0 && <i className="fa-solid fa-crown me-1"></i>}
+                              {index + 1}
+                            </span>
+                          </td>
+                          <td className="fw-semibold">{student.studentName}</td>
+                          <td>{student.symbolNumber}</td>
+                          <td className="text-center">{student.totalObtainedMarks} / {student.totalFullMarks}</td>
+                          <td className="text-center">
+                            <span className="percentage-badge">{student.percentage}%</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-muted">No results available for {activeCourse} yet.</p>
+                </div>
+              )}
             </div>
           </div>
-        )}
-
-        {/* Top 10 Leaderboard */}
-        <div className="top-results-section mt-5">
-          <h2 className="text-center mb-4" style={{ fontWeight: 800 }}>
-            <i className="fa-solid fa-trophy me-2" style={{ color: '#f5a623' }}></i>
-            TOP <span style={{ color: 'var(--primary-orange)' }}>10</span> RESULTS
-          </h2>
-
-          <div className="course-tabs">
-            {COURSES.map((course) => (
-              <button
-                key={course}
-                className={`course-tab ${activeCourse === course ? 'active' : ''}`}
-                onClick={() => setActiveCourse(course)}
-              >
-                {course}
-              </button>
-            ))}
-          </div>
-
-          {topLoading ? (
-            <div className="text-center py-5">
-              <div className="spinner-border" style={{ color: 'var(--primary-orange)' }} role="status">
-                <span className="visually-hidden">Loading...</span>
-              </div>
-            </div>
-          ) : topResults[activeCourse] && topResults[activeCourse].length > 0 ? (
-            <div className="leaderboard-card">
-              <table className="table leaderboard-table mb-0">
-                <thead>
-                  <tr>
-                    <th>Rank</th>
-                    <th>Student Name</th>
-                    <th>Symbol No.</th>
-                    <th className="text-center">Marks</th>
-                    <th className="text-center">Percentage</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {topResults[activeCourse].map((student, index) => (
-                    <tr key={student.symbolNumber} className={index < 3 ? `top-rank rank-${index + 1}` : ''}>
-                      <td>
-                        <span className={`rank-badge ${index < 3 ? `rank-${index + 1}-badge` : ''}`}>
-                          {index === 0 && <i className="fa-solid fa-crown me-1"></i>}
-                          {index + 1}
-                        </span>
-                      </td>
-                      <td className="fw-semibold">{student.studentName}</td>
-                      <td>{student.symbolNumber}</td>
-                      <td className="text-center">{student.totalObtainedMarks} / {student.totalFullMarks}</td>
-                      <td className="text-center">
-                        <span className="percentage-badge">{student.percentage}%</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="text-center py-4">
-              <p className="text-muted">No results available for {activeCourse} yet.</p>
-            </div>
-          )}
         </div>
 
         {result && (

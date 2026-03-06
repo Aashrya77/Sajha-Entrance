@@ -71,6 +71,10 @@ function App() {
     }
   }, []);
 
+  const clearCart = useCallback(() => {
+    setCartItems([]);
+  }, []);
+
   useEffect(() => {
     // Fetch notice data
     fetchNotice();
@@ -134,7 +138,7 @@ function App() {
         <Route path="/results" element={<Results />} />
         <Route path="/books" element={<BookList books={booksData} addToCart={addToCart} />} />
         <Route path="/book/:id" element={<BookDetail books={booksData} addToCart={addToCart} />} />
-        <Route path="/cart" element={<Cart cartItems={cartItems} removeFromCart={removeFromCart} updateQuantity={updateQuantity} />} />
+        <Route path="/cart" element={<Cart cartItems={cartItems} removeFromCart={removeFromCart} updateQuantity={updateQuantity} clearCart={clearCart} />} />
         <Route path="/student/login" element={<StudentLogin setStudentData={setStudentData} setIsAuthenticated={setIsAuthenticated} />} />
         <Route path="/student/register" element={<StudentRegister />} />
         <Route path="/student/profile" element={<StudentProfile studentData={studentData} setStudentData={setStudentData} setIsAuthenticated={setIsAuthenticated} />} />
