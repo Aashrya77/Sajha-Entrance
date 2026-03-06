@@ -106,6 +106,20 @@
   display: inline-block;
 }
 
+.cd-breadcrumb-link {
+  display: inline-flex;
+  align-items: center;
+  color: white !important;
+  font-size: 14px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.cd-breadcrumb-link:hover {
+  color: #ff7422 !important; /* Timro orange theme sanga match garna */
+  transform: translateX(-5px);
+}
+
 /* Admission Box Container */
 .college-admission-notice {
   background: #ffffff;

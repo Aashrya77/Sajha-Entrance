@@ -80,6 +80,11 @@ const CollegeDetail = () => {
 
   return (
     <div className="college-profile">
+      <div className="container-fluid pt-3 ps-4 position-absolute" style={{ zIndex: 10, top: '120px' }}>
+        <Link to="/colleges" className="cd-breadcrumb-link" style={{ background: 'rgba(0,0,0,0.5)', padding: '8px 15px', borderRadius: '20px', backdropFilter: 'blur(5px)' }}>
+          <i className="fa-solid fa-arrow-left me-2"></i>All Colleges
+        </Link>
+      </div>
       {/* Cover Image Section */}
       <div 
         className="college-cover-section"

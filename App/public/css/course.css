@@ -494,7 +494,7 @@
 .cd-breadcrumb-link {
   display: inline-flex;
   align-items: center;
-  color: rgba(255, 255, 255, 0.6);
+  color: white !important;
   font-size: 14px;
   text-decoration: none;
   margin-bottom: 24px;
