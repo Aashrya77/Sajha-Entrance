@@ -238,18 +238,23 @@ const About = () => {
               <form onSubmit={handleContactSubmit}>
                 <div className="row g-3">
                   <div className="col-md-6">
+                     <label className="form-label">Full Name</label>
                     <input type="text" className="form-control custom-input" name="name" value={contactForm.name} onChange={handleContactChange} placeholder="Full Name" required />
                   </div>
                   <div className="col-md-6">
+                    <label className="form-label">+2 College Name</label>
                     <input type="text" className="form-control custom-input" name="college" value={contactForm.college} onChange={handleContactChange} placeholder="+2 College Name" required />
                   </div>
                   <div className="col-md-6">
+                    <label className="form-label">Phone Number</label>
                     <input type="tel" className="form-control custom-input" name="phone" value={contactForm.phone} onChange={handleContactChange} placeholder="Phone Number" required />
                   </div>
                   <div className="col-md-6">
+                    <label className="form-label">Email Address</label>
                     <input type="email" className="form-control custom-input" name="email" value={contactForm.email} onChange={handleContactChange} placeholder="Email Address" required />
                   </div>
                   <div className="col-12">
+                      <label className="form-label">Course Interested In</label>
                     <select className="form-select custom-input" name="course" value={contactForm.course} onChange={handleContactChange} required>
                       <option value="">Select Course</option>
                       <option value="IOE">IOE</option>
@@ -260,12 +265,18 @@ const About = () => {
                     </select>
                   </div>
                   <div className="col-12">
+                      <label className="form-label">Message</label>
                     <textarea className="form-control custom-input" rows="4" name="message" value={contactForm.message} onChange={handleContactChange} placeholder="Your Message" required></textarea>
                   </div>
                   <div className="col-12 mt-4">
-                    <button type="submit" className="btn btn-orange w-100 py-3 fw-bold text-white text-uppercase" disabled={contactLoading}>
-                      {contactLoading ? 'Sending...' : 'Send Message'}
-                    </button>
+                    <button type="submit" className="btn-submit" disabled={loading}>
+                  {loading ? (
+                    <span className="spinner-border spinner-border-sm me-2"></span>
+                  ) : (
+                    <i className="fa-solid fa-paper-plane me-2"></i>
+                  )}
+                  {loading ? 'Sending...' : 'Send Message'}
+                </button>
                   </div>
                 </div>
               </form>
