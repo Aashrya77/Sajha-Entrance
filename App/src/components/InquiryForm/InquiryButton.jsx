@@ -7,15 +7,24 @@ import './InquiryButton.css';
  * Reusable Inquiry Button Component with Modal
  * 
  * Usage:
- * <InquiryButton collegeName="PCPS College" courses={coursesArray} />
+ * <InquiryButton collegeName="PCPS College" collegeId="123" courses={coursesArray} />
+ * <InquiryButton collegeName="TU" universityId="456" courses={coursesArray} />
  * 
  * Props:
- * - collegeName (required): Name of the college to display in modal
+ * - collegeName (required): Name of the college/university to display in modal
+ * - collegeId (optional): ID of the college for backend submission
+ * - universityId (optional): ID of the university for backend submission
  * - courses (optional): Array of course objects with title/fullForm properties
  * - position (optional): Position of button - 'bottom-right' (default), 'bottom-left', etc.
  * - variant (optional): Button style variant
  */
-const InquiryButton = ({ collegeName = 'College Name', position = 'bottom-right', courses = [] }) => {
+const InquiryButton = ({ 
+  collegeName = 'College Name', 
+  collegeId = '', 
+  universityId = '',
+  position = 'bottom-right', 
+  courses = [] 
+}) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleOpenModal = () => {
@@ -36,8 +45,8 @@ const InquiryButton = ({ collegeName = 'College Name', position = 'bottom-right'
       <button
         className={`inquiry-fab inquiry-fab-${position}`}
         onClick={handleOpenModal}
-        title="Inquire about this college"
-        aria-label="Inquire about this college"
+        title="Inquire about this institution"
+        aria-label="Inquire about this institution"
       >
         <Mail size={24} className="fab-icon" />
         <span className="fab-label">Inquire</span>
@@ -48,6 +57,8 @@ const InquiryButton = ({ collegeName = 'College Name', position = 'bottom-right'
         isOpen={isModalOpen} 
         onClose={handleCloseModal} 
         collegeName={collegeName}
+        collegeId={collegeId}
+        universityId={universityId}
         courses={courses}
       />
     </>

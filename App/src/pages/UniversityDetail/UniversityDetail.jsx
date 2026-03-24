@@ -534,7 +534,12 @@ const UniversityDetail = () => {
         </div>
 
         {/* Floating Inquiry Button */}
-        <InquiryButton collegeName={university.universityName} position="bottom-right" courses={courses || []} />
+        <InquiryButton 
+          collegeName={university.universityName} 
+          universityId={university._id}
+          position="bottom-right" 
+          courses={courses || []} 
+        />
       </div>
     </div>
   );

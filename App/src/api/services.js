@@ -96,3 +96,8 @@ export const resultAPI = {
   searchResult: (course, symbolNumber) => API.get(`/results?course=${encodeURIComponent(course)}&symbolNumber=${encodeURIComponent(symbolNumber)}`),
   getTopResults: () => API.get('/results/top'),
 };
+
+// Inquiry API
+export const inquiryAPI = {
+  submitInquiry: (data) => API.post('/inquiry', data),
+};

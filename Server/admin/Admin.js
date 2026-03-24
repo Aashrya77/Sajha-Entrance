@@ -29,6 +29,7 @@ import LandingAdModel, { LandingAdFileModel } from "../models/LandingAd.js";
 import MockTestModel, { MockTestFileModel } from "../models/MockTest.js";
 import { MockTestAttemptModel } from "../models/MockTest.js";
 import BookOrderModel from "../models/BookOrder.js";
+import InquiryModel from "../models/Inquiry.js";
 
 
 // Helper function to extract YouTube video ID from URL
@@ -668,6 +669,83 @@ const startAdminPanel = async () => {
                 { value: "shipped", label: "Shipped" },
                 { value: "delivered", label: "Delivered" },
               ],
+            },
+          },
+        },
+      },
+      {
+        resource: InquiryModel,
+        options: {
+          navigation: { name: "Inquiries", icon: "Message" },
+          listProperties: [
+            "inquiryType",
+            "institutionName",
+            "name",
+            "email",
+            "phone",
+            "course",
+            "status",
+            "submittedAt",
+          ],
+          showProperties: [
+            "inquiryType",
+            "institutionName",
+            "name",
+            "email",
+            "phone",
+            "course",
+            "message",
+            "status",
+            "notes",
+            "submittedAt",
+            "updatedAt",
+          ],
+          editProperties: ["status", "notes"],
+          filterProperties: ["status", "inquiryType", "institutionName", "course"],
+          properties: {
+            inquiryType: {
+              availableValues: [
+                { value: "college", label: "College" },
+                { value: "university", label: "University" },
+              ],
+              isVisible: { list: true, show: true, edit: false },
+            },
+            institutionName: {
+              isVisible: { list: true, show: true, edit: false },
+            },
+            status: {
+              availableValues: [
+                { value: "pending", label: "Pending" },
+                { value: "contacted", label: "Contacted" },
+                { value: "resolved", label: "Resolved" },
+                { value: "closed", label: "Closed" },
+              ],
+            },
+            name: {
+              isVisible: { list: true, show: true, edit: false },
+            },
+            email: {
+              isVisible: { list: true, show: true, edit: false },
+            },
+            phone: {
+              isVisible: { list: true, show: true, edit: false },
+            },
+            course: {
+              isVisible: { list: true, show: true, edit: false },
+            },
+            message: {
+              isVisible: { list: false, show: true, edit: false },
+              type: "textarea",
+            },
+            notes: {
+              isVisible: { list: false, show: true, edit: true },
+              type: "textarea",
+            },
+            submittedAt: {
+              isVisible: { list: true, show: true, edit: false },
+            },
+            updatedAt: {
+              isVisible: { list: false, show: true, edit: false },
             },
           },
         },

@@ -1,8 +1,19 @@
 import React, { useState } from 'react';
+import { inquiryAPI } from '../../api/services';
 import './InquiryModal.css';
 
-const InquiryModal = ({ isOpen, onClose, collegeName, courses = [] }) => {
+const InquiryModal = ({ isOpen, onClose, collegeName, collegeId, universityId, courses = [] }) => {
   const [selectedCourse, setSelectedCourse] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    message: ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
   
   // Yadi modal open chhaina bhane kehi pani nadekhau
   if (!isOpen) return null;
@@ -14,12 +25,65 @@ const InquiryModal = ({ isOpen, onClose, collegeName, courses = [] }) => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Form submission logic yaha halnu hola
-    console.log("Enquiry sent for:", collegeName);
-    console.log("Selected Course:", selectedCourse);
-    onClose();
+    
+    if (!collegeId && !universityId) {
+      setError('Institution information not found. Please try again.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    try {
+      const payload = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        course: selectedCourse,
+        message: formData.message
+      };
+
+      // Add collegeId or universityId based on which is provided
+      if (collegeId) {
+        payload.collegeId = collegeId;
+      } else if (universityId) {
+        payload.universityId = universityId;
+      }
+
+      const response = await inquiryAPI.submitInquiry(payload);
+
+      if (response.data.success) {
+        setSuccess(true);
+        // Reset form after successful submission
+        setTimeout(() => {
+          setFormData({
+            name: '',
+            email: '',
+            phone: '',
+            address: '',
+            message: ''
+          });
+          setSelectedCourse('');
+          setSuccess(false);
+          onClose();
+        }, 2000);
+      }
+    } catch (err) {
+      console.error('Error submitting inquiry:', err);
+      setError(err.response?.data?.error || 'Failed to submit inquiry. Please try again.');
+    }
+
+    setLoading(false);
   };
 
   return (
@@ -36,6 +100,21 @@ const InquiryModal = ({ isOpen, onClose, collegeName, courses = [] }) => {
         </div>
 
         <div className="modal-content">
+          {/* Success Message */}
+          {success && (
+            <div className="inquiry-success-message">
+              <span className="success-icon">✓</span>
+              <p>Your enquiry has been submitted successfully!</p>
+            </div>
+          )}
+
+          {/* Error Message */}
+          {error && (
+            <div className="inquiry-error-message">
+              <p>{error}</p>
+            </div>
+          )}
+
           {/* Dynamic College Name Box */}
           <div className="college-info-box">
             <span className="label">ENQUIRING ABOUT</span>
@@ -44,26 +123,42 @@ const InquiryModal = ({ isOpen, onClose, collegeName, courses = [] }) => {
 
           {/* Form */}
           <form className="inquiry-form" onSubmit={handleSubmit}>
-            {/* Row 1: Full Name and Address */}
+            {/* Row 1: Full Name */}
             <div className="form-group">
               <label>Full Name <span className="required">*</span></label>
-              <input type="text" placeholder="Enter your full name" required />
-            </div>
-
-            <div className="form-group">
-              <label>Address <span className="required">*</span></label>
-              <input type="text" placeholder="Enter your current address" required />
+              <input 
+                type="text" 
+                name="name"
+                placeholder="Enter your full name" 
+                value={formData.name}
+                onChange={handleInputChange}
+                required 
+              />
             </div>
 
             {/* Row 2: Email and Phone */}
             <div className="form-group">
               <label>Email Address <span className="required">*</span></label>
-              <input type="email" placeholder="your.email@example.com" required />
+              <input 
+                type="email" 
+                name="email"
+                placeholder="your.email@example.com" 
+                value={formData.email}
+                onChange={handleInputChange}
+                required 
+              />
             </div>
 
             <div className="form-group">
               <label>Phone Number <span className="required">*</span></label>
-              <input type="tel" placeholder="+977 98XXXXXXXX" required />
+              <input 
+                type="tel" 
+                name="phone"
+                placeholder="+977 98XXXXXXXX" 
+                value={formData.phone}
+                onChange={handleInputChange}
+                required 
+              />
             </div>
 
             {/* Full Width: Course Selection */}
@@ -89,11 +184,26 @@ const InquiryModal = ({ isOpen, onClose, collegeName, courses = [] }) => {
             {/* Full Width: Message */}
             <div className="form-group form-group-full-width">
               <label>Message <span className="required">*</span></label>
-              <textarea rows="4" placeholder="Tell us about your enquiry..." required></textarea>
+              <textarea 
+                rows="4" 
+                name="message"
+                placeholder="Tell us about your enquiry..." 
+                value={formData.message}
+                onChange={handleInputChange}
+                required
+              ></textarea>
             </div>
 
-            <button type="submit" className="submit-btn">
-              <span className="send-icon">➤</span> Submit Enquiry
+            <button type="submit" className="submit-btn" disabled={loading}>
+              {loading ? (
+                <>
+                  <span className="loading-spinner"></span> Submitting...
+                </>
+              ) : (
+                <>
+                  <span className="send-icon">➤</span> Submit Enquiry
+                </>
+              )}
             </button>
           </form>
 
