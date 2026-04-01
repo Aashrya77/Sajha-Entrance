@@ -3,37 +3,50 @@ import { move } from "fs-extra";
 import path from "path";
 import { BaseProvider } from "@adminjs/upload";
 
+const normalizeBaseUrl = (value = "/") => {
+  const normalized = value.replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
+  return normalized ? `/${normalized}` : "/";
+};
+
+const normalizeStorageKey = (key = "") =>
+  key.replace(/\\/g, "/").replace(/^\/+/, "");
+
 export default class UploadProvider extends BaseProvider {
   constructor(options) {
     super(options.bucket, options?.opts);
-    if (!existsSync(options.bucket)) {
+    this.storageRoot = options.bucket;
+    this.baseUrl = normalizeBaseUrl(options.baseUrl);
+
+    if (!existsSync(this.storageRoot)) {
       throw new Error(
-        `directory: "${options.bucket}" does not exists. Create it before running LocalAdapter`
+        `directory: "${this.storageRoot}" does not exist. Create it before running the upload provider`
       );
     }
   }
 
-  // * Fixed this method because original does rename instead of move and it doesn't work with docker volume
+  resolveFilePath(key, bucket = this.storageRoot) {
+    const normalizedKey = normalizeStorageKey(key);
+    return path.join(bucket, ...normalizedKey.split("/"));
+  }
+
   async upload(file, key) {
-    const filePath =
-      process.platform === "win32" ? this.path(key) : this.path(key).slice(1); // adjusting file path according to OS
+    const filePath = this.resolveFilePath(key);
     await fs.promises.mkdir(path.dirname(filePath), { recursive: true });
     await move(file.path, filePath, { overwrite: true });
   }
 
   async delete(key, bucket) {
-    await fs.promises.unlink(
-      process.platform === "win32"
-        ? this.path(key, bucket)
-        : this.path(key, bucket).slice(1)
-    ); // adjusting file path according to OS
+    const filePath = this.resolveFilePath(key, bucket);
+
+    if (existsSync(filePath)) {
+      await fs.promises.unlink(filePath);
+    }
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  path(key, bucket) {
-    // Windows doesn't requires the '/' in path, while UNIX system does
-    return process.platform === "win32"
-      ? `${path.join(bucket || this.bucket, key)}`
-      : `/${path.join(bucket || this.bucket, key)}`;
+  path(key) {
+    const normalizedKey = normalizeStorageKey(key);
+    return this.baseUrl === "/"
+      ? `/${normalizedKey}`
+      : `${this.baseUrl}/${normalizedKey}`;
   }
 }

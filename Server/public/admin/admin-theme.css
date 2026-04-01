@@ -1,0 +1,424 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
+:root {
+  --admin-brand: #ff7422;
+  --admin-brand-strong: #d95a12;
+  --admin-brand-soft: #fff1e8;
+  --admin-brand-muted: #ffd7bf;
+  --admin-success: #16a34a;
+  --admin-success-soft: #dcfce7;
+  --admin-warning: #d97706;
+  --admin-warning-soft: #fef3c7;
+  --admin-danger: #dc2626;
+  --admin-danger-soft: #fee2e2;
+  --admin-info: #0f4c81;
+  --admin-info-soft: #e5f0fa;
+  --admin-ink: #0f172a;
+  --admin-ink-soft: #334155;
+  --admin-muted: #64748b;
+  --admin-muted-soft: #94a3b8;
+  --admin-border: #e2e8f0;
+  --admin-border-soft: #eef2f7;
+  --admin-surface: rgba(255, 255, 255, 0.92);
+  --admin-surface-strong: #ffffff;
+  --admin-canvas: #f5f7fb;
+  --admin-shadow-soft: 0 18px 44px rgba(15, 23, 42, 0.06);
+  --admin-shadow-strong: 0 24px 60px rgba(15, 23, 42, 0.10);
+  --admin-shadow-brand: 0 22px 40px rgba(255, 116, 34, 0.16);
+  --admin-radius-sm: 12px;
+  --admin-radius-md: 16px;
+  --admin-radius-lg: 20px;
+  --admin-radius-xl: 24px;
+  --admin-radius-pill: 999px;
+}
+
+html,
+body {
+  font-family: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(255, 116, 34, 0.09), transparent 30%),
+    radial-gradient(circle at top right, rgba(22, 163, 74, 0.07), transparent 24%),
+    linear-gradient(180deg, #fbfcfe 0%, var(--admin-canvas) 100%);
+}
+
+body {
+  color: var(--admin-ink);
+}
+
+a {
+  transition:
+    color 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+[data-css="topbar"] {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(18px);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.92);
+}
+
+[data-css="sidebar"] {
+  background:
+    radial-gradient(circle at top left, rgba(255, 116, 34, 0.08), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 1) 100%);
+  border-right: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 20px 0 38px rgba(15, 23, 42, 0.05);
+}
+
+[data-css="sidebar-logo"] {
+  padding-top: 0;
+}
+
+[data-css="sidebar-logo"] img {
+  display: block;
+}
+
+[data-css="sidebar-footer"] {
+  opacity: 0.88;
+}
+
+[data-css="sidebar"] nav,
+[data-css="sidebar"] [class*="Navigation"] {
+  padding: 0 14px 18px;
+}
+
+[data-css="sidebar"] a {
+  border-radius: var(--admin-radius-md);
+}
+
+[data-css="sidebar"] a:hover {
+  background: rgba(255, 116, 34, 0.07);
+  color: var(--admin-brand-strong);
+}
+
+[data-css="sidebar"] a[aria-current="page"],
+[data-css="sidebar"] a.active {
+  background:
+    linear-gradient(135deg, rgba(255, 116, 34, 0.16) 0%, rgba(255, 116, 34, 0.08) 100%);
+  color: var(--admin-brand-strong);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 116, 34, 0.14),
+    0 12px 22px rgba(255, 116, 34, 0.08);
+}
+
+.adminjs_Box.adminjs_Box_Card,
+.adminjs_Box.adminjs_Box_White,
+.adminjs_Box.adminjs_Box_Container,
+.adminjs_Drawer {
+  border-radius: var(--admin-radius-xl);
+  border: 1px solid rgba(226, 232, 240, 0.92);
+  box-shadow: var(--admin-shadow-soft);
+}
+
+.adminjs_Drawer {
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.14);
+}
+
+.adminjs_Box.adminjs_Box_Card:hover,
+.adminjs_Box.adminjs_Box_White:hover,
+.adminjs_Box.adminjs_Box_Container:hover {
+  box-shadow: var(--admin-shadow-strong);
+}
+
+.adminjs_Button {
+  border-radius: 14px;
+  font-weight: 700;
+  box-shadow: 0 10px 18px rgba(15, 23, 42, 0.05);
+}
+
+.adminjs_Button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 24px rgba(15, 23, 42, 0.08);
+}
+
+.adminjs_Button:focus-visible,
+.adminjs_Input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(255, 116, 34, 0.14);
+}
+
+.adminjs_Badge {
+  border-radius: var(--admin-radius-pill);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+
+.adminjs_Input,
+textarea,
+select {
+  border-radius: 14px;
+  border-color: rgba(203, 213, 225, 0.92);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.72);
+}
+
+.adminjs_Input:focus,
+textarea:focus,
+select:focus {
+  border-color: rgba(255, 116, 34, 0.48);
+  box-shadow:
+    0 0 0 4px rgba(255, 116, 34, 0.12),
+    inset 0 1px 1px rgba(255, 255, 255, 0.72);
+}
+
+.adminjs_Table {
+  overflow: hidden;
+  border-radius: var(--admin-radius-lg);
+}
+
+.adminjs_Table table,
+.adminjs_Table {
+  border-radius: var(--admin-radius-lg);
+}
+
+.adminjs_Table table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.adminjs_Table thead th {
+  color: var(--admin-muted);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.adminjs_Table tbody tr td {
+  border-bottom-color: rgba(226, 232, 240, 0.92);
+}
+
+.adminjs_Table tbody tr:hover td {
+  background: rgba(255, 116, 34, 0.03);
+}
+
+.adminjs_MessageBox,
+[class*="MessageBox"] {
+  border-radius: var(--admin-radius-lg);
+}
+
+.login__Wrapper {
+  background:
+    radial-gradient(circle at top left, rgba(255, 116, 34, 0.14), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(22, 163, 74, 0.1), transparent 24%),
+    linear-gradient(180deg, #fbfcfe 0%, #f4f7fb 100%);
+}
+
+.sajha-login-shell {
+  min-height: 100vh;
+  padding: 24px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sajha-login-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  width: min(100%, 460px);
+  padding: 38px 34px 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  border-radius: 28px;
+  border: 1px solid rgba(226, 232, 240, 0.92);
+  box-shadow: 0 28px 68px rgba(15, 23, 42, 0.14);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.97) 0%, rgba(248, 250, 252, 0.98) 100%);
+  backdrop-filter: blur(18px);
+}
+
+.sajha-login-card__glow {
+  position: absolute;
+  border-radius: 999px;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.55;
+  filter: blur(24px);
+}
+
+.sajha-login-card__glow--orange {
+  top: -42px;
+  right: -36px;
+  width: 148px;
+  height: 148px;
+  background: rgba(255, 116, 34, 0.24);
+}
+
+.sajha-login-card__glow--green {
+  bottom: -56px;
+  left: -42px;
+  width: 156px;
+  height: 156px;
+  background: rgba(22, 163, 74, 0.14);
+}
+
+.sajha-login-card__brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 72px;
+}
+
+.sajha-login-card__logo {
+  display: block;
+  width: auto;
+  max-width: min(100%, 248px);
+  max-height: 64px;
+  object-fit: contain;
+  object-position: center;
+}
+
+.sajha-login-card__brandFallback {
+  color: var(--admin-ink);
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.sajha-login-card__header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: center;
+}
+
+.sajha-login-card__title {
+  margin: 0;
+  color: var(--admin-ink);
+  font-size: clamp(30px, 4vw, 34px);
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.sajha-login-card__subtitle {
+  margin: 0;
+  color: var(--admin-muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.sajha-login-card__form {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sajha-login-card__form .adminjs_FormGroup {
+  margin-bottom: 14px;
+}
+
+.sajha-login-card__form .adminjs_Label {
+  color: var(--admin-ink-soft);
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 9px;
+}
+
+.sajha-login-card__form .adminjs_Input {
+  min-height: 54px;
+  padding: 0 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(203, 213, 225, 0.94) !important;
+  background: rgba(255, 255, 255, 0.96) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    0 1px 2px rgba(15, 23, 42, 0.02);
+  font-size: 15px;
+  color: var(--admin-ink);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.sajha-login-card__form .adminjs_Input:hover {
+  border-color: rgba(255, 116, 34, 0.42) !important;
+}
+
+.sajha-login-card__form .adminjs_Input:focus,
+.sajha-login-card__form .adminjs_Input:focus-visible {
+  border-color: rgba(255, 116, 34, 0.86) !important;
+  box-shadow:
+    0 0 0 4px rgba(255, 116, 34, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82) !important;
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.sajha-login-card__form .adminjs_Input::placeholder {
+  color: var(--admin-muted-soft);
+}
+
+.sajha-login-card__submit {
+  width: 100%;
+  min-height: 54px;
+  margin-top: 10px;
+  border-radius: 16px;
+  border: none !important;
+  background: linear-gradient(135deg, #ff8a45 0%, var(--admin-brand) 42%, var(--admin-brand-strong) 100%) !important;
+  box-shadow: 0 18px 36px rgba(255, 116, 34, 0.18) !important;
+  color: #fff !important;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease;
+}
+
+.sajha-login-card__submit:hover,
+.sajha-login-card__submit:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 22px 42px rgba(255, 116, 34, 0.24) !important;
+  filter: saturate(1.03);
+}
+
+.sajha-login-card .adminjs_MessageBox {
+  margin: 0 0 2px;
+  border-radius: 16px;
+}
+
+.adminjs_Logo {
+  text-decoration: none;
+}
+
+@media (max-width: 991px) {
+  [data-css="sidebar"] {
+    box-shadow: 12px 0 28px rgba(15, 23, 42, 0.08);
+  }
+
+  [data-css="topbar"] {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}
+
+@media (max-width: 640px) {
+  .sajha-login-shell {
+    padding: 18px 12px;
+  }
+
+  .sajha-login-card {
+    padding: 30px 18px 22px;
+    border-radius: 24px;
+  }
+
+  .sajha-login-card__title {
+    font-size: 28px;
+  }
+
+  .sajha-login-card__logo {
+    max-width: min(100%, 220px);
+    max-height: 54px;
+  }
+}

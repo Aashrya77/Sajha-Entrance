@@ -2,6 +2,9 @@ import express from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import connectDB from "./db/connectDB.js";
 import CourseRoutes from "./routes/Course.js";
 import CollegeRoutes from "./routes/College.js";
@@ -16,69 +19,128 @@ import BlogUploadRoutes from "./routes/BlogUpload.js";
 import BookPaymentRoutes from "./routes/BookPayment.js";
 import InquiryRoutes from "./routes/Inquiry.js";
 import { startAdminPanel } from "./admin/Admin.js";
-import { NotFoundHandler } from "./controllers/Home.js";
+import { adminBrandAssets } from "./admin/config/branding.js";
+import { createLogger } from "./utils/logger.js";
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const logger = createLogger("server");
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const publicDirectory = path.join(__dirname, "public");
 
-// CORS configuration
-app.use(cors({
-  origin: 'http://localhost:3000',
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+const imageDirectoryMappings = [
+  {
+    routes: ["/blog", "/blogs"],
+    current: path.join(publicDirectory, "uploads", "blog"),
+    legacy: [
+      path.join(publicDirectory, "uploads", "blogs"),
+      path.join(publicDirectory, "blogs"),
+    ],
+  },
+  {
+    routes: ["/advertisement", "/advertisements"],
+    current: path.join(publicDirectory, "uploads", "advertisement"),
+    legacy: [path.join(publicDirectory, "advertisements")],
+  },
+  {
+    routes: ["/popup", "/popups"],
+    current: path.join(publicDirectory, "uploads", "popup"),
+    legacy: [path.join(publicDirectory, "popups")],
+  },
+  {
+    routes: ["/landing", "/landingads"],
+    current: path.join(publicDirectory, "uploads", "landing"),
+    legacy: [path.join(publicDirectory, "landingads")],
+  },
+  {
+    routes: ["/popup-section", "/popup-sections"],
+    current: path.join(publicDirectory, "uploads", "popup-section"),
+    legacy: [],
+  },
+  {
+    routes: ["/college", "/colleges"],
+    current: path.join(publicDirectory, "uploads", "college"),
+    legacy: [path.join(publicDirectory, "colleges")],
+  },
+];
 
-// Basic Middleware
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
 app.use(cookieParser());
-app.use(express.static("public"));
+
+if (fs.existsSync(adminBrandAssets.appPublicDirectory)) {
+  app.use(
+    adminBrandAssets.publicMountPath,
+    express.static(adminBrandAssets.appPublicDirectory)
+  );
+
+  app.use(
+    "/brand-assets",
+    express.static(adminBrandAssets.appPublicDirectory)
+  );
+}
+
+imageDirectoryMappings.forEach(({ routes, current, legacy }) => {
+  routes.forEach((route) => {
+    app.use(route, express.static(current));
+
+    legacy
+      .filter((directory) => fs.existsSync(directory))
+      .forEach((directory) => {
+        app.use(route, express.static(directory));
+      });
+  });
+});
+
+app.use(express.static(publicDirectory));
 
 const startServer = async () => {
   try {
-    // 1. Database connect
     await connectDB();
-    console.log("✅ MongoDB Connected");
+    logger.info("MongoDB connected");
 
-    // 2. Bulk upload page (before admin router so it doesn't get intercepted)
-    app.get('/admin/bulk-upload', (req, res) => {
-      res.sendFile('bulk-upload.html', { root: 'public' });
+    app.get("/admin/bulk-upload", (req, res) => {
+      res.sendFile("bulk-upload.html", { root: "public" });
     });
 
-    // 3. Admin router (before body-parser)
     const adminRouter = await startAdminPanel();
     app.use(adminRouter);
 
-    // 4. Body-parser middleware
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
 
-    // 4. API Routes with /api prefix
-    app.use('/api', HomeRoutes);
-    app.use('/api', BlogRoutes);
-    app.use('/api', CourseRoutes);
-    app.use('/api', CollegeRoutes);
+    app.use("/api", HomeRoutes);
+    app.use("/api", BlogRoutes);
+    app.use("/api", CourseRoutes);
+    app.use("/api", CollegeRoutes);
     app.use("/api/student", AuthRoutes);
-    app.use('/api', ResultRoutes);
-    app.use('/api', PaymentRoutes);
-    app.use('/api', UniversityRoutes);
-    app.use('/api', MockTestRoutes);
-    app.use('/api', BlogUploadRoutes);
-    app.use('/api', BookPaymentRoutes);
-app.use('/api', InquiryRoutes);
+    app.use("/api", ResultRoutes);
+    app.use("/api", PaymentRoutes);
+    app.use("/api", UniversityRoutes);
+    app.use("/api", MockTestRoutes);
+    app.use("/api", BlogUploadRoutes);
+    app.use("/api", BookPaymentRoutes);
+    app.use("/api", InquiryRoutes);
 
-    // 404 handler for API routes
-    app.use('/api/*', (req, res) => {
-      res.status(404).json({ error: 'API endpoint not found' });
+    app.use("/api/*", (req, res) => {
+      res.status(404).json({ error: "API endpoint not found" });
     });
 
     app.listen(PORT, () => {
-      console.log("🚀 Server is Running !!");
-      console.log(`🔗 Backend API: http://localhost:${PORT}`);
+      logger.info(`Server running on http://localhost:${PORT}`);
     });
   } catch (error) {
-    console.error("❌ Failed to start server:", error.message);
+    logger.error("Failed to start server:", error.message);
     process.exit(1);
   }
 };

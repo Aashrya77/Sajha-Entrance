@@ -1,68 +1,321 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { ApiClient } from "adminjs";
+import StudentsPerCourseChart from "./StudentsPerCourseChart";
+import {
+  adminBrandMeta,
+  dashboardTheme,
+  getDeltaTone,
+  getNotificationTone,
+  getPaymentTone,
+  getRevenuePalette,
+  getToneStyles,
+} from "../config/theme.js";
 
 const api = new ApiClient();
 
-const COLORS = ["#4361ee", "#3a0ca3", "#7209b7", "#f72585", "#4cc9f0", "#4895ef", "#560bad", "#b5179e"];
-const STATUS_COLORS = { completed: "#06d6a0", pending: "#ffd166", failed: "#ef476f", refunded: "#118ab2", canceled: "#adb5bd" };
+const numberFormatter = new Intl.NumberFormat("en-US");
+const compactNumberFormatter = new Intl.NumberFormat("en-US", {
+  notation: "compact",
+  maximumFractionDigits: 1,
+});
 
-const cardStyle = {
-  background: "#fff",
-  borderRadius: 12,
-  padding: "24px",
-  boxShadow: "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)",
-  flex: "1 1 200px",
-  minWidth: 200,
+const shellCard = {
+  background: dashboardTheme.white,
+  border: `1px solid ${dashboardTheme.border}`,
+  borderRadius: dashboardTheme.radius.xl,
+  boxShadow: dashboardTheme.shadow.card,
 };
 
-const StatCard = ({ label, value, icon, color }) => (
-  <div style={{ ...cardStyle, borderLeft: `4px solid ${color}` }}>
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-      <div>
-        <div style={{ fontSize: 13, color: "#6b7280", fontWeight: 500, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>{label}</div>
-        <div style={{ fontSize: 28, fontWeight: 700, color: "#111827" }}>{value != null ? value : "\u2014"}</div>
-      </div>
-      <div style={{ fontSize: 32, opacity: 0.25 }}>{icon}</div>
-    </div>
+const fmtNum = (value) => numberFormatter.format(value || 0);
+const fmtMoney = (value) => `Rs. ${numberFormatter.format(Math.round(value || 0))}`;
+const fmtMoneyCompact = (value) => `Rs. ${compactNumberFormatter.format(value || 0)}`;
+const fmtPct = (value) => `${value > 0 ? "+" : ""}${(value || 0).toFixed(1)}%`;
+const fmtDate = (value) =>
+  value
+    ? new Date(value).toLocaleString("en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "Not available";
+
+const Empty = ({ label }) => (
+  <div
+    style={{
+      minHeight: 170,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      color: dashboardTheme.muted,
+      fontSize: 14,
+      fontWeight: 600,
+      borderRadius: dashboardTheme.radius.lg,
+      border: `1px dashed ${dashboardTheme.border}`,
+      background: dashboardTheme.white,
+    }}
+  >
+    {label}
   </div>
 );
 
-const SectionTitle = ({ children }) => (
-  <h2 style={{ fontSize: 18, fontWeight: 600, color: "#1f2937", margin: "32px 0 16px" }}>{children}</h2>
-);
+const Pill = ({ tone = "brand", children }) => {
+  const styles = getToneStyles(tone);
 
-const ChartCard = ({ title, children, wide }) => (
-  <div style={{ ...cardStyle, flex: wide ? "1 1 100%" : "1 1 420px", minWidth: wide ? "100%" : 420, maxWidth: wide ? "100%" : 640 }}>
-    <div style={{ fontSize: 15, fontWeight: 600, color: "#374151", marginBottom: 16 }}>{title}</div>
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "8px 12px",
+        borderRadius: 999,
+        background: styles.bg,
+        color: styles.fg,
+        border: `1px solid ${styles.border}`,
+        fontSize: 12,
+        fontWeight: 800,
+        lineHeight: 1,
+      }}
+    >
+      {children}
+    </span>
+  );
+};
+
+const HeroStat = ({ label, value, tone = "brand", detail }) => {
+  const styles = getToneStyles(tone);
+
+  return (
+    <div
+      style={{
+        padding: 18,
+        borderRadius: dashboardTheme.radius.lg,
+        background: "rgba(255,255,255,0.78)",
+        border: `1px solid ${styles.border}`,
+        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.72)",
+      }}
+    >
+      <div
+        style={{
+          color: styles.fg,
+          fontSize: 11,
+          fontWeight: 800,
+          letterSpacing: "0.08em",
+          textTransform: "uppercase",
+        }}
+      >
+        {label}
+      </div>
+      <div
+        style={{
+          marginTop: 10,
+          fontSize: 28,
+          fontWeight: 800,
+          color: dashboardTheme.ink,
+          lineHeight: 1.05,
+        }}
+      >
+        {value}
+      </div>
+      <div
+        style={{
+          marginTop: 8,
+          color: dashboardTheme.muted,
+          fontSize: 12,
+          fontWeight: 600,
+          lineHeight: 1.5,
+        }}
+      >
+        {detail}
+      </div>
+    </div>
+  );
+};
+
+const Panel = ({ title, detail, action, children }) => (
+  <div style={{ ...shellCard, padding: 24 }}>
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        gap: 16,
+        flexWrap: "wrap",
+        alignItems: "flex-start",
+        marginBottom: 18,
+      }}
+    >
+      <div>
+        <h3
+          style={{
+            margin: 0,
+            color: dashboardTheme.ink,
+            fontSize: 18,
+            fontWeight: 800,
+          }}
+        >
+          {title}
+        </h3>
+        {detail ? (
+          <p
+            style={{
+              margin: "7px 0 0",
+              color: dashboardTheme.muted,
+              fontSize: 13,
+              lineHeight: 1.65,
+              maxWidth: 560,
+            }}
+          >
+            {detail}
+          </p>
+        ) : null}
+      </div>
+      {action}
+    </div>
     {children}
   </div>
 );
 
-const EmptyState = ({ text }) => (
-  <div style={{ color: "#9ca3af", textAlign: "center", padding: 40 }}>{text}</div>
-);
+const MiniTrend = ({ data, keyName, palette }) => {
+  if (!data?.length) {
+    return (
+      <div style={{ color: dashboardTheme.muted, fontSize: 12, fontWeight: 600 }}>
+        No trend yet
+      </div>
+    );
+  }
 
-const SimpleBarChart = ({ data, labelKey, valueKey, height }) => {
-  if (!data || data.length === 0) return <EmptyState text="No data" />;
-  const maxVal = Math.max(...data.map((d) => d[valueKey]), 1);
-  const barWidth = Math.max(30, Math.floor((100 / data.length) * 0.6));
-  const gap = Math.floor((100 / data.length) * 0.4);
-  const h = height || 220;
-  const chartH = h - 40;
+  const width = 176;
+  const height = 58;
+  const max = Math.max(...data.map((item) => item[keyName] || 0), 1);
+  const step = data.length > 1 ? (width - 10) / (data.length - 1) : 0;
+  const points = data.map((item, index) => ({
+    x: 5 + index * step,
+    y: height - 6 - ((item[keyName] || 0) / max) * (height - 14),
+  }));
+  const line = points.map((point, index) => `${index ? "L" : "M"} ${point.x} ${point.y}`).join(" ");
+  const area = `${line} L ${points[points.length - 1].x} ${height - 4} L ${points[0].x} ${height - 4} Z`;
+
   return (
-    <div>
-      <svg width="100%" height={h} viewBox={`0 0 ${data.length * (barWidth + gap) + gap} ${h}`} style={{ overflow: "visible" }}>
-        {[0, 0.25, 0.5, 0.75, 1].map((frac) => (
-          <line key={frac} x1={0} y1={chartH - chartH * frac} x2={data.length * (barWidth + gap) + gap} y2={chartH - chartH * frac} stroke="#f3f4f6" strokeWidth={1} />
+    <svg width={width} height={height} role="img" aria-hidden="true">
+      <path d={area} fill={palette.fill} />
+      <path d={line} fill="none" stroke={palette.line} strokeWidth="3" strokeLinecap="round" />
+      {points.map((point, index) => (
+        <circle
+          key={index}
+          cx={point.x}
+          cy={point.y}
+          r="3.5"
+          fill={dashboardTheme.white}
+          stroke={palette.line}
+          strokeWidth="2"
+        />
+      ))}
+    </svg>
+  );
+};
+
+const AreaTrendChart = ({
+  data,
+  valueKey,
+  labelKey,
+  palette,
+  formatValue,
+  formatTick,
+}) => {
+  if (!data?.length) {
+    return <Empty label="No trend data available." />;
+  }
+
+  const width = Math.max(560, data.length * 98);
+  const height = 280;
+  const chartHeight = 208;
+  const max = Math.max(...data.map((item) => item[valueKey] || 0), 1);
+  const step = data.length > 1 ? (width - 64) / (data.length - 1) : 0;
+  const gradientId = `trend-fill-${valueKey}-${palette.line.replace("#", "")}`;
+  const glowId = `trend-glow-${valueKey}-${palette.line.replace("#", "")}`;
+  const points = data.map((item, index) => ({
+    x: 32 + index * step,
+    y: chartHeight - ((item[valueKey] || 0) / max) * (chartHeight - 28),
+    label: item[labelKey],
+    value: item[valueKey] || 0,
+  }));
+  const line = points.map((point, index) => `${index ? "L" : "M"} ${point.x} ${point.y}`).join(" ");
+  const area = `${line} L ${points[points.length - 1].x} ${chartHeight} L ${points[0].x} ${chartHeight} Z`;
+
+  return (
+    <div style={{ overflowX: "auto" }}>
+      <svg width={width} height={height}>
+        <defs>
+          <linearGradient id={gradientId} x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor={palette.line} stopOpacity="0.22" />
+            <stop offset="100%" stopColor={palette.line} stopOpacity="0.02" />
+          </linearGradient>
+          <filter id={glowId} x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur stdDeviation="6" result="coloredBlur" />
+            <feMerge>
+              <feMergeNode in="coloredBlur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+
+        {[0, 0.25, 0.5, 0.75, 1].map((fraction) => (
+          <line
+            key={fraction}
+            x1="0"
+            y1={chartHeight - chartHeight * fraction}
+            x2={width}
+            y2={chartHeight - chartHeight * fraction}
+            stroke={dashboardTheme.borderSoft}
+            strokeDasharray="4 8"
+          />
         ))}
-        {data.map((item, i) => {
-          const barH = (item[valueKey] / maxVal) * chartH;
-          const x = gap + i * (barWidth + gap);
+
+        <path d={area} fill={`url(#${gradientId})`} />
+        <path
+          d={line}
+          fill="none"
+          stroke={palette.line}
+          strokeWidth="4"
+          strokeLinecap="round"
+          filter={`url(#${glowId})`}
+        />
+
+        {points.map((point, index) => {
+          const isLast = index === points.length - 1;
           return (
-            <g key={i}>
-              <rect x={x} y={chartH - barH} width={barWidth} height={barH} rx={4} fill={COLORS[i % COLORS.length]} />
-              <text x={x + barWidth / 2} y={chartH - barH - 6} textAnchor="middle" fontSize={11} fill="#374151" fontWeight={600}>{item[valueKey]}</text>
-              <text x={x + barWidth / 2} y={h - 4} textAnchor="middle" fontSize={10} fill="#6b7280">{item[labelKey]}</text>
+            <g key={`${point.label}-${index}`}>
+              <circle
+                cx={point.x}
+                cy={point.y}
+                r={isLast ? "6" : "5"}
+                fill={dashboardTheme.white}
+                stroke={palette.line}
+                strokeWidth="3"
+              />
+              {isLast ? (
+                <text
+                  x={point.x}
+                  y={point.y - 16}
+                  textAnchor="middle"
+                  fontSize="11"
+                  fontWeight="800"
+                  fill={dashboardTheme.ink}
+                >
+                  {formatValue(point.value)}
+                </text>
+              ) : null}
+              <text
+                x={point.x}
+                y={height - 12}
+                textAnchor="middle"
+                fontSize="11"
+                fontWeight="700"
+                fill={dashboardTheme.muted}
+              >
+                {formatTick(point.label)}
+              </text>
             </g>
           );
         })}
@@ -71,54 +324,170 @@ const SimpleBarChart = ({ data, labelKey, valueKey, height }) => {
   );
 };
 
-const SimpleDonut = ({ data, labelKey, valueKey, colorMap, size }) => {
-  if (!data || data.length === 0) return <EmptyState text="No data" />;
-  const total = data.reduce((s, d) => s + d[valueKey], 0);
-  if (total === 0) return <EmptyState text="No data" />;
-  const r = (size || 200) / 2;
-  const cx = r;
-  const cy = r;
-  const outerR = r - 10;
-  const innerR = outerR * 0.55;
-  let cumAngle = -Math.PI / 2;
-  const slices = data.map((item, i) => {
-    const frac = item[valueKey] / total;
-    const startAngle = cumAngle;
-    const endAngle = cumAngle + frac * 2 * Math.PI;
-    cumAngle = endAngle;
-    const largeArc = frac > 0.5 ? 1 : 0;
-    const x1o = cx + outerR * Math.cos(startAngle);
-    const y1o = cy + outerR * Math.sin(startAngle);
-    const x2o = cx + outerR * Math.cos(endAngle);
-    const y2o = cy + outerR * Math.sin(endAngle);
-    const x1i = cx + innerR * Math.cos(endAngle);
-    const y1i = cy + innerR * Math.sin(endAngle);
-    const x2i = cx + innerR * Math.cos(startAngle);
-    const y2i = cy + innerR * Math.sin(startAngle);
-    const color = (colorMap && colorMap[item[labelKey]]) || COLORS[i % COLORS.length];
-    const d = [
-      `M ${x1o} ${y1o}`,
-      `A ${outerR} ${outerR} 0 ${largeArc} 1 ${x2o} ${y2o}`,
-      `L ${x1i} ${y1i}`,
-      `A ${innerR} ${innerR} 0 ${largeArc} 0 ${x2i} ${y2i}`,
-      "Z",
-    ].join(" ");
-    return { d, color, label: item[labelKey], value: item[valueKey], pct: Math.round(frac * 100) };
-  });
+const MetricCard = ({ label, value, delta, detail, trend, tone = "brand" }) => {
+  const styles = getToneStyles(tone);
+
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 24, flexWrap: "wrap" }}>
-      <svg width={r * 2} height={r * 2}>
-        {slices.map((s, i) => (
-          <path key={i} d={s.d} fill={s.color} />
+    <div
+      style={{
+        ...shellCard,
+        padding: 22,
+        display: "flex",
+        flexDirection: "column",
+        gap: 14,
+        background:
+          "radial-gradient(circle at top right, rgba(255,255,255,0.72), transparent 26%), rgba(255,255,255,0.96)",
+      }}
+    >
+      <div
+        style={{
+          width: 46,
+          height: 6,
+          borderRadius: 999,
+          background: `linear-gradient(90deg, ${styles.fg} 0%, ${dashboardTheme.brand} 100%)`,
+        }}
+      />
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          gap: 12,
+          alignItems: "flex-start",
+        }}
+      >
+        <div>
+          <div
+            style={{
+              color: dashboardTheme.muted,
+              fontSize: 12,
+              fontWeight: 800,
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+            }}
+          >
+            {label}
+          </div>
+          <div
+            style={{
+              marginTop: 10,
+              color: dashboardTheme.ink,
+              fontSize: 34,
+              fontWeight: 800,
+              lineHeight: 1.05,
+            }}
+          >
+            {value}
+          </div>
+        </div>
+        {typeof delta === "number" ? <Pill tone={getDeltaTone(delta)}>{fmtPct(delta)}</Pill> : null}
+      </div>
+
+      <div
+        style={{
+          color: dashboardTheme.muted,
+          fontSize: 14,
+          lineHeight: 1.65,
+        }}
+      >
+        {detail}
+      </div>
+
+      {trend}
+    </div>
+  );
+};
+
+const Donut = ({ data, labelKey, valueKey }) => {
+  if (!data?.length) {
+    return <Empty label="No payment status data available." />;
+  }
+
+  const total = data.reduce((sum, item) => sum + (item[valueKey] || 0), 0);
+  if (!total) {
+    return <Empty label="No payment status data available." />;
+  }
+
+  const prepared = data.map((item) => {
+    const tone = getToneStyles(getPaymentTone(item[labelKey]));
+    return {
+      label: item[labelKey],
+      value: item[valueKey] || 0,
+      color: tone.fg,
+      pct: Math.round(((item[valueKey] || 0) / total) * 100),
+    };
+  });
+
+  const radius = 82;
+  const innerRadius = 58;
+  const center = 92;
+  let angle = -Math.PI / 2;
+
+  const slices = prepared.map((item) => {
+    const fraction = item.value / total;
+    const startAngle = angle;
+    const endAngle = angle + fraction * Math.PI * 2;
+    angle = endAngle;
+    const largeArc = fraction > 0.5 ? 1 : 0;
+    const x1 = center + radius * Math.cos(startAngle);
+    const y1 = center + radius * Math.sin(startAngle);
+    const x2 = center + radius * Math.cos(endAngle);
+    const y2 = center + radius * Math.sin(endAngle);
+    const x3 = center + innerRadius * Math.cos(endAngle);
+    const y3 = center + innerRadius * Math.sin(endAngle);
+    const x4 = center + innerRadius * Math.cos(startAngle);
+    const y4 = center + innerRadius * Math.sin(startAngle);
+
+    return {
+      ...item,
+      path: `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} L ${x3} ${y3} A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${x4} ${y4} Z`,
+    };
+  });
+
+  return (
+    <div style={{ display: "flex", gap: 24, alignItems: "center", flexWrap: "wrap" }}>
+      <svg width="184" height="184">
+        {slices.map((slice) => (
+          <path key={slice.label} d={slice.path} fill={slice.color} />
         ))}
-        <text x={cx} y={cy - 6} textAnchor="middle" fontSize={22} fontWeight={700} fill="#111827">{total}</text>
-        <text x={cx} y={cy + 14} textAnchor="middle" fontSize={11} fill="#6b7280">Total</text>
+        <text x={center} y={center - 4} textAnchor="middle" fontSize="24" fontWeight="800" fill={dashboardTheme.ink}>
+          {total}
+        </text>
+        <text x={center} y={center + 16} textAnchor="middle" fontSize="12" fontWeight="700" fill={dashboardTheme.muted}>
+          Transactions
+        </text>
       </svg>
-      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        {slices.map((s, i) => (
-          <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
-            <div style={{ width: 12, height: 12, borderRadius: 3, background: s.color, flexShrink: 0 }} />
-            <span style={{ color: "#374151" }}>{s.label}: <b>{s.value}</b> ({s.pct}%)</span>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 10, flex: "1 1 220px" }}>
+        {slices.map((slice) => (
+          <div
+            key={slice.label}
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              gap: 12,
+              alignItems: "center",
+              padding: "10px 0",
+              borderBottom: `1px solid ${dashboardTheme.borderSoft}`,
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span
+                style={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: 999,
+                  background: slice.color,
+                  flexShrink: 0,
+                }}
+              />
+              <span style={{ color: dashboardTheme.ink, fontWeight: 700 }}>
+                {slice.label}
+              </span>
+            </div>
+            <span style={{ color: dashboardTheme.muted, fontSize: 13, fontWeight: 700 }}>
+              {slice.value} ({slice.pct}%)
+            </span>
           </div>
         ))}
       </div>
@@ -126,223 +495,663 @@ const SimpleDonut = ({ data, labelKey, valueKey, colorMap, size }) => {
   );
 };
 
-const SimpleLineChart = ({ data, labelKey, valueKey, height }) => {
-  if (!data || data.length === 0) return <EmptyState text="No data" />;
-  const h = height || 220;
-  const chartH = h - 40;
-  const w = Math.max(data.length * 80, 400);
-  const maxVal = Math.max(...data.map((d) => d[valueKey]), 1);
-  const padX = 10;
-  const stepX = (w - padX * 2) / Math.max(data.length - 1, 1);
-  const points = data.map((item, i) => ({
-    x: padX + i * stepX,
-    y: chartH - (item[valueKey] / maxVal) * chartH,
-    label: item[labelKey],
-    value: item[valueKey],
-  }));
-  const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
-  const areaD = pathD + ` L ${points[points.length - 1].x} ${chartH} L ${points[0].x} ${chartH} Z`;
+const Table = ({ rows, cols, empty }) => {
+  if (!rows?.length) {
+    return <Empty label={empty} />;
+  }
+
   return (
     <div style={{ overflowX: "auto" }}>
-      <svg width={w} height={h} style={{ display: "block" }}>
-        {[0, 0.25, 0.5, 0.75, 1].map((frac) => (
-          <line key={frac} x1={0} y1={chartH - chartH * frac} x2={w} y2={chartH - chartH * frac} stroke="#f3f4f6" strokeWidth={1} />
-        ))}
-        <path d={areaD} fill="rgba(67,97,238,0.08)" />
-        <path d={pathD} fill="none" stroke="#4361ee" strokeWidth={2.5} strokeLinejoin="round" strokeLinecap="round" />
-        {points.map((p, i) => (
-          <g key={i}>
-            <circle cx={p.x} cy={p.y} r={4} fill="#fff" stroke="#4361ee" strokeWidth={2} />
-            <text x={p.x} y={p.y - 10} textAnchor="middle" fontSize={11} fontWeight={600} fill="#374151">{p.value}</text>
-            <text x={p.x} y={h - 4} textAnchor="middle" fontSize={10} fill="#6b7280">{p.label}</text>
-          </g>
-        ))}
-      </svg>
+      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+        <thead>
+          <tr>
+            {cols.map((col) => (
+              <th
+                key={col.key}
+                style={{
+                  textAlign: col.align || "left",
+                  paddingBottom: 12,
+                  borderBottom: `1px solid ${dashboardTheme.border}`,
+                  color: dashboardTheme.muted,
+                  fontSize: 12,
+                  fontWeight: 800,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                }}
+              >
+                {col.label}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row, rowIndex) => (
+            <tr key={row._id || rowIndex}>
+              {cols.map((col) => (
+                <td
+                  key={col.key}
+                  style={{
+                    padding: "14px 0",
+                    borderBottom:
+                      rowIndex === rows.length - 1
+                        ? "none"
+                        : `1px solid ${dashboardTheme.borderSoft}`,
+                    textAlign: col.align || "left",
+                    verticalAlign: "top",
+                    fontSize: 14,
+                    color: dashboardTheme.ink,
+                  }}
+                >
+                  {col.render ? col.render(row) : row[col.key]}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };
 
-const Dashboard = () => {
+const Timeline = ({ items }) => {
+  if (!items?.length) {
+    return <Empty label="No activity found for this filter." />;
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      {items.map((item, index) => (
+        <div
+          key={`${item._id || index}`}
+          style={{
+            display: "grid",
+            gridTemplateColumns: "16px 1fr",
+            gap: 14,
+          }}
+        >
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <div
+              style={{
+                width: 12,
+                height: 12,
+                borderRadius: 999,
+                background: dashboardTheme.brand,
+                marginTop: 4,
+                boxShadow: "0 0 0 4px rgba(255, 116, 34, 0.12)",
+              }}
+            />
+            {index < items.length - 1 ? (
+              <div
+                style={{
+                  width: 2,
+                  flex: 1,
+                  background: "linear-gradient(180deg, rgba(255,116,34,0.22) 0%, rgba(148,163,184,0.12) 100%)",
+                  marginTop: 6,
+                }}
+              />
+            ) : null}
+          </div>
+
+          <div
+            style={{
+              padding: "12px 14px",
+              borderRadius: dashboardTheme.radius.lg,
+              background: dashboardTheme.white,
+              border: `1px solid ${dashboardTheme.borderSoft}`,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 12,
+                flexWrap: "wrap",
+              }}
+            >
+              <div style={{ color: dashboardTheme.ink, fontWeight: 800 }}>
+                {item.message}
+              </div>
+              <div style={{ color: dashboardTheme.muted, fontSize: 12, fontWeight: 700 }}>
+                {fmtDate(item.createdAt)}
+              </div>
+            </div>
+            <div
+              style={{
+                marginTop: 7,
+                color: dashboardTheme.muted,
+                fontSize: 12,
+                fontWeight: 600,
+                lineHeight: 1.5,
+              }}
+            >
+              {(item.actorName || "System")} • {item.resource} • {item.action}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const Notices = ({ items }) => {
+  if (!items?.length) {
+    return <Empty label="No notifications to show." />;
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      {items.map((item, index) => {
+        const tone = getNotificationTone(item.type);
+        return (
+          <div
+            key={`${item._id || index}`}
+            style={{
+              padding: 16,
+              border: `1px solid ${item.isRead ? dashboardTheme.borderSoft : getToneStyles(tone).border}`,
+              borderRadius: dashboardTheme.radius.lg,
+              background: item.isRead ? dashboardTheme.white : getToneStyles(tone).bg,
+              boxShadow: item.isRead ? "none" : "inset 0 1px 0 rgba(255,255,255,0.72)",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                gap: 12,
+                flexWrap: "wrap",
+              }}
+            >
+              <div style={{ color: dashboardTheme.ink, fontWeight: 800 }}>
+                {item.title}
+              </div>
+              <Pill tone={tone}>{item.isRead ? "Read" : "Unread"}</Pill>
+            </div>
+            <div
+              style={{
+                marginTop: 8,
+                color: dashboardTheme.muted,
+                fontSize: 13,
+                lineHeight: 1.65,
+              }}
+            >
+              {item.message}
+            </div>
+            <div
+              style={{
+                marginTop: 10,
+                color: dashboardTheme.muted,
+                fontSize: 12,
+                fontWeight: 700,
+              }}
+            >
+              {fmtDate(item.createdAt)}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+export default function Dashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [selectedUserId, setSelectedUserId] = useState("");
 
   useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+
     api
-      .getDashboard()
-      .then((res) => {
-        setData(res.data);
+      .getDashboard({ params: selectedUserId ? { userId: selectedUserId } : {} })
+      .then((response) => mounted && setData(response.data))
+      .catch(() => {
+        mounted && setData({ error: "Failed to load dashboard data." });
       })
-      .catch((err) => console.error("Dashboard fetch error:", err))
-      .finally(() => setLoading(false));
-  }, []);
+      .finally(() => mounted && setLoading(false));
+
+    return () => {
+      mounted = false;
+    };
+  }, [selectedUserId]);
 
   if (loading) {
     return (
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "60vh" }}>
-        <div style={{ fontSize: 16, color: "#6b7280" }}>Loading dashboard...</div>
+      <div
+        style={{
+          minHeight: "65vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: dashboardTheme.muted,
+          fontWeight: 700,
+          fontSize: 15,
+        }}
+      >
+        Loading your premium workspace...
       </div>
     );
   }
 
-  if (!data) {
+  if (!data || data.error) {
     return (
-      <div style={{ padding: 40, textAlign: "center", color: "#ef4444" }}>
-        Failed to load dashboard data. Check server logs.
+      <div style={{ padding: 40, color: dashboardTheme.danger, fontWeight: 700 }}>
+        {data?.error || "Unable to load dashboard."}
       </div>
     );
   }
 
   const {
     counts = {},
+    growth = {},
     studentsByCourse = [],
     paymentsByStatus = [],
     registrationsTrend = [],
-    resultStats = [],
+    revenueTrend = [],
     revenueTotal = 0,
     recentPayments = [],
-    recentContacts = [],
+    recentActivity = [],
+    notifications = [],
+    unreadNotifications = 0,
+    teamMembers = [],
     upcomingClasses = [],
   } = data;
 
+  const revenuePalette = getRevenuePalette(growth.revenue);
+  const registrationPalette = {
+    line: dashboardTheme.brand,
+    fill: "rgba(255, 116, 34, 0.14)",
+  };
+
   return (
-    <div style={{ padding: "24px 32px", maxWidth: 1280, margin: "0 auto", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
-      <div style={{ marginBottom: 8 }}>
-        <h1 style={{ fontSize: 26, fontWeight: 700, color: "#111827", margin: 0 }}>Dashboard</h1>
-        <p style={{ fontSize: 14, color: "#6b7280", marginTop: 4 }}>Welcome back! Here is an overview of your platform.</p>
-      </div>
-
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 20 }}>
-        <StatCard label="Students" value={counts.students} icon="S" color="#4361ee" />
-        <StatCard label="Paid Students" value={counts.paidStudents} icon="P" color="#06d6a0" />
-        <StatCard label="Revenue" value={revenueTotal != null ? `Rs. ${revenueTotal.toLocaleString()}` : "\u2014"} icon="R" color="#f59e0b" />
-        <StatCard label="Courses" value={counts.courses} icon="C" color="#8b5cf6" />
-        <StatCard label="Blogs" value={counts.blogs} icon="B" color="#ec4899" />
-        <StatCard label="Colleges" value={counts.colleges} icon="G" color="#14b8a6" />
-      </div>
-
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 16 }}>
-        <StatCard label="Contacts" value={counts.contacts} icon="M" color="#f97316" />
-        <StatCard label="Newsletter Subs" value={counts.newsletters} icon="N" color="#6366f1" />
-        <StatCard label="Online Classes" value={counts.onlineClasses} icon="O" color="#0ea5e9" />
-        <StatCard label="Recorded Classes" value={counts.recordedClasses} icon="V" color="#a855f7" />
-        <StatCard label="Notices" value={counts.notices} icon="!" color="#ef4444" />
-        <StatCard label="Exam Results" value={counts.results} icon="E" color="#10b981" />
-      </div>
-
-      <SectionTitle>Analytics</SectionTitle>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
-        <ChartCard title="Students by Course">
-          <SimpleBarChart data={studentsByCourse} labelKey="_id" valueKey="count" height={240} />
-        </ChartCard>
-
-        <ChartCard title="Payment Status">
-          <SimpleDonut data={paymentsByStatus} labelKey="_id" valueKey="count" colorMap={STATUS_COLORS} size={180} />
-        </ChartCard>
-      </div>
-
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 16 }}>
-        <ChartCard title="Student Registrations (Last 6 Months)" wide>
-          <SimpleLineChart data={registrationsTrend} labelKey="month" valueKey="count" height={240} />
-        </ChartCard>
-      </div>
-
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 16 }}>
-        <ChartCard title="Exam Results (Pass vs Fail)">
-          <SimpleDonut data={resultStats} labelKey="_id" valueKey="count" colorMap={{ Pass: "#06d6a0", Fail: "#ef476f" }} size={180} />
-        </ChartCard>
-
-        <ChartCard title="Upcoming Online Classes">
-          {upcomingClasses.length > 0 ? (
-            <div style={{ maxHeight: 260, overflowY: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                <thead>
-                  <tr style={{ borderBottom: "2px solid #e5e7eb" }}>
-                    <th style={{ textAlign: "left", padding: "8px 4px", color: "#6b7280", fontWeight: 600 }}>Title</th>
-                    <th style={{ textAlign: "left", padding: "8px 4px", color: "#6b7280", fontWeight: 600 }}>Course</th>
-                    <th style={{ textAlign: "left", padding: "8px 4px", color: "#6b7280", fontWeight: 600 }}>Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {upcomingClasses.map((cls, i) => (
-                    <tr key={i} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                      <td style={{ padding: "8px 4px" }}>{cls.classTitle}</td>
-                      <td style={{ padding: "8px 4px" }}>
-                        <span style={{ background: "#ede9fe", color: "#7c3aed", padding: "2px 8px", borderRadius: 12, fontSize: 11, fontWeight: 600 }}>{cls.course}</span>
-                      </td>
-                      <td style={{ padding: "8px 4px", color: "#6b7280" }}>{new Date(cls.classDateTime).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+    <div
+      style={{
+        padding: 32,
+        maxWidth: 1520,
+        margin: "0 auto",
+        display: "flex",
+        flexDirection: "column",
+        gap: 24,
+      }}
+    >
+      <div
+        style={{
+          ...shellCard,
+          padding: "32px 34px",
+          background:
+            "radial-gradient(circle at top right, rgba(255,116,34,0.16), transparent 26%), radial-gradient(circle at bottom left, rgba(22,163,74,0.10), transparent 22%), linear-gradient(135deg, rgba(255,255,255,0.96) 0%, rgba(255,248,243,1) 100%)",
+          boxShadow: dashboardTheme.shadow.hero,
+        }}
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))",
+            gap: 24,
+            alignItems: "stretch",
+          }}
+        >
+          <div>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 18 }}>
+              <Pill tone="brand">{adminBrandMeta.consoleName}</Pill>
+              <Pill tone={unreadNotifications > 0 ? "warning" : "neutral"}>
+                {unreadNotifications} unread notifications
+              </Pill>
+              <Pill tone="success">{counts.activeAdminUsers || 0} active team members</Pill>
             </div>
-          ) : (
-            <EmptyState text="No upcoming classes" />
-          )}
-        </ChartCard>
+
+            <h1
+              style={{
+                margin: 0,
+                fontSize: 42,
+                lineHeight: 1.02,
+                fontWeight: 800,
+                color: dashboardTheme.ink,
+                maxWidth: 720,
+              }}
+            >
+              Professional admin visibility aligned to the Sajha Entrance brand.
+            </h1>
+
+            <p
+              style={{
+                margin: "16px 0 0",
+                color: dashboardTheme.muted,
+                fontSize: 15,
+                lineHeight: 1.8,
+                maxWidth: 760,
+              }}
+            >
+              Monitor enrollments, revenue, operational activity, and team health from one polished console built for daily admin work.
+            </p>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))",
+              gap: 12,
+            }}
+          >
+            <HeroStat
+              label="Revenue"
+              value={fmtMoneyCompact(revenueTotal)}
+              tone={revenuePalette.tone}
+              detail={growth.revenue >= 0 ? "Positive income momentum" : "Revenue below last month"}
+            />
+            <HeroStat
+              label="Paid Students"
+              value={fmtNum(counts.paidStudents)}
+              tone="success"
+              detail="Students with completed payment status"
+            />
+            <HeroStat
+              label="Admin Team"
+              value={fmtNum(counts.adminUsers)}
+              tone="info"
+              detail="Users with workspace access"
+            />
+          </div>
+        </div>
       </div>
 
-      <SectionTitle>Recent Activity</SectionTitle>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
-        <ChartCard title="Recent Payments">
-          {recentPayments.length > 0 ? (
-            <div style={{ maxHeight: 300, overflowY: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-                <thead>
-                  <tr style={{ borderBottom: "2px solid #e5e7eb" }}>
-                    <th style={{ textAlign: "left", padding: "8px 4px", color: "#6b7280", fontWeight: 600 }}>Student</th>
-                    <th style={{ textAlign: "left", padding: "8px 4px", color: "#6b7280", fontWeight: 600 }}>Course</th>
-                    <th style={{ textAlign: "right", padding: "8px 4px", color: "#6b7280", fontWeight: 600 }}>Amount</th>
-                    <th style={{ textAlign: "center", padding: "8px 4px", color: "#6b7280", fontWeight: 600 }}>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentPayments.map((p, i) => (
-                    <tr key={i} style={{ borderBottom: "1px solid #f3f4f6" }}>
-                      <td style={{ padding: "8px 4px", fontWeight: 500 }}>{p.studentName}</td>
-                      <td style={{ padding: "8px 4px" }}>{p.courseTitle}</td>
-                      <td style={{ padding: "8px 4px", textAlign: "right" }}>Rs. {p.totalAmount}</td>
-                      <td style={{ padding: "8px 4px", textAlign: "center" }}>
-                        <span style={{
-                          padding: "2px 10px", borderRadius: 12, fontSize: 11, fontWeight: 600,
-                          background: p.status === "completed" ? "#d1fae5" : p.status === "pending" ? "#fef3c7" : "#fee2e2",
-                          color: p.status === "completed" ? "#065f46" : p.status === "pending" ? "#92400e" : "#991b1b",
-                        }}>{p.status}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <EmptyState text="No payments yet" />
-          )}
-        </ChartCard>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit,minmax(250px,1fr))",
+          gap: 18,
+        }}
+      >
+        <MetricCard
+          label="Total students"
+          value={fmtNum(counts.students)}
+          delta={growth.students}
+          detail="Month-over-month registration movement based on student account creation."
+          tone="brand"
+          trend={<MiniTrend data={registrationsTrend} keyName="count" palette={registrationPalette} />}
+        />
 
-        <ChartCard title="Recent Contact Messages">
-          {recentContacts.length > 0 ? (
-            <div style={{ maxHeight: 300, overflowY: "auto" }}>
-              {recentContacts.map((c, i) => (
-                <div key={i} style={{ padding: "12px 0", borderBottom: i < recentContacts.length - 1 ? "1px solid #f3f4f6" : "none" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
-                    <span style={{ fontWeight: 600, fontSize: 13, color: "#111827" }}>{c.name}</span>
-                    <span style={{ fontSize: 11, color: "#9ca3af" }}>{new Date(c.submittedAt).toLocaleDateString()}</span>
-                  </div>
-                  <div style={{ fontSize: 12, color: "#6b7280", marginBottom: 2 }}>{c.email} - {c.course}</div>
-                  <div style={{ fontSize: 13, color: "#374151", lineHeight: 1.4 }}>{c.message && c.message.length > 120 ? c.message.substring(0, 120) + "..." : c.message}</div>
-                </div>
+        <MetricCard
+          label="Revenue"
+          value={fmtMoney(revenueTotal)}
+          delta={growth.revenue}
+          detail="Completed payments only, with the latest six-month movement reflected in the trend."
+          tone={revenuePalette.tone}
+          trend={<MiniTrend data={revenueTrend} keyName="total" palette={revenuePalette} />}
+        />
+
+        <MetricCard
+          label="Courses"
+          value={fmtNum(counts.courses)}
+          detail="Programs currently available across Sajha Entrance pathways."
+          tone="info"
+          trend={
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <Pill tone="info">{fmtNum(counts.blogs)} content posts</Pill>
+              <Pill tone="brand">{fmtNum(counts.colleges)} colleges</Pill>
+            </div>
+          }
+        />
+
+        <MetricCard
+          label="Active vs inactive users"
+          value={`${counts.activeAdminUsers || 0} / ${counts.inactiveAdminUsers || 0}`}
+          detail="Team access health across all admin members with role-based privileges."
+          tone="neutral"
+          trend={
+            <div>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  fontSize: 12,
+                  color: dashboardTheme.muted,
+                  marginBottom: 8,
+                  fontWeight: 700,
+                }}
+              >
+                <span>Active access</span>
+                <span>
+                  {counts.adminUsers
+                    ? Math.round(((counts.activeAdminUsers || 0) / counts.adminUsers) * 100)
+                    : 0}
+                  %
+                </span>
+              </div>
+              <div
+                style={{
+                  height: 12,
+                  borderRadius: 999,
+                  background: dashboardTheme.borderSoft,
+                  overflow: "hidden",
+                }}
+              >
+                <div
+                  style={{
+                    width: `${
+                      counts.adminUsers
+                        ? ((counts.activeAdminUsers || 0) / counts.adminUsers) * 100
+                        : 0
+                    }%`,
+                    height: "100%",
+                    background: `linear-gradient(90deg, ${dashboardTheme.success} 0%, ${dashboardTheme.brand} 100%)`,
+                    borderRadius: 999,
+                  }}
+                />
+              </div>
+            </div>
+          }
+        />
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))",
+          gap: 18,
+        }}
+      >
+        <Panel title="Student registrations" detail="Six-month trend of account creation across the student pipeline.">
+          <AreaTrendChart
+            data={registrationsTrend}
+            valueKey="count"
+            labelKey="month"
+            palette={registrationPalette}
+            formatValue={(value) => fmtNum(value)}
+            formatTick={(label) => label.split(" ")[0]}
+          />
+        </Panel>
+
+        <Panel
+          title="Revenue flow"
+          detail="Income movement across completed transactions. Positive momentum uses green, while declines turn red."
+        >
+          <AreaTrendChart
+            data={revenueTrend}
+            valueKey="total"
+            labelKey="month"
+            palette={revenuePalette}
+            formatValue={(value) => fmtMoneyCompact(value)}
+            formatTick={(label) => label.split(" ")[0]}
+          />
+        </Panel>
+
+        <Panel title="Notifications" detail="Unread and recent system events that need attention.">
+          <Notices items={notifications} />
+        </Panel>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))",
+          gap: 18,
+        }}
+      >
+        <Panel title="Students per course" detail="Enrollment distribution by course, ordered by size.">
+          <StudentsPerCourseChart data={studentsByCourse} labelKey="_id" valueKey="count" />
+        </Panel>
+
+        <Panel title="Payment status" detail="Live distribution of transaction outcomes across the payment pipeline.">
+          <Donut data={paymentsByStatus} labelKey="_id" valueKey="count" />
+        </Panel>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))",
+          gap: 18,
+        }}
+      >
+        <Panel
+          title="Recent activity"
+          detail="Member-wise audit trail with timestamps and action context."
+          action={
+            <select
+              value={selectedUserId}
+              onChange={(event) => setSelectedUserId(event.target.value)}
+              style={{
+                minWidth: 220,
+                padding: "12px 14px",
+                borderRadius: 14,
+                border: `1px solid ${dashboardTheme.border}`,
+                background: dashboardTheme.white,
+                color: dashboardTheme.ink,
+                fontWeight: 700,
+              }}
+            >
+              <option value="">All members</option>
+              {teamMembers.map((member) => (
+                <option key={member._id} value={member._id}>
+                  {member.fullName} - {member.role}
+                </option>
               ))}
-            </div>
-          ) : (
-            <EmptyState text="No contact messages yet" />
-          )}
-        </ChartCard>
+            </select>
+          }
+        >
+          <Timeline items={recentActivity} />
+        </Panel>
+
+        <Panel title="Recent payments" detail="Latest transaction updates from the payment pipeline.">
+          <Table
+            rows={recentPayments}
+            empty="No recent payments found."
+            cols={[
+              {
+                key: "studentName",
+                label: "Student",
+                render: (row) => (
+                  <div>
+                    <div style={{ fontWeight: 800 }}>{row.studentName}</div>
+                    <div style={{ fontSize: 12, color: dashboardTheme.muted }}>
+                      {row.courseTitle}
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                key: "totalAmount",
+                label: "Amount",
+                align: "right",
+                render: (row) => fmtMoney(row.totalAmount),
+              },
+              {
+                key: "status",
+                label: "Status",
+                align: "right",
+                render: (row) => <Pill tone={getPaymentTone(row.status)}>{row.status}</Pill>,
+              },
+            ]}
+          />
+        </Panel>
+
+        <Panel title="Upcoming classes" detail="Next live sessions the team should keep an eye on.">
+          <Table
+            rows={upcomingClasses}
+            empty="No upcoming classes scheduled."
+            cols={[
+              {
+                key: "classTitle",
+                label: "Session",
+                render: (row) => (
+                  <div>
+                    <div style={{ fontWeight: 800 }}>{row.classTitle}</div>
+                    <div style={{ fontSize: 12, color: dashboardTheme.muted }}>
+                      {row.subject}
+                    </div>
+                  </div>
+                ),
+              },
+              {
+                key: "course",
+                label: "Course",
+                render: (row) => <Pill tone="brand">{row.course}</Pill>,
+              },
+              {
+                key: "classDateTime",
+                label: "Time",
+                align: "right",
+                render: (row) => fmtDate(row.classDateTime),
+              },
+            ]}
+          />
+        </Panel>
       </div>
 
-      <div style={{ marginTop: 40, paddingBottom: 20, textAlign: "center", fontSize: 12, color: "#d1d5db" }}>
-        Sajha Entrance Admin Dashboard
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit,minmax(210px,1fr))",
+          gap: 18,
+        }}
+      >
+        {[
+          ["Colleges", counts.colleges, "Partner institutions currently active"],
+          ["Universities", counts.universities, "Higher education destinations tracked"],
+          ["Blogs", counts.blogs, "Content pieces ready for students"],
+          ["Notices", counts.notices, "Announcement items in the system"],
+          ["Recorded Classes", counts.recordedClasses, "On-demand learning assets currently stored"],
+          ["Upcoming Classes", counts.onlineClasses, "Scheduled live sessions on the platform"],
+          ["Contacts", counts.contacts, "Lead submissions from the public site"],
+          ["Newsletters", counts.newsletters, "Subscribed email records in the CRM"],
+        ].map(([label, value, description]) => (
+          <div key={label} style={{ ...shellCard, padding: "20px 22px" }}>
+            <div
+              style={{
+                color: dashboardTheme.muted,
+                fontSize: 12,
+                fontWeight: 800,
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+              }}
+            >
+              {label}
+            </div>
+            <div
+              style={{
+                marginTop: 10,
+                fontSize: 28,
+                fontWeight: 800,
+                color: dashboardTheme.ink,
+                lineHeight: 1.05,
+              }}
+            >
+              {fmtNum(value)}
+            </div>
+            <div
+              style={{
+                marginTop: 8,
+                color: dashboardTheme.muted,
+                fontSize: 13,
+                lineHeight: 1.55,
+              }}
+            >
+              {description}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
-};
-
-export default Dashboard;
+}

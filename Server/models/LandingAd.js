@@ -9,6 +9,18 @@ const LandingAdSchema = new mongoose.Schema({
     type: String,
     default: ""
   },
+  landingAdImageMimeType: {
+    type: String,
+    default: ""
+  },
+  landingAdImageFilename: {
+    type: String,
+    default: ""
+  },
+  landingAdImageSize: {
+    type: Number,
+    default: 0
+  },
   adLink: {
     type: String,
     default: ""

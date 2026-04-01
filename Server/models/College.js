@@ -19,7 +19,13 @@ export const CollegeSchema = new mongoose.Schema({
 
   // Media
   collegeLogo: String,
+  collegeLogoMimeType: String,
+  collegeLogoFilename: String,
+  collegeLogoSize: Number,
   collegeCover: String,
+  collegeCoverMimeType: String,
+  collegeCoverFilename: String,
+  collegeCoverSize: Number,
 
   // Content Management
   admissionNotice: {
@@ -55,8 +61,14 @@ export const CollegeSchema = new mongoose.Schema({
     default: ""
   },
   chairmanImage: String,
+  chairmanImageMimeType: String,
+  chairmanImageFilename: String,
+  chairmanImageSize: Number,
   keyFeatures: [String],
   gallery: [String],
+  galleryMimeType: [String],
+  galleryFilename: [String],
+  gallerySize: [Number],
   googleMapUrl: {
     type: String,
     default: ""

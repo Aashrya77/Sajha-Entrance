@@ -9,6 +9,9 @@ export const PopupSchema = new mongoose.Schema({
   },
   // For image popups
   popupImage: String,
+  popupImageMimeType: String,
+  popupImageFilename: String,
+  popupImageSize: Number,
   // For text popups
   popupText: String,
   popupHeading: String,

@@ -6,18 +6,31 @@ import session from "express-session";
 import { default as MongoDBSession } from "connect-mongodb-session";
 import dotenv from "dotenv";
 import componentLoader, { Components } from "./ComponentLoader.js";
+import { adminAssets, adminBranding } from "./config/branding.js";
+import { adminLocale } from "./config/locale.js";
+import { adminBrandMeta } from "./config/theme.js";
+import {
+  authenticateAdminUser,
+  ensureAdminUserSeed,
+  hasAnyAdminAccess,
+} from "./utils/admin-auth.js";
+import { decorateAdminResource } from "./utils/admin-resource.js";
+import { logAdminLogin, logAdminSystemError } from "./utils/admin-audit.js";
+import { createLogger } from "../utils/logger.js";
 
 dotenv.config();
 
 const MongoStore = MongoDBSession(session);
+const logger = createLogger("admin");
 
 import Notice from "../models/Notice.js";
-import CollegeModel, { CollegeFileModel } from "../models/College.js";
+import AdminUserModel from "../models/AdminUser.js";
+import AdminActivityModel from "../models/AdminActivity.js";
+import AdminNotificationModel from "../models/AdminNotification.js";
+import CollegeModel from "../models/College.js";
 import Course from "../models/Course.js";
-import { AdvertisementFileModel } from "../models/Advertisement.js";
-import BlogModel, { BlogFileModel } from "../models/Blog.js";
+import BlogModel from "../models/Blog.js";
 import NewsletterModel from "../models/Newsletter.js";
-import { PopupFileModel } from "../models/Popup.js";
 import ContactModel from "../models/Contact.js";
 import Student from "../models/Student.js";
 import OnlineClass from "../models/OnlineClass.js";
@@ -25,11 +38,18 @@ import RecordedClass from "../models/RecordedClass.js";
 import StudentResult from "../models/StudentResult.js";
 import Payment from "../models/Payment.js";
 import UniversityModel, { UniversityFileModel } from "../models/University.js";
-import LandingAdModel, { LandingAdFileModel } from "../models/LandingAd.js";
 import MockTestModel, { MockTestFileModel } from "../models/MockTest.js";
 import { MockTestAttemptModel } from "../models/MockTest.js";
 import BookOrderModel from "../models/BookOrder.js";
 import InquiryModel from "../models/Inquiry.js";
+import BlogAdminResource from "./resources/blog.resource.js";
+import AdvertisementAdminResource from "./resources/advertisement.resource.js";
+import PopupAdminResource from "./resources/popup.resource.js";
+import LandingAdAdminResource from "./resources/landing-ad.resource.js";
+import CollegeAdminResource from "./resources/college.resource.js";
+import AdminUserAdminResource from "./resources/admin-user.resource.js";
+import AdminActivityAdminResource from "./resources/admin-activity.resource.js";
+import AdminNotificationAdminResource from "./resources/admin-notification.resource.js";
 
 
 // Helper function to extract YouTube video ID from URL
@@ -58,17 +78,39 @@ AdminJS.registerAdapter({
   Database: AdminJSMongoose.Database,
 });
 
+const getMonthStart = (date) => new Date(date.getFullYear(), date.getMonth(), 1);
+
+const shiftMonth = (date, offset) => new Date(date.getFullYear(), date.getMonth() + offset, 1);
+
+const calculateGrowth = (currentValue, previousValue) => {
+  if (!previousValue) {
+    return currentValue > 0 ? 100 : 0;
+  }
+
+  return Number((((currentValue - previousValue) / previousValue) * 100).toFixed(1));
+};
+
+const formatMonthSeries = (series) => {
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return series.map((item) => ({
+    month: `${monthNames[item._id.month - 1]} ${item._id.year}`,
+    count: item.count,
+    total: item.total,
+  }));
+};
+
 const startAdminPanel = async () => {
-  const DEFAULT_ADMIN = {
-    email: process.env.ADMIN_USERNAME,
-    password: process.env.ADMIN_PASSWORD,
-  };
+  await ensureAdminUserSeed();
 
   const authenticate = async (email, password) => {
-    if (email === DEFAULT_ADMIN.email && password === DEFAULT_ADMIN.password) {
-      return Promise.resolve(DEFAULT_ADMIN);
+    const result = await authenticateAdminUser(email, password);
+
+    if (!result) {
+      return null;
     }
-    return null;
+
+    await logAdminLogin(result.currentAdmin);
+    return result.currentAdmin;
   };
 
   const courseResource = {
@@ -507,10 +549,19 @@ const startAdminPanel = async () => {
     },
   };
 
-  const dashboardHandler = async () => {
+  const dashboardHandler = async (request, response, context) => {
     try {
-      const sixMonthsAgo = new Date();
-      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+      if (!hasAnyAdminAccess(context.currentAdmin)) {
+        return { error: "You do not have permission to view this dashboard." };
+      }
+
+      const now = new Date();
+      const currentMonthStart = getMonthStart(now);
+      const previousMonthStart = shiftMonth(currentMonthStart, -1);
+      const nextMonthStart = shiftMonth(currentMonthStart, 1);
+      const sixMonthsAgo = shiftMonth(currentMonthStart, -5);
+      const selectedUserId = request?.query?.userId || "";
+      const activityFilter = selectedUserId ? { actor: selectedUserId } : {};
 
       const [
         studentsCount,
@@ -525,14 +576,24 @@ const startAdminPanel = async () => {
         noticesCount,
         resultsCount,
         universitiesCount,
+        adminUsersCount,
+        activeAdminUsersCount,
+        inactiveAdminUsersCount,
         studentsByCourse,
         paymentsByStatus,
-        registrationsTrend,
+        registrationsTrendRaw,
+        revenueTrendRaw,
         resultStats,
         revenueAgg,
         recentPayments,
         recentContacts,
         upcomingClasses,
+        recentActivity,
+        notifications,
+        unreadNotifications,
+        teamMembers,
+        currentMonthStudents,
+        previousMonthStudents,
       ] = await Promise.all([
         Student.countDocuments(),
         Student.countDocuments({ accountStatus: "Paid" }),
@@ -546,6 +607,9 @@ const startAdminPanel = async () => {
         Notice.countDocuments(),
         StudentResult.countDocuments(),
         UniversityModel.countDocuments(),
+        AdminUserModel.countDocuments(),
+        AdminUserModel.countDocuments({ isActive: true }),
+        AdminUserModel.countDocuments({ isActive: false }),
         Student.aggregate([{ $group: { _id: "$course", count: { $sum: 1 } } }, { $sort: { count: -1 } }]),
         Payment.aggregate([{ $group: { _id: "$status", count: { $sum: 1 } } }]),
         Student.aggregate([
@@ -553,6 +617,17 @@ const startAdminPanel = async () => {
           {
             $group: {
               _id: { year: { $year: "$createdAt" }, month: { $month: "$createdAt" } },
+              count: { $sum: 1 },
+            },
+          },
+          { $sort: { "_id.year": 1, "_id.month": 1 } },
+        ]),
+        Payment.aggregate([
+          { $match: { status: "completed", createdAt: { $gte: sixMonthsAgo } } },
+          {
+            $group: {
+              _id: { year: { $year: "$createdAt" }, month: { $month: "$createdAt" } },
+              total: { $sum: "$totalAmount" },
               count: { $sum: 1 },
             },
           },
@@ -566,13 +641,27 @@ const startAdminPanel = async () => {
         Payment.find().sort({ createdAt: -1 }).limit(5).lean(),
         ContactModel.find().sort({ submittedAt: -1 }).limit(5).lean(),
         OnlineClass.find({ classDateTime: { $gte: new Date() } }).sort({ classDateTime: 1 }).limit(5).lean(),
+        AdminActivityModel.find(activityFilter).sort({ createdAt: -1 }).limit(10).lean(),
+        AdminNotificationModel.find().sort({ createdAt: -1 }).limit(6).lean(),
+        AdminNotificationModel.countDocuments({ isRead: false }),
+        AdminUserModel.find()
+          .sort({ createdAt: 1 })
+          .select("fullName email role isActive lastLoginAt")
+          .lean(),
+        Student.countDocuments({ createdAt: { $gte: currentMonthStart, $lt: nextMonthStart } }),
+        Student.countDocuments({ createdAt: { $gte: previousMonthStart, $lt: currentMonthStart } }),
       ]);
 
-      const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      const formattedTrend = registrationsTrend.map((item) => ({
-        month: `${monthNames[item._id.month - 1]} ${item._id.year}`,
-        count: item.count,
-      }));
+      const currentRevenueEntry = revenueTrendRaw.find(
+        (item) =>
+          item._id.year === currentMonthStart.getFullYear() &&
+          item._id.month === currentMonthStart.getMonth() + 1
+      );
+      const previousRevenueEntry = revenueTrendRaw.find(
+        (item) =>
+          item._id.year === previousMonthStart.getFullYear() &&
+          item._id.month === previousMonthStart.getMonth() + 1
+      );
 
       return {
         counts: {
@@ -588,171 +677,230 @@ const startAdminPanel = async () => {
           notices: noticesCount,
           results: resultsCount,
           universities: universitiesCount,
+          adminUsers: adminUsersCount,
+          activeAdminUsers: activeAdminUsersCount,
+          inactiveAdminUsers: inactiveAdminUsersCount,
+        },
+        growth: {
+          students: calculateGrowth(currentMonthStudents, previousMonthStudents),
+          revenue: calculateGrowth(currentRevenueEntry?.total || 0, previousRevenueEntry?.total || 0),
         },
         studentsByCourse,
         paymentsByStatus,
-        registrationsTrend: formattedTrend,
+        registrationsTrend: formatMonthSeries(registrationsTrendRaw).map(({ month, count }) => ({
+          month,
+          count,
+        })),
+        revenueTrend: formatMonthSeries(revenueTrendRaw).map(({ month, total, count }) => ({
+          month,
+          total: total || 0,
+          count: count || 0,
+        })),
         resultStats,
         revenueTotal: revenueAgg.length > 0 ? revenueAgg[0].total : 0,
         recentPayments,
         recentContacts,
         upcomingClasses,
+        recentActivity,
+        notifications,
+        unreadNotifications,
+        teamMembers,
+        selectedUserId,
       };
     } catch (error) {
-      console.error("Dashboard handler error:", error);
+      logger.error("Dashboard handler error:", error);
+      await logAdminSystemError("Dashboard", error);
       return { error: error.message };
     }
   };
 
+  const rawResources = [
+    AdminUserAdminResource,
+    AdminActivityAdminResource,
+    AdminNotificationAdminResource,
+    BlogAdminResource,
+    Notice,
+    AdvertisementAdminResource,
+    CollegeAdminResource,
+    UniversityFileModel,
+    LandingAdAdminResource,
+    MockTestFileModel,
+    { resource: MockTestAttemptModel, options: { id: "MockTestAttempt", properties: { student: { type: "reference" }, mockTest: { type: "reference" } } } },
+    courseResource,
+    NewsletterModel,
+    ContactModel,
+    PopupAdminResource,
+    studentResource,
+    onlineClassResource,
+    recordedClassResource,
+    studentResultResource,
+    paymentResource,
+    {
+      resource: BookOrderModel,
+      options: {
+        navigation: { name: "Book Orders", icon: "ShoppingCart" },
+        listProperties: [
+          "customerName",
+          "email",
+          "phone",
+          "totalAmount",
+          "status",
+          "deliveryStatus",
+          "createdAt",
+        ],
+        showProperties: [
+          "customerName",
+          "email",
+          "phone",
+          "address",
+          "items",
+          "amount",
+          "totalAmount",
+          "transactionUuid",
+          "transactionCode",
+          "status",
+          "deliveryStatus",
+          "paidAt",
+          "createdAt",
+        ],
+        editProperties: ["deliveryStatus", "status"],
+        properties: {
+          status: {
+            availableValues: [
+              { value: "pending", label: "Pending" },
+              { value: "completed", label: "Completed" },
+              { value: "failed", label: "Failed" },
+              { value: "refunded", label: "Refunded" },
+              { value: "canceled", label: "Canceled" },
+            ],
+          },
+          deliveryStatus: {
+            availableValues: [
+              { value: "pending", label: "Pending" },
+              { value: "processing", label: "Processing" },
+              { value: "shipped", label: "Shipped" },
+              { value: "delivered", label: "Delivered" },
+            ],
+          },
+        },
+      },
+    },
+    {
+      resource: InquiryModel,
+      options: {
+        navigation: { name: "Inquiries", icon: "Message" },
+        listProperties: [
+          "inquiryType",
+          "institutionName",
+          "name",
+          "email",
+          "phone",
+          "course",
+          "status",
+          "submittedAt",
+        ],
+        showProperties: [
+          "inquiryType",
+          "institutionName",
+          "name",
+          "email",
+          "phone",
+          "course",
+          "message",
+          "status",
+          "notes",
+          "submittedAt",
+          "updatedAt",
+        ],
+        editProperties: ["status", "notes"],
+        filterProperties: ["status", "inquiryType", "institutionName", "course"],
+        properties: {
+          inquiryType: {
+            availableValues: [
+              { value: "college", label: "College" },
+              { value: "university", label: "University" },
+            ],
+            isVisible: { list: true, show: true, edit: false },
+          },
+          institutionName: {
+            isVisible: { list: true, show: true, edit: false },
+          },
+          status: {
+            availableValues: [
+              { value: "pending", label: "Pending" },
+              { value: "contacted", label: "Contacted" },
+              { value: "resolved", label: "Resolved" },
+              { value: "closed", label: "Closed" },
+            ],
+          },
+          name: {
+            isVisible: { list: true, show: true, edit: false },
+          },
+          email: {
+            isVisible: { list: true, show: true, edit: false },
+          },
+          phone: {
+            isVisible: { list: true, show: true, edit: false },
+          },
+          course: {
+            isVisible: { list: true, show: true, edit: false },
+          },
+          message: {
+            isVisible: { list: false, show: true, edit: false },
+            type: "textarea",
+          },
+          notes: {
+            isVisible: { list: false, show: true, edit: true },
+            type: "textarea",
+          },
+          submittedAt: {
+            isVisible: { list: true, show: true, edit: false },
+          },
+          updatedAt: {
+            isVisible: { list: false, show: true, edit: false },
+          },
+        },
+      },
+    },
+  ];
+
+  const adminResources = rawResources.map((resource) => {
+    const resourceId =
+      resource?.options?.id ||
+      resource?.resource?.modelName ||
+      resource?.modelName ||
+      resource?.name;
+
+    if (resourceId === "AdminUser") {
+      return decorateAdminResource(resource, { manageUsersOnly: true });
+    }
+
+    if (resourceId === "AdminActivity") {
+      return decorateAdminResource(resource, {
+        manageUsersOnly: true,
+        readOnly: true,
+        audit: false,
+      });
+    }
+
+    if (resourceId === "AdminNotification") {
+      return decorateAdminResource(resource, { audit: false });
+    }
+
+    return decorateAdminResource(resource);
+  });
+
   const adminOptions = {
-    resources: [
-      BlogFileModel,
-      Notice,
-      AdvertisementFileModel,
-      CollegeFileModel,
-      UniversityFileModel,
-      LandingAdFileModel,
-      MockTestFileModel,
-      { resource: MockTestAttemptModel, options: { id: 'MockTestAttempt', properties: { student: { type: 'reference' }, mockTest: { type: 'reference' } } } },
-      courseResource,
-      NewsletterModel,
-      ContactModel,
-      PopupFileModel,
-      studentResource,
-      onlineClassResource,
-      recordedClassResource,
-      studentResultResource,
-      paymentResource,
-      {
-        resource: BookOrderModel,
-        options: {
-          navigation: { name: "Book Orders", icon: "ShoppingCart" },
-          listProperties: [
-            "customerName",
-            "email",
-            "phone",
-            "totalAmount",
-            "status",
-            "deliveryStatus",
-            "createdAt",
-          ],
-          showProperties: [
-            "customerName",
-            "email",
-            "phone",
-            "address",
-            "items",
-            "amount",
-            "totalAmount",
-            "transactionUuid",
-            "transactionCode",
-            "status",
-            "deliveryStatus",
-            "paidAt",
-            "createdAt",
-          ],
-          editProperties: ["deliveryStatus", "status"],
-          properties: {
-            status: {
-              availableValues: [
-                { value: "pending", label: "Pending" },
-                { value: "completed", label: "Completed" },
-                { value: "failed", label: "Failed" },
-                { value: "refunded", label: "Refunded" },
-                { value: "canceled", label: "Canceled" },
-              ],
-            },
-            deliveryStatus: {
-              availableValues: [
-                { value: "pending", label: "Pending" },
-                { value: "processing", label: "Processing" },
-                { value: "shipped", label: "Shipped" },
-                { value: "delivered", label: "Delivered" },
-              ],
-            },
-          },
-        },
-      },
-      {
-        resource: InquiryModel,
-        options: {
-          navigation: { name: "Inquiries", icon: "Message" },
-          listProperties: [
-            "inquiryType",
-            "institutionName",
-            "name",
-            "email",
-            "phone",
-            "course",
-            "status",
-            "submittedAt",
-          ],
-          showProperties: [
-            "inquiryType",
-            "institutionName",
-            "name",
-            "email",
-            "phone",
-            "course",
-            "message",
-            "status",
-            "notes",
-            "submittedAt",
-            "updatedAt",
-          ],
-          editProperties: ["status", "notes"],
-          filterProperties: ["status", "inquiryType", "institutionName", "course"],
-          properties: {
-            inquiryType: {
-              availableValues: [
-                { value: "college", label: "College" },
-                { value: "university", label: "University" },
-              ],
-              isVisible: { list: true, show: true, edit: false },
-            },
-            institutionName: {
-              isVisible: { list: true, show: true, edit: false },
-            },
-            status: {
-              availableValues: [
-                { value: "pending", label: "Pending" },
-                { value: "contacted", label: "Contacted" },
-                { value: "resolved", label: "Resolved" },
-                { value: "closed", label: "Closed" },
-              ],
-            },
-            name: {
-              isVisible: { list: true, show: true, edit: false },
-            },
-            email: {
-              isVisible: { list: true, show: true, edit: false },
-            },
-            phone: {
-              isVisible: { list: true, show: true, edit: false },
-            },
-            course: {
-              isVisible: { list: true, show: true, edit: false },
-            },
-            message: {
-              isVisible: { list: false, show: true, edit: false },
-              type: "textarea",
-            },
-            notes: {
-              isVisible: { list: false, show: true, edit: true },
-              type: "textarea",
-            },
-            submittedAt: {
-              isVisible: { list: true, show: true, edit: false },
-            },
-            updatedAt: {
-              isVisible: { list: false, show: true, edit: false },
-            },
-          },
-        },
-      },
-    ],
+    resources: adminResources,
     rootPath: "/admin",
     componentLoader,
+    branding: adminBranding,
+    assets: adminAssets,
+    locale: adminLocale,
+    version: {
+      admin: false,
+      app: adminBrandMeta.consoleName,
+    },
     dashboard: {
       component: Components.Dashboard,
       handler: dashboardHandler,
@@ -760,6 +908,14 @@ const startAdminPanel = async () => {
   };
 
   const admin = new AdminJS(adminOptions);
+  const shouldWatchAdmin =
+    process.env.NODE_ENV !== "production" && process.env.ADMINJS_WATCH === "true";
+
+  if (shouldWatchAdmin) {
+    await admin.watch();
+  } else {
+    await admin.initialize();
+  }
 
   const sessionStore = new MongoStore({
     uri: process.env.MONGO_URI,
@@ -767,9 +923,9 @@ const startAdminPanel = async () => {
 
   });
 
-  sessionStore.on('error', function(error) {
-      console.error("Session Store Error Details:", error);
-    });
+  sessionStore.on("error", (error) => {
+    logger.error("Session store error:", error);
+  });
 
   const adminRouter = AdminJSExpress.buildAuthenticatedRouter(
     admin,

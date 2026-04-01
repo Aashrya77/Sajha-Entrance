@@ -3,6 +3,9 @@ import mongoose from "mongoose";
 export const AdvertisementScheme = new mongoose.Schema({
   advertisementName: String,
   advertisementFile: String,
+  advertisementImageMimeType: String,
+  advertisementImageFilename: String,
+  advertisementImageSize: Number,
   advertisementLink: String,
 });
 
