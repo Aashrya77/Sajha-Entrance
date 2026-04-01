@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import './LandingPage.css';
+import './LandingPageResponsive.css';
 import { Search, Building2, MapPin, GraduationCap, BookOpen, X, Loader2 } from 'lucide-react';
 import { collegeAPI, universityAPI, courseAPI } from '../../api/services';
 import { getImageUrl } from '../../utils/imageHelper';

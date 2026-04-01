@@ -27,10 +27,6 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
         <div className="container-fluid">
           <Link to="/" className="d-flex align-items-center text-decoration-none">
             <img src="/img/logo-main.png" className="navbar-logo" alt="Sajha Entrance" style={{height: '80px'}} />
-            {/* <div style={{lineHeight: '1.2'}}>
-              <div style={{fontSize: '11px', color: '#666', fontWeight: 500}}>सबैको विश्वास यहीं</div>
-              <div style={{fontSize: '11px', color: '#666', fontWeight: 500}}>सबै <span style={{color: '#ff6b35', fontWeight: 700}}>ENTRANCE</span> !</div>
-            </div> */}
           </Link>
           <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
             <span className="navbar-toggler-icon"></span>
@@ -113,70 +109,7 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
           </div>
         </div>
       </div>
-      
-      <MobileNav />
     </>
-  );
-};
-
-const MobileNav = () => {
-  const location = useLocation();
-  const pageName = location.pathname === '/' ? 'Home' : 
-                   location.pathname.includes('college') ? 'Colleges' :
-                   location.pathname.includes('service') ? 'Our Services' :
-                   location.pathname.includes('blog') ? 'Blogs' :
-                   location.pathname.includes('course') ? 'Courses' : '';
-
-  return (
-    <div className="d-flex d-lg-none d-block fixed-bottom btm-nav">
-      <table className="container btm-nav-btn">
-        <tbody>
-          <tr>
-            <td>
-              <button 
-                type="button" 
-                onClick={() => window.location.href='/colleges'} 
-                className={pageName === 'Colleges' ? 'active-btm-nav' : ''}
-              >
-                <i className="fa-solid fa-graduation-cap mb-1"></i>COLLEGES
-              </button>
-            </td>
-            <td>
-              <button 
-                type="button" 
-                onClick={() => window.location.href='/services'} 
-                className={pageName === 'Our Services' ? 'active-btm-nav' : ''}
-              >
-                <i className="fa-solid fa-gear mb-1"></i>SERVICES
-              </button>
-            </td>
-            <td className="center-btn-home-outer" style={{height: '78px !important', width: '78px !important'}}>
-              <button className="center-btn-home-inner" type="button" onClick={() => window.location.href='/'}>
-                <i className="fa-solid fa-house mb-1"></i>
-              </button>
-            </td>
-            <td>
-              <button 
-                type="button" 
-                onClick={() => window.location.href='/blogs'} 
-                className={pageName === 'Blogs' ? 'active-btm-nav' : ''}
-              >
-                <i className="fa-solid fa-newspaper mb-1"></i>BLOGS
-              </button>
-            </td>
-            <td>
-              <button 
-                type="button" 
-                onClick={() => window.location.href='/courses'} 
-                className={pageName === 'Courses' ? 'active-btm-nav' : ''}
-              >
-                <i className="fa-solid fa-book mb-1"></i>COURSES
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
   );
 };
 
