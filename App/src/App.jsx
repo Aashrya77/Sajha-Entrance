@@ -34,6 +34,17 @@ import Cart from './components/Books/Cart';
 import { booksData } from './data/booksData';
 import PaymentSuccess from './pages/PaymentSuccess/PaymentSuccess';
 import PaymentFailure from './pages/PaymentFailure/PaymentFailure';
+
+// ScrollToTop component to reset scroll position on route change
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  
+  return null;
+};
 function App() {
   const [notice, setNotice] = useState(null);
   const [studentData, setStudentData] = useState(null);
@@ -117,6 +128,7 @@ function App() {
 
   return (
     <div className="App">
+      <ScrollToTop />
       {!isAuthPage && <Navbar notice={notice} studentData={studentData} isAuthenticated={isAuthenticated} cartCount={cartItems.reduce((total, item) => total + item.quantity, 0)} />}
       <Routes>
         <Route path="/" element={<Home />} />
