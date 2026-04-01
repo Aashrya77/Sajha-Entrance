@@ -1,0 +1,23 @@
+/* Main CSS Entry Point */
+/* Import all CSS files in proper order */
+
+/* Global styles first */
+@import './global.css';
+@import './navbar.css';
+
+/* Component styles */
+@import './hero.css';
+@import './course.css';
+@import './blog.css';
+@import './about.css';
+@import './college.css';
+@import './contact.css';
+@import './services.css';
+@import './advertisement.css';
+@import './student.css';
+
+/* Page-specific styles */
+@import './404.css';
+@import './success.css';
+@import './already-exists.css';
+@import './footer.css';

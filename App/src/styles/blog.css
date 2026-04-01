@@ -1,6 +1,6 @@
 /* ===== 1. CORE LAYOUT & VARIABLES ===== */
 :root {
-  --primary-orange: #ee7c3b;
+  --primary-orange: #ee7c3b; /* Adjusted based on context */
   --secondary-orange: #ff6b35;
   --primary-black: #333;
   --text-gray: #666;
@@ -9,15 +9,19 @@
   --shadow-md: 0 12px 24px rgba(0, 0, 0, 0.15);
   --transition-cubic: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
 .blogs, .blog, .blog-detail {
   margin-top: 88px !important;
 }
+
+/* ===== 2. BLOG CARD (GRID VIEW) ===== */
 .blog-card-link {
   text-decoration: none;
   color: inherit;
   display: block;
   height: 100%;
 }
+
 .blog-card {
   height: 100%;
   background: white;
@@ -30,11 +34,13 @@
   display: flex;
   flex-direction: column;
 }
+
 .blog-card:hover {
   box-shadow: var(--shadow-md);
   border-color: var(--primary-orange);
   transform: translateY(-8px);
 }
+
 .blog-card-image {
   width: 100%;
   aspect-ratio: 5 / 3;
@@ -45,6 +51,7 @@
   justify-content: center;
   flex-shrink: 0;
 }
+
 .blog-card-image img {
   width: 100%;
   height: 100%;
@@ -53,30 +60,34 @@
   display: block;
   transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
 .blog-card:hover .blog-card-image img {
   transform: scale(1.08);
 }
+
 .blog-card-content {
   padding: 24px;
   flex: 1;
   display: flex;
   flex-direction: column;
 }
+
 .blog-title {
   font-weight: 700;
   color: var(--primary-black);
   margin-bottom: 12px;
   line-height: 1.4;
   display: -webkit-box;
-  line-clamp: 2;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   transition: color 0.3s ease;
 }
+
 .blog-card:hover .blog-title {
   color: var(--primary-orange);
 }
+
 .blog-excerpt {
   font-size: 14px;
   color: var(--text-gray);
@@ -84,22 +95,25 @@
   margin-bottom: 16px;
   flex-grow: 1;
   display: -webkit-box;
-  line-clamp: 3;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* ===== 3. BLOG DETAIL (ARTICLE VIEW) ===== */
 .blog-article {
   background: white;
   padding: 30px;
   border-radius: 12px;
   box-shadow: var(--shadow-sm);
 }
+
 .blog-article .blog-title {
   font-size: 32px;
   font-weight: 800;
   margin-bottom: 20px;
 }
+
 .blog-detail-image-container {
   width: 100%;
   aspect-ratio: 5 / 3;
@@ -110,6 +124,7 @@
   background-color: #f8f9fa;
   margin-bottom: 25px;
 }
+
 .blog-detail-image {
   width: 100%;
   height: 100%;
@@ -117,17 +132,21 @@
   object-position: center;
   display: block;
 }
+
 .blog-content {
   font-size: 16px;
   line-height: 1.8;
   color: #444;
 }
+
 .blogDescription { line-height: 1.75rem; }
 .blogDescription a, .blog-content a {
   color: var(--primary-orange) !important;
   text-decoration: none;
   font-weight: 600;
 }
+
+/* ===== 4. SHARED UI ELEMENTS (Meta, Buttons, Labels) ===== */
 .blog-meta {
   display: flex;
   align-items: center;
@@ -137,6 +156,7 @@
   padding: 16px 0;
   border-top: 1px solid var(--light-gray);
 }
+
 .blog-date {
   padding: 6px 10px;
   background-color: var(--primary-orange);
@@ -147,7 +167,10 @@
   display: flex;
   align-items: center;
 }
+
 .blog-date i { margin-right: 4px; color: white; }
+
+/* Buttons */
 .btn-read-more, .btn-primary {
   background-color: var(--primary-orange);
   color: white !important;
@@ -163,11 +186,13 @@
   gap: 6px;
   text-decoration: none;
 }
+
 .btn-read-more:hover, .btn-primary:hover {
   background-color: var(--secondary-orange);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(238, 124, 59, 0.3);
 }
+
 .btn-share, .article-share-btn {
   background-color: transparent;
   color: var(--primary-orange);
@@ -182,17 +207,22 @@
   align-items: center;
   gap: 6px;
 }
+
 .btn-share:hover, .article-share-btn:hover {
   background-color: var(--primary-orange);
   color: white;
 }
+
+/* ===== 5. SIDEBAR & RELATED BLOGS ===== */
 .blog-sidebar { position: sticky; top: 120px; }
+
 .related-blogs {
   background: white;
   padding: 25px;
   border-radius: 12px;
   box-shadow: var(--shadow-sm);
 }
+
 .related-blogs h4 {
   font-size: 20px;
   font-weight: 700;
@@ -200,6 +230,7 @@
   padding-bottom: 15px;
   border-bottom: 3px solid var(--primary-orange);
 }
+
 .related-blog-item .card {
   border: 1px solid var(--light-gray);
   border-radius: 10px;
@@ -208,35 +239,39 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
   margin-bottom: 15px;
 }
+
 .related-blog-item .card:hover {
   border-color: var(--primary-orange);
   transform: translateY(-6px);
 }
+/* ===== FIXED SHARE MODAL STYLING ===== */
 .share-modal {
-  position: fixed;
+  position: fixed; /* Ensures it stays on top of everything */
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: rgba(0, 0, 0, 0.6); /* Darkened background */
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
-  backdrop-filter: blur(4px);
+  z-index: 9999; /* Highest priority */
+  backdrop-filter: blur(4px); /* Modern frosted glass effect */
   animation: fadeIn 0.2s ease-out;
 }
+
 .share-modal-content {
   background: white;
   border-radius: 16px;
   padding: 24px;
   width: 90%;
-  max-width: 450px;
+  max-width: 450px; /* Controlled width */
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
   position: relative;
   transform: translateY(0);
   animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
+
 .share-modal-header {
   display: flex;
   justify-content: space-between;
@@ -245,12 +280,14 @@
   border-bottom: 1px solid #eee;
   padding-bottom: 12px;
 }
+
 .share-modal-header h4 {
   margin: 0;
   font-size: 1.25rem;
   font-weight: 700;
   color: var(--primary-black);
 }
+
 .share-modal-close {
   background: #f5f5f5;
   border: none;
@@ -265,15 +302,18 @@
   color: #666;
   transition: 0.2s;
 }
+
 .share-modal-close:hover {
   background: #eee;
   color: #000;
 }
+
 .share-options {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, 1fr); /* Clean 3-column layout */
   gap: 12px;
 }
+
 .share-option {
   display: flex;
   flex-direction: column;
@@ -287,34 +327,44 @@
   transition: all 0.2s ease;
   text-decoration: none;
 }
+
 .share-option:hover {
   transform: translateY(-3px);
   border-color: var(--primary-orange);
   background-color: #fff9f6;
 }
+
 .share-option i {
   font-size: 24px;
   margin-bottom: 8px;
 }
+
 .share-option span {
   font-size: 13px;
   font-weight: 600;
   color: #555;
 }
+
+/* Animations */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
 @keyframes slideUp {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* Search Bar */
 .blogs .form-control {
   border: 1px solid #ddd;
   border-radius: 8px;
   padding: 12px 16px;
   transition: all 0.3s ease;
 }
+
+/* Pagination */
 .pagination-wrapper { display: flex; justify-content: center; padding: 30px 0; }
 .pagination .page-item .page-link {
   border: 2px solid #ddd;
@@ -324,39 +374,49 @@
   font-weight: 600;
   margin: 0 4px;
 }
+
 .pagination .page-item.active .page-link,
 .pagination .page-item .page-link:hover {
   background-color: var(--primary-orange);
   border-color: var(--primary-orange);
   color: white;
 }
+
+/* Back Button Styling */
 .btn-back-to-blogs {
-  background-color: transparent;
-  color: var(--primary-black);
-  border: 1px solid var(--light-gray);
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  transition: var(--transition-cubic);
-  display: inline-flex;
-  align-items: center;
+    background-color: transparent;
+    color: var(--primary-black);
+    border: 1px solid var(--light-gray);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: var(--transition-cubic);
+    display: inline-flex;
+    align-items: center;
 }
+
 .btn-back-to-blogs:hover {
-  background-color: var(--light-gray);
-  color: var(--primary-orange);
-  border-color: var(--primary-orange);
-  transform: translateX(-5px);
+    background-color: var(--light-gray);
+    color: var(--primary-orange);
+    border-color: var(--primary-orange);
+    transform: translateX(-5px); /* थोरै देब्रेतिर सर्छ */
 }
+
+/* ===== 7. MEDIA QUERIES ===== */
 @media (min-width: 992px) {
   .blog-title { font-size: 17px; }
 }
+
 @media (max-width: 991px) {
   .blog-sidebar { position: relative; top: 0; margin-top: 40px; }
   .blog-article .blog-title { font-size: 26px; }
 }
+
 @media (max-width: 768px) {
   .blog-article { padding: 15px; }
   .blog-article .blog-title { font-size: 22px; }
 }
+
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
