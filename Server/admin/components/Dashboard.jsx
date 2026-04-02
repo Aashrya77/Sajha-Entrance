@@ -19,17 +19,20 @@ const compactNumberFormatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 1,
 });
 
-const shellCard = {
-  background: dashboardTheme.white,
-  border: `1px solid ${dashboardTheme.border}`,
-  borderRadius: dashboardTheme.radius.xl,
-  boxShadow: dashboardTheme.shadow.card,
-};
-
 const fmtNum = (value) => numberFormatter.format(value || 0);
 const fmtMoney = (value) => `Rs. ${numberFormatter.format(Math.round(value || 0))}`;
 const fmtMoneyCompact = (value) => `Rs. ${compactNumberFormatter.format(value || 0)}`;
 const fmtPct = (value) => `${value > 0 ? "+" : ""}${(value || 0).toFixed(1)}%`;
+const fmtShare = (value, total) => {
+  if (!total) {
+    return "0%";
+  }
+
+  const percentage = ((value || 0) / total) * 100;
+  return percentage >= 10
+    ? `${Math.round(percentage)}%`
+    : `${percentage.toFixed(1).replace(/\.0$/, "")}%`;
+};
 const fmtDate = (value) =>
   value
     ? new Date(value).toLocaleString("en-US", {
@@ -39,181 +42,63 @@ const fmtDate = (value) =>
         minute: "2-digit",
       })
     : "Not available";
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+const getTrendSnapshot = (data, valueKey) => {
+  const points = Array.isArray(data)
+    ? data.map((item) => ({
+        label: item?.month || "",
+        value: Number(item?.[valueKey]) || 0,
+      }))
+    : [];
 
-const Empty = ({ label }) => (
-  <div
-    style={{
-      minHeight: 170,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      color: dashboardTheme.muted,
-      fontSize: 14,
-      fontWeight: 600,
-      borderRadius: dashboardTheme.radius.lg,
-      border: `1px dashed ${dashboardTheme.border}`,
-      background: dashboardTheme.white,
-    }}
-  >
-    {label}
+  const latest = points[points.length - 1] || null;
+  const peak = points.reduce(
+    (currentPeak, point) => (!currentPeak || point.value > currentPeak.value ? point : currentPeak),
+    null
+  );
+  const total = points.reduce((sum, point) => sum + point.value, 0);
+  const average = points.length ? total / points.length : 0;
+
+  return {
+    latest,
+    peak,
+    total,
+    average,
+    periods: points.length,
+  };
+};
+
+const cx = (...classes) => classes.filter(Boolean).join(" ");
+const getToneClassName = (tone = "brand") => `dashboard-tone-${tone}`;
+const getAlignClassName = (align = "left") =>
+  align === "right" ? "dashboard-align-right" : "dashboard-align-left";
+
+const Empty = ({ label }) => <div className="dashboard-empty">{label}</div>;
+
+const Pill = ({ tone = "brand", children }) => (
+  <span className={cx("dashboard-pill", getToneClassName(tone))}>{children}</span>
+);
+
+const HeroStat = ({ label, value, tone = "brand", detail }) => (
+  <div className={cx("dashboard-hero-stat", getToneClassName(tone))}>
+    <div className="dashboard-hero-stat__label">{label}</div>
+    <div className="dashboard-hero-stat__value">{value}</div>
+    <div className="dashboard-hero-stat__detail">{detail}</div>
   </div>
 );
 
-const Pill = ({ tone = "brand", children }) => {
-  const styles = getToneStyles(tone);
-
-  return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 8,
-        padding: "8px 12px",
-        borderRadius: 999,
-        background: styles.bg,
-        color: styles.fg,
-        border: `1px solid ${styles.border}`,
-        fontSize: 12,
-        fontWeight: 800,
-        lineHeight: 1,
-      }}
-    >
-      {children}
-    </span>
-  );
-};
-
-const HeroStat = ({ label, value, tone = "brand", detail }) => {
-  const styles = getToneStyles(tone);
-
-  return (
-    <div
-      style={{
-        padding: 18,
-        borderRadius: dashboardTheme.radius.lg,
-        background: "rgba(255,255,255,0.78)",
-        border: `1px solid ${styles.border}`,
-        boxShadow: "inset 0 1px 0 rgba(255,255,255,0.72)",
-      }}
-    >
-      <div
-        style={{
-          color: styles.fg,
-          fontSize: 11,
-          fontWeight: 800,
-          letterSpacing: "0.08em",
-          textTransform: "uppercase",
-        }}
-      >
-        {label}
-      </div>
-      <div
-        style={{
-          marginTop: 10,
-          fontSize: 28,
-          fontWeight: 800,
-          color: dashboardTheme.ink,
-          lineHeight: 1.05,
-        }}
-      >
-        {value}
-      </div>
-      <div
-        style={{
-          marginTop: 8,
-          color: dashboardTheme.muted,
-          fontSize: 12,
-          fontWeight: 600,
-          lineHeight: 1.5,
-        }}
-      >
-        {detail}
-      </div>
-    </div>
-  );
-};
-
-const Panel = ({ title, detail, action, children }) => (
-  <div style={{ ...shellCard, padding: 24 }}>
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "space-between",
-        gap: 16,
-        flexWrap: "wrap",
-        alignItems: "flex-start",
-        marginBottom: 18,
-      }}
-    >
+const Panel = ({ title, detail, action, children, className, bodyClassName }) => (
+  <section className={cx("dashboard-card", "dashboard-panel", className)}>
+    <div className="dashboard-panel__header">
       <div>
-        <h3
-          style={{
-            margin: 0,
-            color: dashboardTheme.ink,
-            fontSize: 18,
-            fontWeight: 800,
-          }}
-        >
-          {title}
-        </h3>
-        {detail ? (
-          <p
-            style={{
-              margin: "7px 0 0",
-              color: dashboardTheme.muted,
-              fontSize: 13,
-              lineHeight: 1.65,
-              maxWidth: 560,
-            }}
-          >
-            {detail}
-          </p>
-        ) : null}
+        <h3 className="dashboard-panel__title">{title}</h3>
+        {detail ? <p className="dashboard-panel__detail">{detail}</p> : null}
       </div>
-      {action}
+      {action ? <div className="dashboard-panel__action">{action}</div> : null}
     </div>
-    {children}
-  </div>
+    <div className={cx("dashboard-panel__body", bodyClassName)}>{children}</div>
+  </section>
 );
-
-const MiniTrend = ({ data, keyName, palette }) => {
-  if (!data?.length) {
-    return (
-      <div style={{ color: dashboardTheme.muted, fontSize: 12, fontWeight: 600 }}>
-        No trend yet
-      </div>
-    );
-  }
-
-  const width = 176;
-  const height = 58;
-  const max = Math.max(...data.map((item) => item[keyName] || 0), 1);
-  const step = data.length > 1 ? (width - 10) / (data.length - 1) : 0;
-  const points = data.map((item, index) => ({
-    x: 5 + index * step,
-    y: height - 6 - ((item[keyName] || 0) / max) * (height - 14),
-  }));
-  const line = points.map((point, index) => `${index ? "L" : "M"} ${point.x} ${point.y}`).join(" ");
-  const area = `${line} L ${points[points.length - 1].x} ${height - 4} L ${points[0].x} ${height - 4} Z`;
-
-  return (
-    <svg width={width} height={height} role="img" aria-hidden="true">
-      <path d={area} fill={palette.fill} />
-      <path d={line} fill="none" stroke={palette.line} strokeWidth="3" strokeLinecap="round" />
-      {points.map((point, index) => (
-        <circle
-          key={index}
-          cx={point.x}
-          cy={point.y}
-          r="3.5"
-          fill={dashboardTheme.white}
-          stroke={palette.line}
-          strokeWidth="2"
-        />
-      ))}
-    </svg>
-  );
-};
 
 const AreaTrendChart = ({
   data,
@@ -222,30 +107,55 @@ const AreaTrendChart = ({
   palette,
   formatValue,
   formatTick,
+  formatAxisValue = formatValue,
+  variant = "area",
 }) => {
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    setActiveIndex(Math.max((data?.length || 1) - 1, 0));
+  }, [data, valueKey, labelKey]);
+
   if (!data?.length) {
     return <Empty label="No trend data available." />;
   }
 
-  const width = Math.max(560, data.length * 98);
-  const height = 280;
-  const chartHeight = 208;
+  const width = Math.max(760, data.length * 124);
+  const height = 336;
+  const chartTop = 28;
+  const chartBottom = 258;
+  const leftPad = 76;
+  const rightPad = 28;
+  const drawableHeight = chartBottom - chartTop;
   const max = Math.max(...data.map((item) => item[valueKey] || 0), 1);
-  const step = data.length > 1 ? (width - 64) / (data.length - 1) : 0;
+  const step = data.length > 1 ? (width - leftPad - rightPad) / (data.length - 1) : 0;
   const gradientId = `trend-fill-${valueKey}-${palette.line.replace("#", "")}`;
   const glowId = `trend-glow-${valueKey}-${palette.line.replace("#", "")}`;
   const points = data.map((item, index) => ({
-    x: 32 + index * step,
-    y: chartHeight - ((item[valueKey] || 0) / max) * (chartHeight - 28),
+    x: leftPad + index * step,
+    y: chartBottom - ((item[valueKey] || 0) / max) * drawableHeight,
     label: item[labelKey],
     value: item[valueKey] || 0,
   }));
   const line = points.map((point, index) => `${index ? "L" : "M"} ${point.x} ${point.y}`).join(" ");
-  const area = `${line} L ${points[points.length - 1].x} ${chartHeight} L ${points[0].x} ${chartHeight} Z`;
+  const area = `${line} L ${points[points.length - 1].x} ${chartBottom} L ${points[0].x} ${chartBottom} Z`;
+  const yFractions = [1, 0.75, 0.5, 0.25, 0];
+  const safeActiveIndex = clamp(activeIndex, 0, points.length - 1);
+  const activePoint = points[safeActiveIndex];
+  const tooltipWidth = 170;
+  const tooltipHeight = 60;
+  const showArea = variant !== "line";
+  const strokeWidth = variant === "line" ? 5 : 4;
+  const tooltipX = activePoint
+    ? clamp(activePoint.x - tooltipWidth / 2, leftPad, width - rightPad - tooltipWidth)
+    : leftPad;
 
   return (
-    <div style={{ overflowX: "auto" }}>
-      <svg width={width} height={height}>
+    <div
+      className="dashboard-trend-chart"
+      onMouseLeave={() => setActiveIndex(points.length - 1)}
+    >
+      <svg width={width} height={height} className="dashboard-trend-chart__svg">
         <defs>
           <linearGradient id={gradientId} x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stopColor={palette.line} stopOpacity="0.22" />
@@ -260,55 +170,77 @@ const AreaTrendChart = ({
           </filter>
         </defs>
 
-        {[0, 0.25, 0.5, 0.75, 1].map((fraction) => (
-          <line
-            key={fraction}
-            x1="0"
-            y1={chartHeight - chartHeight * fraction}
-            x2={width}
-            y2={chartHeight - chartHeight * fraction}
-            stroke={dashboardTheme.borderSoft}
-            strokeDasharray="4 8"
-          />
-        ))}
+        {yFractions.map((fraction) => {
+          const y = chartBottom - drawableHeight * fraction;
 
-        <path d={area} fill={`url(#${gradientId})`} />
+          return (
+            <g key={fraction}>
+              <line
+                x1={leftPad}
+                y1={y}
+                x2={width - rightPad}
+                y2={y}
+                stroke={dashboardTheme.borderSoft}
+                strokeDasharray="4 8"
+              />
+              <text
+                x={leftPad - 14}
+                y={y + 4}
+                textAnchor="end"
+                fontSize="11"
+                fontWeight="700"
+                fill={dashboardTheme.mutedSoft}
+              >
+                {formatAxisValue(max * fraction)}
+              </text>
+            </g>
+          );
+        })}
+
+        {showArea ? <path d={area} fill={`url(#${gradientId})`} /> : null}
         <path
           d={line}
           fill="none"
           stroke={palette.line}
-          strokeWidth="4"
+          strokeWidth={strokeWidth}
           strokeLinecap="round"
           filter={`url(#${glowId})`}
         />
 
+        {activePoint ? (
+          <line
+            x1={activePoint.x}
+            y1={chartTop}
+            x2={activePoint.x}
+            y2={chartBottom}
+            stroke={palette.line}
+            strokeOpacity="0.18"
+            strokeDasharray="5 8"
+          />
+        ) : null}
+
         {points.map((point, index) => {
-          const isLast = index === points.length - 1;
+          const isActive = index === safeActiveIndex;
           return (
-            <g key={`${point.label}-${index}`}>
+            <g
+              key={`${point.label}-${index}`}
+              className="dashboard-trend-chart__point"
+              onMouseEnter={() => setActiveIndex(index)}
+              onFocus={() => setActiveIndex(index)}
+              tabIndex={0}
+            >
+              <circle cx={point.x} cy={point.y} r="18" fill="transparent" />
               <circle
                 cx={point.x}
                 cy={point.y}
-                r={isLast ? "6" : "5"}
+                r={isActive ? "7" : "5"}
                 fill={dashboardTheme.white}
                 stroke={palette.line}
                 strokeWidth="3"
               />
-              {isLast ? (
-                <text
-                  x={point.x}
-                  y={point.y - 16}
-                  textAnchor="middle"
-                  fontSize="11"
-                  fontWeight="800"
-                  fill={dashboardTheme.ink}
-                >
-                  {formatValue(point.value)}
-                </text>
-              ) : null}
               <text
                 x={point.x}
-                y={height - 12}
+                y={height - 16}
                 textAnchor="middle"
                 fontSize="11"
                 fontWeight="700"
@@ -319,86 +251,79 @@ const AreaTrendChart = ({
             </g>
           );
         })}
+
+        {activePoint ? (
+          <g transform={`translate(${tooltipX}, 16)`}>
+            <rect
+              width={tooltipWidth}
+              height={tooltipHeight}
+              rx="16"
+              fill="rgba(15, 23, 42, 0.96)"
+            />
+            <text x="16" y="24" fontSize="12" fontWeight="700" fill="rgba(255,255,255,0.72)">
+              {activePoint.label}
+            </text>
+            <text x="16" y="43" fontSize="20" fontWeight="800" fill={dashboardTheme.white}>
+              {formatValue(activePoint.value)}
+            </text>
+          </g>
+        ) : null}
       </svg>
     </div>
   );
 };
 
-const MetricCard = ({ label, value, delta, detail, trend, tone = "brand" }) => {
-  const styles = getToneStyles(tone);
-
-  return (
-    <div
-      style={{
-        ...shellCard,
-        padding: 22,
-        display: "flex",
-        flexDirection: "column",
-        gap: 14,
-        background:
-          "radial-gradient(circle at top right, rgba(255,255,255,0.72), transparent 26%), rgba(255,255,255,0.96)",
-      }}
-    >
-      <div
-        style={{
-          width: 46,
-          height: 6,
-          borderRadius: 999,
-          background: `linear-gradient(90deg, ${styles.fg} 0%, ${dashboardTheme.brand} 100%)`,
-        }}
-      />
-
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          gap: 12,
-          alignItems: "flex-start",
-        }}
-      >
-        <div>
-          <div
-            style={{
-              color: dashboardTheme.muted,
-              fontSize: 12,
-              fontWeight: 800,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-            }}
-          >
-            {label}
-          </div>
-          <div
-            style={{
-              marginTop: 10,
-              color: dashboardTheme.ink,
-              fontSize: 34,
-              fontWeight: 800,
-              lineHeight: 1.05,
-            }}
-          >
-            {value}
-          </div>
-        </div>
-        {typeof delta === "number" ? <Pill tone={getDeltaTone(delta)}>{fmtPct(delta)}</Pill> : null}
-      </div>
-
-      <div
-        style={{
-          color: dashboardTheme.muted,
-          fontSize: 14,
-          lineHeight: 1.65,
-        }}
-      >
-        {detail}
-      </div>
-
-      {trend}
+const TrendSummary = ({ tone = "brand", primaryLabel, primaryValue, primaryMeta, stats }) => (
+  <div className={cx("dashboard-trend-overview", getToneClassName(tone))}>
+    <div className="dashboard-trend-overview__primary">
+      <div className="dashboard-trend-overview__eyebrow">{primaryLabel}</div>
+      <div className="dashboard-trend-overview__value">{primaryValue}</div>
+      <div className="dashboard-trend-overview__meta">{primaryMeta}</div>
     </div>
-  );
-};
 
-const Donut = ({ data, labelKey, valueKey }) => {
+    <div className="dashboard-trend-overview__stats">
+      {stats.map((stat) => (
+        <div key={stat.label} className="dashboard-trend-stat">
+          <div className="dashboard-trend-stat__label">{stat.label}</div>
+          <div className="dashboard-trend-stat__value">{stat.value}</div>
+          <div className="dashboard-trend-stat__meta">{stat.meta}</div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const MetricList = ({ items }) => (
+  <div className="dashboard-metric-list">
+    {items.map((item) => (
+      <div key={item.label} className="dashboard-metric-list__item">
+        <div className="dashboard-metric-list__label">{item.label}</div>
+        <div className="dashboard-metric-list__value">{item.value}</div>
+        <div className="dashboard-metric-list__meta">{item.meta}</div>
+      </div>
+    ))}
+  </div>
+);
+
+const MetricCard = ({ label, value, delta, detail, trend, tone = "brand" }) => (
+  <div className={cx("dashboard-card", "dashboard-metric-card", getToneClassName(tone))}>
+    <div className="dashboard-metric-card__accent" />
+
+    <div className="dashboard-metric-card__header">
+      <div>
+        <div className="dashboard-metric-card__label">{label}</div>
+        <div className="dashboard-metric-card__value">{value}</div>
+      </div>
+      {typeof delta === "number" ? <Pill tone={getDeltaTone(delta)}>{fmtPct(delta)}</Pill> : null}
+    </div>
+
+    <div className="dashboard-metric-card__detail">{detail}</div>
+
+    {trend}
+  </div>
+);
+
+const PaymentStatusChart = ({ data, labelKey, valueKey }) => {
   if (!data?.length) {
     return <Empty label="No payment status data available." />;
   }
@@ -408,86 +333,77 @@ const Donut = ({ data, labelKey, valueKey }) => {
     return <Empty label="No payment status data available." />;
   }
 
-  const prepared = data.map((item) => {
-    const tone = getToneStyles(getPaymentTone(item[labelKey]));
-    return {
-      label: item[labelKey],
-      value: item[valueKey] || 0,
-      color: tone.fg,
-      pct: Math.round(((item[valueKey] || 0) / total) * 100),
-    };
-  });
+  const prepared = data
+    .map((item) => {
+      const tone = getPaymentTone(item[labelKey]);
+      const toneStyles = getToneStyles(tone);
+      const value = item[valueKey] || 0;
 
-  const radius = 82;
-  const innerRadius = 58;
-  const center = 92;
-  let angle = -Math.PI / 2;
-
-  const slices = prepared.map((item) => {
-    const fraction = item.value / total;
-    const startAngle = angle;
-    const endAngle = angle + fraction * Math.PI * 2;
-    angle = endAngle;
-    const largeArc = fraction > 0.5 ? 1 : 0;
-    const x1 = center + radius * Math.cos(startAngle);
-    const y1 = center + radius * Math.sin(startAngle);
-    const x2 = center + radius * Math.cos(endAngle);
-    const y2 = center + radius * Math.sin(endAngle);
-    const x3 = center + innerRadius * Math.cos(endAngle);
-    const y3 = center + innerRadius * Math.sin(endAngle);
-    const x4 = center + innerRadius * Math.cos(startAngle);
-    const y4 = center + innerRadius * Math.sin(startAngle);
-
-    return {
-      ...item,
-      path: `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} L ${x3} ${y3} A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${x4} ${y4} Z`,
-    };
-  });
+      return {
+        label: item[labelKey],
+        value,
+        color: toneStyles.fg,
+        pct: Math.round((value / total) * 100),
+        shareLabel: fmtShare(value, total),
+        tone,
+      };
+    })
+    .sort((left, right) => right.value - left.value);
 
   return (
-    <div style={{ display: "flex", gap: 24, alignItems: "center", flexWrap: "wrap" }}>
-      <svg width="184" height="184">
-        {slices.map((slice) => (
-          <path key={slice.label} d={slice.path} fill={slice.color} />
-        ))}
-        <text x={center} y={center - 4} textAnchor="middle" fontSize="24" fontWeight="800" fill={dashboardTheme.ink}>
-          {total}
-        </text>
-        <text x={center} y={center + 16} textAnchor="middle" fontSize="12" fontWeight="700" fill={dashboardTheme.muted}>
-          Transactions
-        </text>
-      </svg>
+    <div className="dashboard-status-chart">
+      <div className="dashboard-status-chart__summary">
+        <div>
+          <div className="dashboard-status-chart__eyebrow">Transaction mix</div>
+          <div className="dashboard-status-chart__total">{fmtNum(total)}</div>
+          <div className="dashboard-status-chart__meta">
+            All payment outcomes combined in one readable distribution bar.
+          </div>
+        </div>
+        <Pill tone="neutral">{prepared.length} statuses</Pill>
+      </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 10, flex: "1 1 220px" }}>
-        {slices.map((slice) => (
+      <div
+        className="dashboard-status-chart__stack"
+        role="img"
+        aria-label={prepared
+          .map((slice) => `${slice.label}: ${slice.value} (${slice.shareLabel})`)
+          .join(", ")}
+      >
+        {prepared.map((slice) => (
           <div
             key={slice.label}
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              gap: 12,
-              alignItems: "center",
-              padding: "10px 0",
-              borderBottom: `1px solid ${dashboardTheme.borderSoft}`,
-            }}
+            className={cx("dashboard-status-chart__segment", getToneClassName(slice.tone))}
+            style={{ "--dashboard-segment-grow": Math.max(slice.value, 1) }}
+            title={`${slice.label}: ${slice.value} (${slice.shareLabel})`}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span className="dashboard-status-chart__segment-fill" />
+          </div>
+        ))}
+      </div>
+
+      <div className="dashboard-status-chart__legend">
+        {prepared.map((slice) => (
+          <div key={slice.label} className="dashboard-status-chart__legend-item">
+            <div className="dashboard-status-chart__legend-main">
               <span
-                style={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: 999,
-                  background: slice.color,
-                  flexShrink: 0,
-                }}
+                className={cx("dashboard-status-chart__legend-dot", getToneClassName(slice.tone))}
+                aria-hidden="true"
               />
-              <span style={{ color: dashboardTheme.ink, fontWeight: 700 }}>
-                {slice.label}
-              </span>
+              <span className="dashboard-status-chart__legend-name">{slice.label}</span>
             </div>
-            <span style={{ color: dashboardTheme.muted, fontSize: 13, fontWeight: 700 }}>
-              {slice.value} ({slice.pct}%)
-            </span>
+
+            <div className="dashboard-status-chart__legend-bar">
+              <div
+                className={cx("dashboard-status-chart__legend-fill", getToneClassName(slice.tone))}
+                style={{ width: slice.shareLabel }}
+              />
+            </div>
+
+            <div className="dashboard-status-chart__legend-values">
+              <strong>{fmtNum(slice.value)}</strong>
+              <span>{slice.shareLabel}</span>
+            </div>
           </div>
         ))}
       </div>
@@ -501,23 +417,14 @@ const Table = ({ rows, cols, empty }) => {
   }
 
   return (
-    <div style={{ overflowX: "auto" }}>
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+    <div className="dashboard-scroll-x">
+      <table className="dashboard-table">
         <thead>
           <tr>
             {cols.map((col) => (
               <th
                 key={col.key}
-                style={{
-                  textAlign: col.align || "left",
-                  paddingBottom: 12,
-                  borderBottom: `1px solid ${dashboardTheme.border}`,
-                  color: dashboardTheme.muted,
-                  fontSize: 12,
-                  fontWeight: 800,
-                  textTransform: "uppercase",
-                  letterSpacing: "0.08em",
-                }}
+                className={cx("dashboard-table__head", getAlignClassName(col.align))}
               >
                 {col.label}
               </th>
@@ -530,17 +437,7 @@ const Table = ({ rows, cols, empty }) => {
               {cols.map((col) => (
                 <td
                   key={col.key}
-                  style={{
-                    padding: "14px 0",
-                    borderBottom:
-                      rowIndex === rows.length - 1
-                        ? "none"
-                        : `1px solid ${dashboardTheme.borderSoft}`,
-                    textAlign: col.align || "left",
-                    verticalAlign: "top",
-                    fontSize: 14,
-                    color: dashboardTheme.ink,
-                  }}
+                  className={cx("dashboard-table__cell", getAlignClassName(col.align))}
                 >
                   {col.render ? col.render(row) : row[col.key]}
                 </td>
@@ -553,139 +450,32 @@ const Table = ({ rows, cols, empty }) => {
   );
 };
 
-const Timeline = ({ items }) => {
-  if (!items?.length) {
-    return <Empty label="No activity found for this filter." />;
-  }
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-      {items.map((item, index) => (
-        <div
-          key={`${item._id || index}`}
-          style={{
-            display: "grid",
-            gridTemplateColumns: "16px 1fr",
-            gap: 14,
-          }}
-        >
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <div
-              style={{
-                width: 12,
-                height: 12,
-                borderRadius: 999,
-                background: dashboardTheme.brand,
-                marginTop: 4,
-                boxShadow: "0 0 0 4px rgba(255, 116, 34, 0.12)",
-              }}
-            />
-            {index < items.length - 1 ? (
-              <div
-                style={{
-                  width: 2,
-                  flex: 1,
-                  background: "linear-gradient(180deg, rgba(255,116,34,0.22) 0%, rgba(148,163,184,0.12) 100%)",
-                  marginTop: 6,
-                }}
-              />
-            ) : null}
-          </div>
-
-          <div
-            style={{
-              padding: "12px 14px",
-              borderRadius: dashboardTheme.radius.lg,
-              background: dashboardTheme.white,
-              border: `1px solid ${dashboardTheme.borderSoft}`,
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                gap: 12,
-                flexWrap: "wrap",
-              }}
-            >
-              <div style={{ color: dashboardTheme.ink, fontWeight: 800 }}>
-                {item.message}
-              </div>
-              <div style={{ color: dashboardTheme.muted, fontSize: 12, fontWeight: 700 }}>
-                {fmtDate(item.createdAt)}
-              </div>
-            </div>
-            <div
-              style={{
-                marginTop: 7,
-                color: dashboardTheme.muted,
-                fontSize: 12,
-                fontWeight: 600,
-                lineHeight: 1.5,
-              }}
-            >
-              {(item.actorName || "System")} • {item.resource} • {item.action}
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-};
-
 const Notices = ({ items }) => {
   if (!items?.length) {
     return <Empty label="No notifications to show." />;
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+    <div className="dashboard-notices">
       {items.map((item, index) => {
         const tone = getNotificationTone(item.type);
+
         return (
           <div
             key={`${item._id || index}`}
-            style={{
-              padding: 16,
-              border: `1px solid ${item.isRead ? dashboardTheme.borderSoft : getToneStyles(tone).border}`,
-              borderRadius: dashboardTheme.radius.lg,
-              background: item.isRead ? dashboardTheme.white : getToneStyles(tone).bg,
-              boxShadow: item.isRead ? "none" : "inset 0 1px 0 rgba(255,255,255,0.72)",
-            }}
+            className={cx(
+              "dashboard-notice",
+              item.isRead
+                ? "dashboard-notice--read"
+                : cx("dashboard-notice--unread", getToneClassName(tone))
+            )}
           >
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                gap: 12,
-                flexWrap: "wrap",
-              }}
-            >
-              <div style={{ color: dashboardTheme.ink, fontWeight: 800 }}>
-                {item.title}
-              </div>
+            <div className="dashboard-notice__header">
+              <div className="dashboard-notice__title">{item.title}</div>
               <Pill tone={tone}>{item.isRead ? "Read" : "Unread"}</Pill>
             </div>
-            <div
-              style={{
-                marginTop: 8,
-                color: dashboardTheme.muted,
-                fontSize: 13,
-                lineHeight: 1.65,
-              }}
-            >
-              {item.message}
-            </div>
-            <div
-              style={{
-                marginTop: 10,
-                color: dashboardTheme.muted,
-                fontSize: 12,
-                fontWeight: 700,
-              }}
-            >
-              {fmtDate(item.createdAt)}
-            </div>
+            <div className="dashboard-notice__message">{item.message}</div>
+            <div className="dashboard-notice__time">{fmtDate(item.createdAt)}</div>
           </div>
         );
       })}
@@ -696,14 +486,13 @@ const Notices = ({ items }) => {
 export default function Dashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedUserId, setSelectedUserId] = useState("");
 
   useEffect(() => {
     let mounted = true;
     setLoading(true);
 
     api
-      .getDashboard({ params: selectedUserId ? { userId: selectedUserId } : {} })
+      .getDashboard()
       .then((response) => mounted && setData(response.data))
       .catch(() => {
         mounted && setData({ error: "Failed to load dashboard data." });
@@ -713,21 +502,11 @@ export default function Dashboard() {
     return () => {
       mounted = false;
     };
-  }, [selectedUserId]);
+  }, []);
 
   if (loading) {
     return (
-      <div
-        style={{
-          minHeight: "65vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: dashboardTheme.muted,
-          fontWeight: 700,
-          fontSize: 15,
-        }}
-      >
+      <div className="dashboard-state dashboard-state--loading">
         Loading your premium workspace...
       </div>
     );
@@ -735,7 +514,7 @@ export default function Dashboard() {
 
   if (!data || data.error) {
     return (
-      <div style={{ padding: 40, color: dashboardTheme.danger, fontWeight: 700 }}>
+      <div className="dashboard-state dashboard-state--error">
         {data?.error || "Unable to load dashboard."}
       </div>
     );
@@ -750,10 +529,8 @@ export default function Dashboard() {
     revenueTrend = [],
     revenueTotal = 0,
     recentPayments = [],
-    recentActivity = [],
     notifications = [],
     unreadNotifications = 0,
-    teamMembers = [],
     upcomingClasses = [],
   } = data;
 
@@ -762,37 +539,18 @@ export default function Dashboard() {
     line: dashboardTheme.brand,
     fill: "rgba(255, 116, 34, 0.14)",
   };
+  const registrationsSnapshot = getTrendSnapshot(registrationsTrend, "count");
+  const revenueSnapshot = getTrendSnapshot(revenueTrend, "total");
+  const activeAccessPercentage = counts.adminUsers
+    ? ((counts.activeAdminUsers || 0) / counts.adminUsers) * 100
+    : 0;
 
   return (
-    <div
-      style={{
-        padding: 32,
-        maxWidth: 1520,
-        margin: "0 auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: 24,
-      }}
-    >
-      <div
-        style={{
-          ...shellCard,
-          padding: "32px 34px",
-          background:
-            "radial-gradient(circle at top right, rgba(255,116,34,0.16), transparent 26%), radial-gradient(circle at bottom left, rgba(22,163,74,0.10), transparent 22%), linear-gradient(135deg, rgba(255,255,255,0.96) 0%, rgba(255,248,243,1) 100%)",
-          boxShadow: dashboardTheme.shadow.hero,
-        }}
-      >
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))",
-            gap: 24,
-            alignItems: "stretch",
-          }}
-        >
+    <div className="dashboard-root">
+      <div className="dashboard-card dashboard-hero dashboard-hero--premium">
+        <div className="dashboard-hero__grid">
           <div>
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 18 }}>
+            <div className="dashboard-flex dashboard-flex-wrap dashboard-gap-sm dashboard-hero__pills">
               <Pill tone="brand">{adminBrandMeta.consoleName}</Pill>
               <Pill tone={unreadNotifications > 0 ? "warning" : "neutral"}>
                 {unreadNotifications} unread notifications
@@ -800,39 +558,17 @@ export default function Dashboard() {
               <Pill tone="success">{counts.activeAdminUsers || 0} active team members</Pill>
             </div>
 
-            <h1
-              style={{
-                margin: 0,
-                fontSize: 42,
-                lineHeight: 1.02,
-                fontWeight: 800,
-                color: dashboardTheme.ink,
-                maxWidth: 720,
-              }}
-            >
+            <h1 className="dashboard-hero__title">
               Professional admin visibility aligned to the Sajha Entrance brand.
             </h1>
 
-            <p
-              style={{
-                margin: "16px 0 0",
-                color: dashboardTheme.muted,
-                fontSize: 15,
-                lineHeight: 1.8,
-                maxWidth: 760,
-              }}
-            >
-              Monitor enrollments, revenue, operational activity, and team health from one polished console built for daily admin work.
+            <p className="dashboard-hero__copy">
+              Monitor enrollments, revenue, team health, and high-priority alerts from one polished
+              console built for daily admin work.
             </p>
           </div>
 
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))",
-              gap: 12,
-            }}
-          >
+          <div className="dashboard-hero__stats">
             <HeroStat
               label="Revenue"
               value={fmtMoneyCompact(revenueTotal)}
@@ -855,20 +591,29 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit,minmax(250px,1fr))",
-          gap: 18,
-        }}
-      >
+      <div className="dashboard-grid dashboard-grid--metrics">
         <MetricCard
           label="Total students"
           value={fmtNum(counts.students)}
           delta={growth.students}
           detail="Month-over-month registration movement based on student account creation."
           tone="brand"
-          trend={<MiniTrend data={registrationsTrend} keyName="count" palette={registrationPalette} />}
+          trend={
+            <MetricList
+              items={[
+                {
+                  label: "Latest month",
+                  value: fmtNum(registrationsSnapshot.latest?.value),
+                  meta: registrationsSnapshot.latest?.label || "No recent month",
+                },
+                {
+                  label: "6-month total",
+                  value: fmtNum(registrationsSnapshot.total),
+                  meta: "Tracked in the trend section",
+                },
+              ]}
+            />
+          }
         />
 
         <MetricCard
@@ -877,7 +622,22 @@ export default function Dashboard() {
           delta={growth.revenue}
           detail="Completed payments only, with the latest six-month movement reflected in the trend."
           tone={revenuePalette.tone}
-          trend={<MiniTrend data={revenueTrend} keyName="total" palette={revenuePalette} />}
+          trend={
+            <MetricList
+              items={[
+                {
+                  label: "Latest month",
+                  value: fmtMoneyCompact(revenueSnapshot.latest?.value),
+                  meta: revenueSnapshot.latest?.label || "No recent month",
+                },
+                {
+                  label: "6-month total",
+                  value: fmtMoneyCompact(revenueSnapshot.total),
+                  meta: "Completed revenue only",
+                },
+              ]}
+            />
+          }
         />
 
         <MetricCard
@@ -886,10 +646,20 @@ export default function Dashboard() {
           detail="Programs currently available across Sajha Entrance pathways."
           tone="info"
           trend={
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-              <Pill tone="info">{fmtNum(counts.blogs)} content posts</Pill>
-              <Pill tone="brand">{fmtNum(counts.colleges)} colleges</Pill>
-            </div>
+            <MetricList
+              items={[
+                {
+                  label: "Content posts",
+                  value: fmtNum(counts.blogs),
+                  meta: "Published blog inventory",
+                },
+                {
+                  label: "Colleges tracked",
+                  value: fmtNum(counts.colleges),
+                  meta: "Partner institution count",
+                },
+              ]}
+            />
           }
         />
 
@@ -899,138 +669,137 @@ export default function Dashboard() {
           detail="Team access health across all admin members with role-based privileges."
           tone="neutral"
           trend={
-            <div>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  fontSize: 12,
-                  color: dashboardTheme.muted,
-                  marginBottom: 8,
-                  fontWeight: 700,
-                }}
-              >
+            <div className="dashboard-progress-card">
+              <div className="dashboard-progress-card__header">
                 <span>Active access</span>
-                <span>
-                  {counts.adminUsers
-                    ? Math.round(((counts.activeAdminUsers || 0) / counts.adminUsers) * 100)
-                    : 0}
-                  %
-                </span>
+                <span>{Math.round(activeAccessPercentage)}%</span>
               </div>
-              <div
-                style={{
-                  height: 12,
-                  borderRadius: 999,
-                  background: dashboardTheme.borderSoft,
-                  overflow: "hidden",
-                }}
-              >
-                <div
-                  style={{
-                    width: `${
-                      counts.adminUsers
-                        ? ((counts.activeAdminUsers || 0) / counts.adminUsers) * 100
-                        : 0
-                    }%`,
-                    height: "100%",
-                    background: `linear-gradient(90deg, ${dashboardTheme.success} 0%, ${dashboardTheme.brand} 100%)`,
-                    borderRadius: 999,
-                  }}
-                />
-              </div>
+              <progress className="dashboard-progress" max="100" value={activeAccessPercentage} />
             </div>
           }
         />
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))",
-          gap: 18,
-        }}
-      >
-        <Panel title="Student registrations" detail="Six-month trend of account creation across the student pipeline.">
+      <div className="dashboard-stack dashboard-stack--trends">
+        <Panel
+          title="Student registrations"
+          detail="Six-month trend of account creation across the student pipeline."
+          action={<Pill tone="brand">Enrollment trend</Pill>}
+          className={cx("dashboard-panel--trend", getToneClassName("brand"))}
+          bodyClassName="dashboard-panel__body--chart"
+        >
+          <TrendSummary
+            tone="brand"
+            primaryLabel="Latest month"
+            primaryValue={fmtNum(registrationsSnapshot.latest?.value)}
+            primaryMeta={registrationsSnapshot.latest?.label || "No trend data available yet"}
+            stats={[
+              {
+                label: "Peak month",
+                value: fmtNum(registrationsSnapshot.peak?.value),
+                meta: registrationsSnapshot.peak?.label || "Not available",
+              },
+              {
+                label: "Monthly average",
+                value: fmtNum(Math.round(registrationsSnapshot.average || 0)),
+                meta: `${registrationsSnapshot.periods || 0} months reviewed`,
+              },
+              {
+                label: "Period total",
+                value: fmtNum(registrationsSnapshot.total),
+                meta: "New student accounts",
+              },
+            ]}
+          />
           <AreaTrendChart
             data={registrationsTrend}
             valueKey="count"
             labelKey="month"
             palette={registrationPalette}
             formatValue={(value) => fmtNum(value)}
+            formatAxisValue={(value) => fmtNum(Math.round(value))}
             formatTick={(label) => label.split(" ")[0]}
+            variant="area"
           />
         </Panel>
 
         <Panel
           title="Revenue flow"
           detail="Income movement across completed transactions. Positive momentum uses green, while declines turn red."
+          action={<Pill tone={revenuePalette.tone}>Income trend</Pill>}
+          className={cx("dashboard-panel--trend", getToneClassName(revenuePalette.tone))}
+          bodyClassName="dashboard-panel__body--chart"
         >
+          <TrendSummary
+            tone={revenuePalette.tone}
+            primaryLabel="Latest month"
+            primaryValue={fmtMoneyCompact(revenueSnapshot.latest?.value)}
+            primaryMeta={revenueSnapshot.latest?.label || "No trend data available yet"}
+            stats={[
+              {
+                label: "Peak month",
+                value: fmtMoneyCompact(revenueSnapshot.peak?.value),
+                meta: revenueSnapshot.peak?.label || "Not available",
+              },
+              {
+                label: "Monthly average",
+                value: fmtMoneyCompact(revenueSnapshot.average || 0),
+                meta: `${revenueSnapshot.periods || 0} months reviewed`,
+              },
+              {
+                label: "Period total",
+                value: fmtMoneyCompact(revenueSnapshot.total),
+                meta: "Completed transactions only",
+              },
+            ]}
+          />
           <AreaTrendChart
             data={revenueTrend}
             valueKey="total"
             labelKey="month"
             palette={revenuePalette}
             formatValue={(value) => fmtMoneyCompact(value)}
+            formatAxisValue={(value) => fmtMoneyCompact(value)}
             formatTick={(label) => label.split(" ")[0]}
+            variant="line"
           />
-        </Panel>
-
-        <Panel title="Notifications" detail="Unread and recent system events that need attention.">
-          <Notices items={notifications} />
         </Panel>
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))",
-          gap: 18,
-        }}
-      >
-        <Panel title="Students per course" detail="Enrollment distribution by course, ordered by size.">
+      <div className="dashboard-grid dashboard-grid--distribution">
+        <Panel
+          title="Students per course"
+          detail="Shows enrollment distribution across courses with readable horizontal bars, clear student counts, and a polished analytics presentation."
+          action={<Pill tone="info">Enrollment distribution</Pill>}
+          className="dashboard-panel--comparison"
+        >
           <StudentsPerCourseChart data={studentsByCourse} labelKey="_id" valueKey="count" />
         </Panel>
 
-        <Panel title="Payment status" detail="Live distribution of transaction outcomes across the payment pipeline.">
-          <Donut data={paymentsByStatus} labelKey="_id" valueKey="count" />
-        </Panel>
+        <div className="dashboard-stack dashboard-stack--analysis-rail">
+          <Panel
+            title="Payment status"
+            detail="This segmented horizontal bar is easier to compare at a glance than a donut when admins need to read exact status mix."
+            action={<Pill tone="neutral">Segmented distribution</Pill>}
+            className="dashboard-panel--compact-chart"
+          >
+            <PaymentStatusChart data={paymentsByStatus} labelKey="_id" valueKey="count" />
+          </Panel>
+        </div>
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))",
-          gap: 18,
-        }}
-      >
+      <div className="dashboard-grid dashboard-grid--operations">
         <Panel
-          title="Recent activity"
-          detail="Member-wise audit trail with timestamps and action context."
+          title="Notifications"
+          detail="Recent admin alerts and items that still need attention."
           action={
-            <select
-              value={selectedUserId}
-              onChange={(event) => setSelectedUserId(event.target.value)}
-              style={{
-                minWidth: 220,
-                padding: "12px 14px",
-                borderRadius: 14,
-                border: `1px solid ${dashboardTheme.border}`,
-                background: dashboardTheme.white,
-                color: dashboardTheme.ink,
-                fontWeight: 700,
-              }}
-            >
-              <option value="">All members</option>
-              {teamMembers.map((member) => (
-                <option key={member._id} value={member._id}>
-                  {member.fullName} - {member.role}
-                </option>
-              ))}
-            </select>
+            <Pill tone={unreadNotifications > 0 ? "warning" : "neutral"}>
+              {unreadNotifications} unread
+            </Pill>
           }
+          className="dashboard-panel--notifications"
         >
-          <Timeline items={recentActivity} />
+          <Notices items={notifications} />
         </Panel>
 
         <Panel title="Recent payments" detail="Latest transaction updates from the payment pipeline.">
@@ -1042,11 +811,9 @@ export default function Dashboard() {
                 key: "studentName",
                 label: "Student",
                 render: (row) => (
-                  <div>
-                    <div style={{ fontWeight: 800 }}>{row.studentName}</div>
-                    <div style={{ fontSize: 12, color: dashboardTheme.muted }}>
-                      {row.courseTitle}
-                    </div>
+                  <div className="dashboard-table__stack">
+                    <div className="dashboard-table__title">{row.studentName}</div>
+                    <div className="dashboard-table__meta">{row.courseTitle}</div>
                   </div>
                 ),
               },
@@ -1075,11 +842,9 @@ export default function Dashboard() {
                 key: "classTitle",
                 label: "Session",
                 render: (row) => (
-                  <div>
-                    <div style={{ fontWeight: 800 }}>{row.classTitle}</div>
-                    <div style={{ fontSize: 12, color: dashboardTheme.muted }}>
-                      {row.subject}
-                    </div>
+                  <div className="dashboard-table__stack">
+                    <div className="dashboard-table__title">{row.classTitle}</div>
+                    <div className="dashboard-table__meta">{row.subject}</div>
                   </div>
                 ),
               },
@@ -1099,13 +864,7 @@ export default function Dashboard() {
         </Panel>
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit,minmax(210px,1fr))",
-          gap: 18,
-        }}
-      >
+      <div className="dashboard-grid dashboard-grid--summary">
         {[
           ["Colleges", counts.colleges, "Partner institutions currently active"],
           ["Universities", counts.universities, "Higher education destinations tracked"],
@@ -1116,39 +875,10 @@ export default function Dashboard() {
           ["Contacts", counts.contacts, "Lead submissions from the public site"],
           ["Newsletters", counts.newsletters, "Subscribed email records in the CRM"],
         ].map(([label, value, description]) => (
-          <div key={label} style={{ ...shellCard, padding: "20px 22px" }}>
-            <div
-              style={{
-                color: dashboardTheme.muted,
-                fontSize: 12,
-                fontWeight: 800,
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-              }}
-            >
-              {label}
-            </div>
-            <div
-              style={{
-                marginTop: 10,
-                fontSize: 28,
-                fontWeight: 800,
-                color: dashboardTheme.ink,
-                lineHeight: 1.05,
-              }}
-            >
-              {fmtNum(value)}
-            </div>
-            <div
-              style={{
-                marginTop: 8,
-                color: dashboardTheme.muted,
-                fontSize: 13,
-                lineHeight: 1.55,
-              }}
-            >
-              {description}
-            </div>
+          <div key={label} className="dashboard-card dashboard-summary-card">
+            <div className="dashboard-summary-card__label">{label}</div>
+            <div className="dashboard-summary-card__value">{fmtNum(value)}</div>
+            <div className="dashboard-summary-card__detail">{description}</div>
           </div>
         ))}
       </div>

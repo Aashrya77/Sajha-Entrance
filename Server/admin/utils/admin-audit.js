@@ -1,51 +1,10 @@
-import AdminActivityModel from "../../models/AdminActivity.js";
 import AdminNotificationModel from "../../models/AdminNotification.js";
 import { createLogger } from "../../utils/logger.js";
 
-const AUDIT_EXCLUDED_RESOURCES = new Set(["AdminActivity", "AdminNotification"]);
+const NOTIFICATION_EXCLUDED_RESOURCES = new Set(["AdminNotification"]);
 const logger = createLogger("admin-audit");
 
 const toRecordParams = (record) => record?.params || {};
-
-const getRecordTitle = (record, resourceId) => {
-  const params = toRecordParams(record);
-  return (
-    params.title ||
-    params.fullName ||
-    params.name ||
-    params.studentName ||
-    params.blogTitle ||
-    params.collegeName ||
-    params.universityName ||
-    params.popupTitle ||
-    params.advertisementName ||
-    params.transactionUuid ||
-    params.email ||
-    params._id ||
-    resourceId
-  );
-};
-
-const createAdminActivity = async ({
-  currentAdmin,
-  action,
-  resource,
-  record,
-  message,
-  meta = {},
-}) => {
-  await AdminActivityModel.create({
-    actor: currentAdmin?.id || null,
-    actorName: currentAdmin?.fullName || currentAdmin?.email || "System",
-    actorEmail: currentAdmin?.email || "",
-    actorRole: currentAdmin?.role || "system",
-    action,
-    resource,
-    recordId: record?.id || record?.params?._id || "",
-    message,
-    meta,
-  });
-};
 
 const createAdminNotification = async ({ title, message, type = "info", resource = "" }) => {
   await AdminNotificationModel.create({
@@ -92,28 +51,8 @@ const buildNotificationPayload = ({ resourceId, actionName, record }) => {
   return null;
 };
 
-const buildAuditMessage = ({ actionName, resourceId, record }) => {
-  const recordTitle = getRecordTitle(record, resourceId);
-  const actionLabel =
-    actionName === "new" ? "created" : actionName === "edit" ? "updated" : "deleted";
-
-  if (resourceId === "Student" && actionName === "new") {
-    return `Added student ${recordTitle}.`;
-  }
-
-  if (resourceId === "Payment" && actionName === "edit") {
-    return `Updated payment ${recordTitle}.`;
-  }
-
-  if (resourceId === "Course" && actionName === "edit") {
-    return `Updated course ${recordTitle}.`;
-  }
-
-  return `${resourceId} ${recordTitle} was ${actionLabel}.`;
-};
-
 const createAuditAfterHook = (actionName, resourceId) => async (response, request, context) => {
-  if (request.method !== "post" || AUDIT_EXCLUDED_RESOURCES.has(resourceId)) {
+  if (request.method !== "post" || NOTIFICATION_EXCLUDED_RESOURCES.has(resourceId)) {
     return response;
   }
 
@@ -122,22 +61,7 @@ const createAuditAfterHook = (actionName, resourceId) => async (response, reques
     return response;
   }
 
-  const message = buildAuditMessage({ actionName, resourceId, record });
-  const meta = {
-    actionName,
-    resourceId,
-  };
-
   try {
-    await createAdminActivity({
-      currentAdmin: context.currentAdmin,
-      action: actionName,
-      resource: resourceId,
-      record,
-      message,
-      meta,
-    });
-
     const notificationPayload = buildNotificationPayload({
       resourceId,
       actionName,
@@ -148,21 +72,13 @@ const createAuditAfterHook = (actionName, resourceId) => async (response, reques
       await createAdminNotification(notificationPayload);
     }
   } catch (error) {
-    logger.error("Admin audit log error:", error);
+    logger.error("Admin notification hook error:", error);
   }
 
   return response;
 };
 
-const logAdminLogin = async (currentAdmin) => {
-  await createAdminActivity({
-    currentAdmin,
-    action: "login",
-    resource: "Auth",
-    record: null,
-    message: `${currentAdmin.fullName || currentAdmin.email} signed in to the admin panel.`,
-  });
-};
+const logAdminLogin = async () => {};
 
 const logAdminSystemError = async (source, error) => {
   try {

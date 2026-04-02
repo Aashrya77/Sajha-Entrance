@@ -5,7 +5,6 @@
   background: #f8f9fa;
 }
 
-/* Profile Card */
 .profile-card {
   background: #fff;
   border-radius: 16px;
@@ -79,7 +78,6 @@
   color: #fff;
 }
 
-/* Status Badge */
 .status-badge {
   display: inline-block;
   padding: 4px 14px;
@@ -100,7 +98,6 @@
   color: #e65100;
 }
 
-/* Dashboard Cards */
 .dash-section {
   background: #fff;
   border-radius: 16px;
@@ -122,7 +119,6 @@
   color: #ff7422;
 }
 
-/* Payment Banner */
 .payment-banner {
   background: linear-gradient(135deg, #fff3e0, #ffe0b2);
   border: 1.5px solid #ffcc80;
@@ -151,7 +147,6 @@
   margin: 0;
 }
 
-/* Class Cards */
 .class-card {
   border: 1px solid #eee;
   border-radius: 12px;
@@ -253,7 +248,6 @@
   box-shadow: none;
 }
 
-/* Empty State */
 .empty-state {
   text-align: center;
   padding: 40px 20px;
@@ -270,7 +264,6 @@
   font-size: 14px;
 }
 
-/* Tabs */
 .dash-tabs {
   display: flex;
   gap: 0;
@@ -300,7 +293,6 @@
   color: #666;
 }
 
-/* Responsive */
 @media (max-width: 768px) {
   .dashboard {
     padding-top: 4.5rem;

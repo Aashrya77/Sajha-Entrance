@@ -81,7 +81,6 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
     <div className="dashboard">
       <div className="container">
         <div className="row">
-          {/* Left: Profile Card */}
           <div className="col-lg-4 col-md-5">
             <div className="profile-card">
               <div className="profile-avatar">
@@ -100,7 +99,7 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
                 </div>
                 <div className="profile-info-row">
                   <span className="label">Phone</span>
-                  <span className="value">{profile.phone || '—'}</span>
+                  <span className="value">{profile.phone || '-'}</span>
                 </div>
                 <div className="profile-info-row">
                   <span className="label">Course</span>
@@ -108,11 +107,11 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
                 </div>
                 <div className="profile-info-row">
                   <span className="label">College</span>
-                  <span className="value">{profile.collegeName || '—'}</span>
+                  <span className="value">{profile.collegeName || '-'}</span>
                 </div>
                 <div className="profile-info-row">
                   <span className="label">Address</span>
-                  <span className="value">{profile.address || '—'}</span>
+                  <span className="value">{profile.address || '-'}</span>
                 </div>
               </div>
 
@@ -122,9 +121,7 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
             </div>
           </div>
 
-          {/* Right: Dashboard Content */}
           <div className="col-lg-8 col-md-7">
-            {/* Payment Banner (if unpaid) */}
             {!isPaid && (
               <div className="payment-banner">
                 <i className="fa-solid fa-lock"></i>
@@ -135,9 +132,8 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
               </div>
             )}
 
-            {/* Classes Section */}
             <div className="dash-section">
-              <h5><i className="fa-solid fa-chalkboard-user"></i> My Classes — {profile.course}</h5>
+              <h5><i className="fa-solid fa-chalkboard-user"></i> My Classes - {profile.course}</h5>
 
               <div className="dash-tabs">
                 <button className={`dash-tab ${activeTab === 'live' ? 'active' : ''}`} onClick={() => setActiveTab('live')}>
@@ -148,7 +144,6 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
                 </button>
               </div>
 
-              {/* Live Classes Tab */}
               {activeTab === 'live' && (
                 <>
                   {classData.liveClasses.length === 0 ? (
@@ -188,7 +183,6 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
                 </>
               )}
 
-              {/* Recorded Classes Tab */}
               {activeTab === 'recorded' && (
                 <>
                   {classData.recordedClasses.length === 0 ? (

@@ -25,7 +25,6 @@ const logger = createLogger("admin");
 
 import Notice from "../models/Notice.js";
 import AdminUserModel from "../models/AdminUser.js";
-import AdminActivityModel from "../models/AdminActivity.js";
 import AdminNotificationModel from "../models/AdminNotification.js";
 import CollegeModel from "../models/College.js";
 import Course from "../models/Course.js";
@@ -48,7 +47,6 @@ import PopupAdminResource from "./resources/popup.resource.js";
 import LandingAdAdminResource from "./resources/landing-ad.resource.js";
 import CollegeAdminResource from "./resources/college.resource.js";
 import AdminUserAdminResource from "./resources/admin-user.resource.js";
-import AdminActivityAdminResource from "./resources/admin-activity.resource.js";
 import AdminNotificationAdminResource from "./resources/admin-notification.resource.js";
 
 
@@ -560,8 +558,6 @@ const startAdminPanel = async () => {
       const previousMonthStart = shiftMonth(currentMonthStart, -1);
       const nextMonthStart = shiftMonth(currentMonthStart, 1);
       const sixMonthsAgo = shiftMonth(currentMonthStart, -5);
-      const selectedUserId = request?.query?.userId || "";
-      const activityFilter = selectedUserId ? { actor: selectedUserId } : {};
 
       const [
         studentsCount,
@@ -586,12 +582,9 @@ const startAdminPanel = async () => {
         resultStats,
         revenueAgg,
         recentPayments,
-        recentContacts,
         upcomingClasses,
-        recentActivity,
         notifications,
         unreadNotifications,
-        teamMembers,
         currentMonthStudents,
         previousMonthStudents,
       ] = await Promise.all([
@@ -639,15 +632,9 @@ const startAdminPanel = async () => {
           { $group: { _id: null, total: { $sum: "$totalAmount" } } },
         ]),
         Payment.find().sort({ createdAt: -1 }).limit(5).lean(),
-        ContactModel.find().sort({ submittedAt: -1 }).limit(5).lean(),
         OnlineClass.find({ classDateTime: { $gte: new Date() } }).sort({ classDateTime: 1 }).limit(5).lean(),
-        AdminActivityModel.find(activityFilter).sort({ createdAt: -1 }).limit(10).lean(),
         AdminNotificationModel.find().sort({ createdAt: -1 }).limit(6).lean(),
         AdminNotificationModel.countDocuments({ isRead: false }),
-        AdminUserModel.find()
-          .sort({ createdAt: 1 })
-          .select("fullName email role isActive lastLoginAt")
-          .lean(),
         Student.countDocuments({ createdAt: { $gte: currentMonthStart, $lt: nextMonthStart } }),
         Student.countDocuments({ createdAt: { $gte: previousMonthStart, $lt: currentMonthStart } }),
       ]);
@@ -699,13 +686,9 @@ const startAdminPanel = async () => {
         resultStats,
         revenueTotal: revenueAgg.length > 0 ? revenueAgg[0].total : 0,
         recentPayments,
-        recentContacts,
         upcomingClasses,
-        recentActivity,
         notifications,
         unreadNotifications,
-        teamMembers,
-        selectedUserId,
       };
     } catch (error) {
       logger.error("Dashboard handler error:", error);
@@ -716,7 +699,6 @@ const startAdminPanel = async () => {
 
   const rawResources = [
     AdminUserAdminResource,
-    AdminActivityAdminResource,
     AdminNotificationAdminResource,
     BlogAdminResource,
     Notice,
@@ -873,14 +855,6 @@ const startAdminPanel = async () => {
 
     if (resourceId === "AdminUser") {
       return decorateAdminResource(resource, { manageUsersOnly: true });
-    }
-
-    if (resourceId === "AdminActivity") {
-      return decorateAdminResource(resource, {
-        manageUsersOnly: true,
-        readOnly: true,
-        audit: false,
-      });
     }
 
     if (resourceId === "AdminNotification") {

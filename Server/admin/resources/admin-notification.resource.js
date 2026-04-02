@@ -1,6 +1,35 @@
 import AdminNotificationModel from "../../models/AdminNotification.js";
 import { hasPermission } from "../utils/admin-auth.js";
 
+const coerceBoolean = (value) => {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    return value === "true" || value === "on" || value === "1";
+  }
+
+  return Boolean(value);
+};
+
+const syncReadState = async (request) => {
+  if (request.method !== "post" || !request.payload || request.payload.isRead === undefined) {
+    return request;
+  }
+
+  const isRead = coerceBoolean(request.payload.isRead);
+
+  return {
+    ...request,
+    payload: {
+      ...request.payload,
+      isRead,
+      readAt: isRead ? new Date() : null,
+    },
+  };
+};
+
 const markAsReadHandler = async (request, response, context) => {
   const { record } = context;
 
@@ -41,6 +70,9 @@ const AdminNotificationAdminResource = {
       new: { isAccessible: false },
       delete: { isAccessible: false },
       bulkDelete: { isAccessible: false },
+      edit: {
+        before: [syncReadState],
+      },
       markAsRead: {
         actionType: "record",
         icon: "Check",

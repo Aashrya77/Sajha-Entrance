@@ -16,7 +16,6 @@ const adminNavigationLabels = Object.freeze({
 
 const adminResourceLabels = Object.freeze({
   AdminUser: "Admin Users",
-  AdminActivity: "Admin Activity",
   AdminNotification: "Notifications",
   Blog: "Blogs",
   Notice: "Notices",

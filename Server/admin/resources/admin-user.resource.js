@@ -24,20 +24,24 @@ const applyRolePermissions = async (request) => {
   const hasExplicitPermissions = ADMIN_PERMISSION_KEYS.some(
     (permissionKey) => flat.get(payload, `permissions.${permissionKey}`) !== undefined
   );
+  const defaultPermissions = buildPermissionSet(role);
 
-  if (!hasExplicitPermissions) {
-    const defaults = buildPermissionSet(role);
-    ADMIN_PERMISSION_KEYS.forEach((permissionKey) => {
-      payload[`permissions.${permissionKey}`] = defaults[permissionKey];
-    });
-  } else {
-    ADMIN_PERMISSION_KEYS.forEach((permissionKey) => {
-      const payloadKey = `permissions.${permissionKey}`;
-      if (flat.get(payload, payloadKey) !== undefined) {
-        payload[payloadKey] = coerceBoolean(flat.get(payload, payloadKey));
-      }
-    });
-  }
+  ADMIN_PERMISSION_KEYS.forEach((permissionKey) => {
+    const payloadKey = `permissions.${permissionKey}`;
+    const rawValue = flat.get(payload, payloadKey);
+
+    if (role === "super_admin") {
+      payload[payloadKey] = defaultPermissions[permissionKey];
+      return;
+    }
+
+    if (!hasExplicitPermissions) {
+      payload[payloadKey] = defaultPermissions[permissionKey];
+      return;
+    }
+
+    payload[payloadKey] = rawValue === undefined ? false : coerceBoolean(rawValue);
+  });
 
   return {
     ...request,

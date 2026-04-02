@@ -104,23 +104,9 @@ a {
     0 12px 22px rgba(255, 116, 34, 0.08);
 }
 
-.adminjs_Box.adminjs_Box_Card,
-.adminjs_Box.adminjs_Box_White,
-.adminjs_Box.adminjs_Box_Container,
-.adminjs_Drawer {
-  border-radius: var(--admin-radius-xl);
-  border: 1px solid rgba(226, 232, 240, 0.92);
-  box-shadow: var(--admin-shadow-soft);
-}
 
 .adminjs_Drawer {
   box-shadow: 0 24px 60px rgba(15, 23, 42, 0.14);
-}
-
-.adminjs_Box.adminjs_Box_Card:hover,
-.adminjs_Box.adminjs_Box_White:hover,
-.adminjs_Box.adminjs_Box_Container:hover {
-  box-shadow: var(--admin-shadow-strong);
 }
 
 .adminjs_Button {

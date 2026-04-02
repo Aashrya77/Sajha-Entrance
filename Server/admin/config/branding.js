@@ -25,6 +25,7 @@ const adminBrandAssets = {
   fallbackLogoUrl,
   faviconUrl: "/admin/favicon.svg",
   themeStylesheetUrl: "/admin/admin-theme.css",
+  dashboardStylesheetUrl: "/admin/Dashboard.css",
 };
 
 const adminBranding = {
@@ -36,7 +37,10 @@ const adminBranding = {
 };
 
 const adminAssets = {
-  styles: [adminBrandAssets.themeStylesheetUrl],
+  styles: [
+    adminBrandAssets.themeStylesheetUrl,
+    adminBrandAssets.dashboardStylesheetUrl,
+  ],
 };
 
 export { adminAssets, adminBrandAssets, adminBranding };
