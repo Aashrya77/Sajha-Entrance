@@ -78,7 +78,7 @@ const Colleges = () => {
                 Search for <span style={{color: 'var(--primary-black)'}}>a college</span>
               </h3>
             </div>
-            <div className="d-flex justify-content-center">
+            <div className="d-flex justify-content-center" style={{marginTop: '10px'}}>
               <form onSubmit={handleSearch} className="d-flex flex-column">
                 <div>
                   <input

@@ -10,6 +10,8 @@
   outline: 1.5px solid var(--primary-orange);
   border: none;
   width: 300px;
+  max-width: calc(100% - 50px);
+  box-sizing: border-box;
 }
 
 .searchInput:focus {
