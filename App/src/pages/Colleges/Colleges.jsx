@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { collegeAPI, courseAPI } from '../../api/services';
 import { getImageUrl } from '../../utils/imageHelper';
 import Loader from '../../components/Loader/Loader';
-import InquiryButton from '../../components/InquiryForm/InquiryButton';
 
 const Colleges = () => {
   const [colleges, setColleges] = useState([]);
@@ -117,7 +116,7 @@ const Colleges = () => {
                 <h3 className="text-uppercase mb-0 mt-3" style={{fontWeight: 900, color: 'var(--primary-orange)', fontSize: '16px'}}>
                   Location <span style={{color: 'var(--primary-black)'}}>Filter</span>
                 </h3>
-                <div className="locationFilter mt-3">
+                <div className="locationFilter mt-2">
                   <input
                     type="radio"
                     id="all"
@@ -214,7 +213,7 @@ const Colleges = () => {
                   </h3>
                 )}
 
-                <div className="row g-4 mt-3">
+                <div className="row g-4 mt-0" >
                   {colleges.map((college) => (
                     <div key={college._id} className="col-12 col-lg-4">
                       <Link to={`/college/${college._id}`} className="college-card-link">
@@ -288,8 +287,6 @@ const Colleges = () => {
         </div>
       </div>
 
-      {/* Floating Inquiry Button */}
-      <InquiryButton collegeName="Colleges & Programs" position="bottom-right" courses={courses || []} />
     </div>
   );
 };

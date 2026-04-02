@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { courseAPI } from '../../api/services';
 import Loader from '../../components/Loader/Loader';
-import InquiryButton from '../../components/InquiryForm/InquiryButton';
 
 const COURSE_ICONS = {
   'BIT': 'fa-laptop-code',
@@ -209,8 +208,6 @@ const Courses = () => {
           </Link>
         </div>
 
-        {/* Floating Inquiry Button */}
-        <InquiryButton collegeName="Courses & Programs" position="bottom-right" courses={courses || []} />
       </div>
     </div>
   );
