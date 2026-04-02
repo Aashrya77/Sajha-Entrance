@@ -6,6 +6,7 @@ import { noticeAPI, authAPI } from './api/services';
 import Navbar from './components/Navbar/Navbar';
 import Footer from './components/Footer/Footer';
 import Home from './pages/Home/Home';
+import Dashboard from './pages/Home/Dashboard';
 import About from './pages/About/About';
 import Courses from './pages/Courses/Courses';
 import CourseDetail from './pages/CourseDetail/CourseDetail';
@@ -131,6 +132,7 @@ function App() {
       <ScrollToTop />
       {!isAuthPage && <Navbar notice={notice} studentData={studentData} isAuthenticated={isAuthenticated} cartCount={cartItems.reduce((total, item) => total + item.quantity, 0)} />}
       <Routes>
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/courses" element={<Courses />} />

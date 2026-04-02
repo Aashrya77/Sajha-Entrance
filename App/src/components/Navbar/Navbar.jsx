@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
   const location = useLocation();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   
   const getParentGroup = () => {
     const path = location.pathname;
@@ -26,11 +27,35 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
       <nav className="navbar navbar-expand-lg fixed-top" id="navbar" style={{backgroundColor: '#fff', boxShadow: '0 2px 4px rgba(0,0,0,0.08)', padding: '19px 0', zIndex: 1030}}>
         <div className="container-fluid">
           <Link to="/" className="d-flex align-items-center text-decoration-none">
-            <img src="/img/logo-main.png" className="navbar-logo" alt="Sajha Entrance" style={{height: '80px'}} />
+            <img src="/img/adminlogo.png" className="navbar-logo" alt="Sajha Entrance" style={{height: '80px', width: '140px'}} />
           </Link>
-          <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span className="navbar-toggler-icon"></span>
-          </button>
+          <div className="d-flex align-items-center d-lg-none" style={{gap: '12px'}}>
+            <Link to="/cart" className="btn btn-link text-decoration-none position-relative" style={{color: '#333', fontSize: '18px', padding: '4px 8px'}}>
+              <i className="fa-solid fa-cart-shopping"></i>
+              {cartCount > 0 && (
+                <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style={{fontSize: '9px'}}>
+                  {cartCount}
+                </span>
+              )}
+            </Link>
+            <button 
+              className="navbar-toggler" 
+              type="button" 
+              data-bs-toggle="collapse" 
+              data-bs-target="#navbarContent" 
+              aria-controls="navbarContent" 
+              aria-expanded={isMenuOpen} 
+              aria-label="Toggle navigation"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              style={{ border: 'none', padding: '0', outline: 'none', boxShadow: 'none' }}
+            >
+              {isMenuOpen ? (
+                <i className="fa-solid fa-xmark" style={{ fontSize: '24px', color: '#333' }}></i>
+              ) : (
+                <span className="navbar-toggler-icon"></span>
+              )}
+            </button>
+          </div>
           <div className="collapse navbar-collapse" id="navbarContent">
             <ul className="navbar-nav mx-auto mb-2 mb-lg-0">
               <li className="nav-item">
@@ -61,8 +86,18 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
                   <li><Link className="dropdown-item" to="/contact" style={parentGroup === 'Contact' ? {color: '#ff6b35', fontWeight: 600} : {color: '#333'}}>CONTACT</Link></li>
                 </ul>
               </li>
+              <li className="nav-item d-lg-none">
+                {isAuthenticated && studentData ? (
+                  <Link to="/student/profile" className="nav-link" style={{color: '#333', fontWeight: 600, fontSize: '14px', padding: '8px 12px'}}>PROFILE</Link>
+                ) : (
+                  <div className="d-flex flex-column gap-2 p-2">
+                    <Link to="/student/login" className="btn btn-outline-primary btn-sm">LOGIN</Link>
+                    <Link to="/student/register" className="btn btn-primary btn-sm">REGISTER</Link>
+                  </div>
+                )}
+              </li>
             </ul>
-            <div className="d-flex align-items-center" style={{gap: '8px'}}>
+            <div className="d-flex align-items-center d-none d-lg-flex" style={{gap: '8px'}}>
               <Link to="/cart" className="btn btn-link text-decoration-none position-relative" style={{color: '#333', fontSize: '18px', padding: '4px 8px'}}>
                 <i className="fa-solid fa-cart-shopping"></i>
                 {cartCount > 0 && (
