@@ -143,7 +143,7 @@ const Home = () => {
           </h1>
           <div className="row g-4 mt-4">
             {colleges.map((college) => (
-              <div key={college._id} className="col-12">
+              <div key={college._id} className="col-12 col-sm-6 col-lg-3">
                 <Link to={`/college/${college._id}`} className="college-card-link">
                   <div className="college-card-modern">
                     {/* College Banner */}
