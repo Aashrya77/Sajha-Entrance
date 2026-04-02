@@ -216,7 +216,7 @@ const Colleges = () => {
 
                 <div className="row g-4 mt-3">
                   {colleges.map((college) => (
-                    <div key={college._id} className="col-6 col-lg-4">
+                    <div key={college._id} className="col-12 col-lg-4">
                       <Link to={`/college/${college._id}`} className="college-card-link">
                         <div className="college-card-modern">
                           {/* College Banner */}

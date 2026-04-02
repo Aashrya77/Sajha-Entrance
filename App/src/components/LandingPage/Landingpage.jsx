@@ -142,7 +142,7 @@ const LandingPage = ({ landingAds = [] }) => {
                 <div className="category-wrapper" style={{ position: 'relative' }}>
                   <div className="category-selector" onClick={() => setShowCatDropdown(!showCatDropdown)}>
                    {getCategoryIcon()}
-                    <span>{category}</span>
+                    <span className="category-text">{category}</span>
                   </div>
                   
                   {showCatDropdown && (
@@ -168,7 +168,7 @@ const LandingPage = ({ landingAds = [] }) => {
               <div className="location-wrapper">
                 <div className="location-selector" onClick={() => setShowDropdown(!showDropdown)}>
                   <MapPin size={18} className="icon" />
-                  <span> {location}</span>
+                  <span className="location-text"> {location}</span>
                 </div>
                 {showDropdown && (
                   <ul className="location-dropdown custom-dropdown">
@@ -187,7 +187,7 @@ const LandingPage = ({ landingAds = [] }) => {
                 ) : (
                   <Search size={18} className="icon" />
                 )}
-                <span>{searchLoading ? 'Searching...' : 'Search'}</span>
+                <span className="search-btn-text d-none d-md-inline">{searchLoading ? 'Searching...' : 'Search'}</span>
               </button>
             </div>
             
