@@ -1,5 +1,4 @@
 import AdminNotificationModel from "../../models/AdminNotification.js";
-import { hasPermission } from "../utils/admin-auth.js";
 
 const coerceBoolean = (value) => {
   if (typeof value === "boolean") {
@@ -77,7 +76,6 @@ const AdminNotificationAdminResource = {
         actionType: "record",
         icon: "Check",
         guard: "Mark this notification as read?",
-        isAccessible: ({ currentAdmin }) => hasPermission(currentAdmin, "write"),
         isVisible: ({ record }) => !record?.params?.isRead,
         handler: markAsReadHandler,
       },

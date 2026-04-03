@@ -12,7 +12,9 @@ import { adminBrandMeta } from "./config/theme.js";
 import {
   authenticateAdminUser,
   ensureAdminUserSeed,
-  hasAnyAdminAccess,
+  hasPermission,
+  requireAdminPermission,
+  syncAllAdminUserPermissions,
 } from "./utils/admin-auth.js";
 import { decorateAdminResource } from "./utils/admin-resource.js";
 import { logAdminLogin, logAdminSystemError } from "./utils/admin-audit.js";
@@ -35,6 +37,7 @@ import Student from "../models/Student.js";
 import OnlineClass from "../models/OnlineClass.js";
 import RecordedClass from "../models/RecordedClass.js";
 import StudentResult from "../models/StudentResult.js";
+import { BulkUploadResults } from "../controllers/Result.js";
 import Payment from "../models/Payment.js";
 import UniversityModel, { UniversityFileModel } from "../models/University.js";
 import MockTestModel, { MockTestFileModel } from "../models/MockTest.js";
@@ -99,6 +102,7 @@ const formatMonthSeries = (series) => {
 
 const startAdminPanel = async () => {
   await ensureAdminUserSeed();
+  await syncAllAdminUserPermissions();
 
   const authenticate = async (email, password) => {
     const result = await authenticateAdminUser(email, password);
@@ -398,6 +402,12 @@ const startAdminPanel = async () => {
             return request;
           },
         },
+        bulkUpload: {
+          actionType: "resource",
+          icon: "Upload",
+          label: "Bulk Upload",
+          component: Components.BulkUploadResults,
+        },
         edit: {
           before: async (request) => {
             const { payload } = request;
@@ -549,7 +559,7 @@ const startAdminPanel = async () => {
 
   const dashboardHandler = async (request, response, context) => {
     try {
-      if (!hasAnyAdminAccess(context.currentAdmin)) {
+      if (!hasPermission(context.currentAdmin, "dashboard", "view")) {
         return { error: "You do not have permission to view this dashboard." };
       }
 
@@ -853,10 +863,6 @@ const startAdminPanel = async () => {
       resource?.modelName ||
       resource?.name;
 
-    if (resourceId === "AdminUser") {
-      return decorateAdminResource(resource, { manageUsersOnly: true });
-    }
-
     if (resourceId === "AdminNotification") {
       return decorateAdminResource(resource, { audit: false });
     }
@@ -921,6 +927,12 @@ const startAdminPanel = async () => {
       },
       name: "adminjs",
     }
+  );
+
+  adminRouter.post(
+    "/api/results/bulk-upload",
+    requireAdminPermission("results", "add"),
+    BulkUploadResults
   );
 
   const Router = express.Router();

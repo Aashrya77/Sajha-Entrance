@@ -1,47 +1,77 @@
 import { flat } from "adminjs";
 import AdminUserModel from "../../models/AdminUser.js";
-import { ADMIN_PERMISSION_KEYS, ADMIN_ROLE_OPTIONS, buildPermissionSet } from "../constants/roles.js";
+import {
+  ADMIN_PERMISSION_PROPERTY_DESCRIPTORS,
+} from "../constants/permissions.js";
+import {
+  ADMIN_ROLE_OPTIONS,
+  buildPermissionSet,
+  normalizeStoredPermissionSet,
+} from "../constants/roles.js";
 
-const coerceBoolean = (value) => {
-  if (typeof value === "boolean") {
-    return value;
-  }
+const buildPermissionOverridesFromSource = (source = {}) =>
+  ADMIN_PERMISSION_PROPERTY_DESCRIPTORS.reduce((permissions, descriptor) => {
+    const rawValue = flat.get(source, descriptor.path);
 
-  if (typeof value === "string") {
-    return value === "true" || value === "on" || value === "1";
-  }
+    if (rawValue === undefined) {
+      return permissions;
+    }
 
-  return Boolean(value);
+    return flat.set(
+      permissions,
+      descriptor.path.replace(/^permissions\./, ""),
+      rawValue
+    );
+  }, {});
+
+const applyPermissionPayload = (payload, permissions) => {
+  ADMIN_PERMISSION_PROPERTY_DESCRIPTORS.forEach((descriptor) => {
+    payload[descriptor.path] = permissions[descriptor.resourceKey][descriptor.action];
+  });
 };
 
-const applyRolePermissions = async (request) => {
+const hasExplicitPermissionUpdates = (payload) =>
+  ADMIN_PERMISSION_PROPERTY_DESCRIPTORS.some(
+    (descriptor) => flat.get(payload, descriptor.path) !== undefined
+  );
+
+const hasGrantedPermission = (permissions) =>
+  ADMIN_PERMISSION_PROPERTY_DESCRIPTORS.some(
+    (descriptor) => permissions?.[descriptor.resourceKey]?.[descriptor.action]
+  );
+
+const buildPermissionSelectionFromPayload = (payload, role) => {
+  const selectedPermissions = ADMIN_PERMISSION_PROPERTY_DESCRIPTORS.reduce((permissions, descriptor) => {
+    return flat.set(
+      permissions,
+      descriptor.path.replace(/^permissions\./, ""),
+      flat.get(payload, descriptor.path) ?? false
+    );
+  }, {});
+
+  return buildPermissionSet(role, selectedPermissions);
+};
+
+const applyRolePermissions = async (request, context) => {
   if (request.method !== "post" || !request.payload) {
     return request;
   }
 
   const payload = { ...request.payload };
-  const role = flat.get(payload, "role") || "viewer";
-  const hasExplicitPermissions = ADMIN_PERMISSION_KEYS.some(
-    (permissionKey) => flat.get(payload, `permissions.${permissionKey}`) !== undefined
-  );
-  const defaultPermissions = buildPermissionSet(role);
+  const currentRole = flat.get(context?.record?.params || {}, "role") || "viewer";
+  const nextRole = flat.get(payload, "role") || currentRole;
+  const currentPermissionOverrides = buildPermissionOverridesFromSource(context?.record?.params || {});
+  const currentPermissions = normalizeStoredPermissionSet(currentRole, currentPermissionOverrides);
+  const roleChanged = !context?.record || nextRole !== currentRole;
+  const nextPermissions = hasExplicitPermissionUpdates(payload)
+    ? buildPermissionSelectionFromPayload(payload, nextRole)
+    : context?.record && hasGrantedPermission(currentPermissions)
+      ? buildPermissionSelectionFromPayload({}, nextRole)
+      : roleChanged
+        ? buildPermissionSet(nextRole)
+        : currentPermissions;
 
-  ADMIN_PERMISSION_KEYS.forEach((permissionKey) => {
-    const payloadKey = `permissions.${permissionKey}`;
-    const rawValue = flat.get(payload, payloadKey);
-
-    if (role === "super_admin") {
-      payload[payloadKey] = defaultPermissions[permissionKey];
-      return;
-    }
-
-    if (!hasExplicitPermissions) {
-      payload[payloadKey] = defaultPermissions[permissionKey];
-      return;
-    }
-
-    payload[payloadKey] = rawValue === undefined ? false : coerceBoolean(rawValue);
-  });
+  applyPermissionPayload(payload, nextPermissions);
 
   return {
     ...request,
@@ -67,32 +97,37 @@ const stripBlankPassword = async (request) => {
 const preventSelfDelete = ({ currentAdmin, record }) =>
   currentAdmin?.id && record?.params?._id && currentAdmin.id !== record.params._id;
 
+const permissionEditProperties = ADMIN_PERMISSION_PROPERTY_DESCRIPTORS.map(
+  (descriptor) => descriptor.path
+);
+
+const permissionShowProperties = [...permissionEditProperties];
+
+const permissionPropertyOptions = ADMIN_PERMISSION_PROPERTY_DESCRIPTORS.reduce(
+  (properties, descriptor) => {
+    properties[descriptor.path] = {
+      label: descriptor.label,
+      position: descriptor.position,
+      isVisible: { list: false, show: true, edit: true, filter: false },
+    };
+    return properties;
+  },
+  {}
+);
+
 const AdminUserAdminResource = {
   resource: AdminUserModel,
   options: {
     id: "AdminUser",
     navigation: { name: "Administration", icon: "User" },
     listProperties: ["fullName", "email", "role", "isActive", "lastLoginAt"],
-    editProperties: [
-      "fullName",
-      "email",
-      "role",
-      "isActive",
-      "permissions.read",
-      "permissions.write",
-      "permissions.delete",
-      "permissions.manageUsers",
-      "password",
-    ],
+    editProperties: ["fullName", "email", "role", "isActive", ...permissionEditProperties, "password"],
     showProperties: [
       "fullName",
       "email",
       "role",
       "isActive",
-      "permissions.read",
-      "permissions.write",
-      "permissions.delete",
-      "permissions.manageUsers",
+      ...permissionShowProperties,
       "lastLoginAt",
       "createdAt",
       "updatedAt",
@@ -120,18 +155,6 @@ const AdminUserAdminResource = {
         type: "password",
         isVisible: { list: false, show: false, edit: true, filter: false },
       },
-      "permissions.read": {
-        label: "Read access",
-      },
-      "permissions.write": {
-        label: "Write access",
-      },
-      "permissions.delete": {
-        label: "Delete access",
-      },
-      "permissions.manageUsers": {
-        label: "Manage users",
-      },
       lastLoginAt: {
         isVisible: { list: true, show: true, edit: false, filter: true },
       },
@@ -141,6 +164,7 @@ const AdminUserAdminResource = {
       updatedAt: {
         isVisible: { list: false, show: true, edit: false, filter: false },
       },
+      ...permissionPropertyOptions,
     },
   },
 };

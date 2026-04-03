@@ -1,6 +1,8 @@
 AdminJS.UserComponents = {}
 import Dashboard from '../admin/components/Dashboard'
 AdminJS.UserComponents.Dashboard = Dashboard
+import BulkUploadResults from '../admin/components/BulkUploadResults'
+AdminJS.UserComponents.BulkUploadResults = BulkUploadResults
 import ImageUpload from '../admin/components/ImageUpload'
 AdminJS.UserComponents.ImageUpload = ImageUpload
 import Login from '../admin/components/Login'

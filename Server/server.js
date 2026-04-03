@@ -109,10 +109,6 @@ const startServer = async () => {
     await connectDB();
     logger.info("MongoDB connected");
 
-    app.get("/admin/bulk-upload", (req, res) => {
-      res.sendFile("bulk-upload.html", { root: "public" });
-    });
-
     const adminRouter = await startAdminPanel();
     app.use(adminRouter);
 

@@ -1,3 +1,7 @@
+import {
+  ADMINJS_ACTION_PERMISSION_MAP,
+  getAdminResourceAccessConfig,
+} from "../constants/permissions.js";
 import { hasPermission } from "./admin-auth.js";
 import { createAuditAfterHook } from "./admin-audit.js";
 
@@ -9,23 +13,26 @@ const toArray = (value) => {
   return Array.isArray(value) ? value : [value];
 };
 
-const combineGuards = (existingGuard, nextGuard) => async (context) => {
-  const existingResult =
-    typeof existingGuard === "function"
-      ? await existingGuard(context)
-      : existingGuard === undefined
+const resolveSyncGuard = (guard, context) => {
+  const result =
+    typeof guard === "function"
+      ? guard(context)
+      : guard === undefined
         ? true
-        : existingGuard;
+        : guard;
 
-  const nextResult =
-    typeof nextGuard === "function"
-      ? await nextGuard(context)
-      : nextGuard === undefined
-        ? true
-        : nextGuard;
+  if (result && typeof result.then === "function") {
+    console.error(
+      "[AdminJS RBAC] Async action guard detected. AdminJS expects synchronous guards, so access was denied by default."
+    );
+    return false;
+  }
 
-  return Boolean(existingResult && nextResult);
+  return Boolean(result);
 };
+
+const combineGuards = (existingGuard, nextGuard) => (context) =>
+  resolveSyncGuard(existingGuard, context) && resolveSyncGuard(nextGuard, context);
 
 const mergeAction = (existingAction = {}, additions = {}) => ({
   ...existingAction,
@@ -33,6 +40,7 @@ const mergeAction = (existingAction = {}, additions = {}) => ({
   before: [...toArray(existingAction.before), ...toArray(additions.before)],
   after: [...toArray(existingAction.after), ...toArray(additions.after)],
   isAccessible: combineGuards(existingAction.isAccessible, additions.isAccessible),
+  isVisible: combineGuards(existingAction.isVisible, additions.isVisible),
 });
 
 const normalizeResource = (resource) =>
@@ -54,51 +62,69 @@ const resourceIdOf = (resourceEntry) =>
   resourceEntry.resource?.name ||
   "Resource";
 
-const guardForAction = (actionName, manageUsersOnly = false) => ({ currentAdmin }) => {
+const resolvePermissionAction = (actionName, resourceAccessConfig) =>
+  resourceAccessConfig.customActionPermissions?.[actionName] ||
+  ADMINJS_ACTION_PERMISSION_MAP[actionName] ||
+  "view";
+
+const isMutatingPermissionAction = (permissionAction) =>
+  ["add", "edit", "delete"].includes(permissionAction);
+
+const buildActionGuard = (actionName, resourceAccessConfig) => ({ currentAdmin }) => {
   if (!currentAdmin) {
     return false;
   }
 
-  if (manageUsersOnly) {
-    return hasPermission(currentAdmin, "manageUsers");
+  const permissionAction = resolvePermissionAction(actionName, resourceAccessConfig);
+
+  if (resourceAccessConfig.readOnly && isMutatingPermissionAction(permissionAction)) {
+    return false;
   }
 
-  if (actionName === "list" || actionName === "show" || actionName === "search") {
-    return hasPermission(currentAdmin, "read");
+  if (
+    resourceAccessConfig.superAdminOnlyActions?.includes(actionName) &&
+    currentAdmin.role !== "super_admin"
+  ) {
+    return false;
   }
 
-  if (actionName === "new" || actionName === "edit") {
-    return hasPermission(currentAdmin, "write");
+  if (!resourceAccessConfig.permissionResource) {
+    return true;
   }
 
-  if (actionName === "delete" || actionName === "bulkDelete") {
-    return hasPermission(currentAdmin, "delete");
-  }
-
-  return hasPermission(currentAdmin, "read");
+  return hasPermission(currentAdmin, resourceAccessConfig.permissionResource, permissionAction);
 };
 
 const decorateAdminResource = (resource, config = {}) => {
   const normalizedResource = normalizeResource(resource);
   const resourceId = resourceIdOf(normalizedResource);
+  const resourceAccessConfig = {
+    ...(getAdminResourceAccessConfig(resourceId) || {}),
+    ...config,
+  };
   const actions = { ...(normalizedResource.options.actions || {}) };
-  const manageUsersOnly = Boolean(config.manageUsersOnly);
-  const readOnly = Boolean(config.readOnly);
-  const auditEnabled = config.audit !== false;
+  const auditEnabled = resourceAccessConfig.audit !== false;
+  const actionNames = new Set([
+    "list",
+    "show",
+    "search",
+    "new",
+    "edit",
+    "delete",
+    "bulkDelete",
+    ...Object.keys(actions),
+    ...Object.keys(resourceAccessConfig.customActionPermissions || {}),
+  ]);
 
-  ["list", "show", "search", "new", "edit", "delete", "bulkDelete"].forEach((actionName) => {
-    if (readOnly && ["new", "edit", "delete", "bulkDelete"].includes(actionName)) {
-      actions[actionName] = mergeAction(actions[actionName], {
-        isAccessible: () => false,
-      });
-      return;
-    }
-
+  actionNames.forEach((actionName) => {
+    const permissionAction = resolvePermissionAction(actionName, resourceAccessConfig);
+    const guard = buildActionGuard(actionName, resourceAccessConfig);
     const additions = {
-      isAccessible: guardForAction(actionName, manageUsersOnly),
+      isAccessible: guard,
+      isVisible: guard,
     };
 
-    if (auditEnabled && ["new", "edit", "delete"].includes(actionName)) {
+    if (auditEnabled && isMutatingPermissionAction(permissionAction) && ["new", "edit", "delete"].includes(actionName)) {
       additions.after = [createAuditAfterHook(actionName, resourceId)];
     }
 

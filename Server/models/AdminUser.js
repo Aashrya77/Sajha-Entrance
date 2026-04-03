@@ -1,5 +1,12 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
+import { buildAdminPermissionSchemaDefinition } from "../admin/constants/permissions.js";
+import { normalizeStoredPermissionSet } from "../admin/constants/roles.js";
+
+const AdminPermissionsSchema = new mongoose.Schema(buildAdminPermissionSchemaDefinition(), {
+  _id: false,
+  minimize: false,
+});
 
 const AdminUserSchema = new mongoose.Schema(
   {
@@ -25,22 +32,8 @@ const AdminUserSchema = new mongoose.Schema(
       default: "viewer",
     },
     permissions: {
-      read: {
-        type: Boolean,
-        default: true,
-      },
-      write: {
-        type: Boolean,
-        default: false,
-      },
-      delete: {
-        type: Boolean,
-        default: false,
-      },
-      manageUsers: {
-        type: Boolean,
-        default: false,
-      },
+      type: AdminPermissionsSchema,
+      default: () => ({}),
     },
     isActive: {
       type: Boolean,
@@ -53,8 +46,23 @@ const AdminUserSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    minimize: false,
   }
 );
+
+AdminUserSchema.pre("validate", function normalizeAdminPermissions(next) {
+  const normalizedPermissions = normalizeStoredPermissionSet(
+    this.role,
+    this.permissions?.toObject?.() || this.permissions
+  );
+
+  if (JSON.stringify(this.permissions?.toObject?.() || this.permissions || {}) !== JSON.stringify(normalizedPermissions)) {
+    this.permissions = normalizedPermissions;
+    this.markModified("permissions");
+  }
+
+  next();
+});
 
 AdminUserSchema.pre("save", async function saveAdminUser(next) {
   if (!this.isModified("password")) {

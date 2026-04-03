@@ -117,9 +117,10 @@ const BulkUploadResults = () => {
     setResult(null);
 
     try {
-      const res = await fetch("/api/results/bulk-upload", {
+      const res = await fetch("/admin/api/results/bulk-upload", {
         method: "POST",
         body: formData,
+        credentials: "same-origin",
       });
       const data = await res.json();
 

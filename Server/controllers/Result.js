@@ -1,5 +1,5 @@
 import StudentResult from "../models/StudentResult.js";
-import multer from "multer";
+import fs from "fs/promises";
 import XLSX from "xlsx";
 
 const COURSE_SUBJECTS = {
@@ -11,16 +11,33 @@ const COURSE_SUBJECTS = {
 
 const VALID_COURSES = Object.keys(COURSE_SUBJECTS);
 
-// Multer config — store file in memory
-const upload = multer({ storage: multer.memoryStorage() });
+const getUploadedFileBuffer = async (req) => {
+  if (req.file?.buffer) {
+    return req.file.buffer;
+  }
+
+  const uploadedFile = Array.isArray(req.files?.file) ? req.files.file[0] : req.files?.file;
+
+  if (uploadedFile?.buffer) {
+    return uploadedFile.buffer;
+  }
+
+  if (uploadedFile?.filepath) {
+    return fs.readFile(uploadedFile.filepath);
+  }
+
+  return null;
+};
 
 const BulkUploadResults = async (req, res) => {
   try {
-    if (!req.file) {
+    const fileBuffer = await getUploadedFileBuffer(req);
+
+    if (!fileBuffer) {
       return res.status(400).json({ success: false, error: "No file uploaded." });
     }
 
-    const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
+    const workbook = XLSX.read(fileBuffer, { type: "buffer" });
     const sheetName = workbook.SheetNames[0];
     const sheet = workbook.Sheets[sheetName];
     const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
@@ -216,4 +233,4 @@ const GetTopResults = async (req, res) => {
   }
 };
 
-export { SearchResult, GetTopResults, BulkUploadResults, upload };
+export { SearchResult, GetTopResults, BulkUploadResults };
