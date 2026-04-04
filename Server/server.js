@@ -21,6 +21,7 @@ import InquiryRoutes from "./routes/Inquiry.js";
 import { startAdminPanel } from "./admin/Admin.js";
 import { adminBrandAssets } from "./admin/config/branding.js";
 import { createLogger } from "./utils/logger.js";
+import { backfillLegacyResultExams } from "./services/resultService.js";
 
 dotenv.config();
 
@@ -108,6 +109,17 @@ const startServer = async () => {
   try {
     await connectDB();
     logger.info("MongoDB connected");
+
+    try {
+      const legacyMigration = await backfillLegacyResultExams();
+      if (legacyMigration.migratedResults > 0) {
+        logger.info(
+          `Backfilled ${legacyMigration.migratedResults} legacy results across ${legacyMigration.migratedGroups} exam group(s)`
+        );
+      }
+    } catch (migrationError) {
+      logger.error("Legacy result migration failed:", migrationError.message);
+    }
 
     const adminRouter = await startAdminPanel();
     app.use(adminRouter);

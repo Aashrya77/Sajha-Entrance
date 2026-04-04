@@ -220,11 +220,14 @@ export const ADMIN_RESOURCE_ACCESS = {
   RecordedClass: {
     permissionResource: "recorded_classes",
   },
-  StudentResult: {
+  ResultExam: {
     permissionResource: "results",
     customActionPermissions: {
       bulkUpload: "add",
     },
+  },
+  StudentResult: {
+    permissionResource: "results",
   },
   Payment: {
     permissionResource: "payments",

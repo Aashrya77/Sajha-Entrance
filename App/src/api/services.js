@@ -55,6 +55,7 @@ export const authAPI = {
   login: (credentials) => API.post('/student/login', credentials),
   register: (userData) => API.post('/student/register', userData),
   getProfile: () => API.get('/student/profile'),
+  updateProfile: (data) => API.put('/student/profile', data),
   getClasses: () => API.get('/student/classes'),
   logout: () => API.post('/student/logout'),
 };
@@ -93,8 +94,22 @@ export const bookPaymentAPI = {
 
 // Result API
 export const resultAPI = {
-  searchResult: (course, symbolNumber) => API.get(`/results?course=${encodeURIComponent(course)}&symbolNumber=${encodeURIComponent(symbolNumber)}`),
-  getTopResults: () => API.get('/results/top'),
+  getCourses: () => API.get("/results/courses"),
+  getPublishedExams: (course) =>
+    API.get(`/results/exams?course=${encodeURIComponent(course)}`),
+  searchResult: (course, symbolNumber, examId = "") => {
+    const params = new URLSearchParams();
+    params.append("course", course);
+    params.append("symbolNumber", symbolNumber);
+    if (examId) params.append("examId", examId);
+    return API.get(`/results?${params.toString()}`);
+  },
+  getTopResults: (course = "", examId = "") => {
+    const params = new URLSearchParams();
+    if (course) params.append("course", course);
+    if (examId) params.append("examId", examId);
+    return API.get(`/results/top?${params.toString()}`);
+  },
 };
 
 // Inquiry API

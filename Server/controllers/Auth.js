@@ -130,6 +130,48 @@ export const getProfile = async (req, res) => {
   }
 };
 
+export const updateProfile = async (req, res) => {
+  try {
+    const student = await Student.findById(req.student.id).select("-password");
+
+    if (!student) {
+      return res.status(404).json({ success: false, error: "Student not found." });
+    }
+
+    const nextName = String(req.body.name || "").trim();
+    if (!nextName) {
+      return res.status(400).json({ success: false, error: "Name is required." });
+    }
+
+    student.name = nextName;
+    student.phone = String(req.body.phone || "").trim();
+    student.address = String(req.body.address || "").trim();
+    student.collegeName = String(req.body.collegeName || "").trim();
+
+    await student.save();
+
+    res.json({
+      success: true,
+      message: "Profile updated successfully.",
+      data: {
+        id: student._id,
+        studentId: student.studentId,
+        name: student.name,
+        email: student.email,
+        phone: student.phone,
+        address: student.address,
+        collegeName: student.collegeName,
+        course: student.course,
+        accountStatus: student.accountStatus,
+        createdAt: student.createdAt,
+      },
+    });
+  } catch (error) {
+    console.error("Update profile error:", error);
+    res.status(500).json({ success: false, error: "Failed to update profile." });
+  }
+};
+
 // Get Classes for student's course
 export const getClasses = async (req, res) => {
   try {

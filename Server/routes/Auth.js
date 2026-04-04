@@ -3,6 +3,7 @@ import {
   register,
   login,
   getProfile,
+  updateProfile,
   getClasses,
   logout,
 } from "../controllers/Auth.js";
@@ -16,6 +17,7 @@ Router.post("/login", login);
 
 // Protected routes
 Router.get("/profile", authenticateToken, getProfile);
+Router.put("/profile", authenticateToken, updateProfile);
 Router.get("/classes", authenticateToken, getClasses);
 Router.post("/logout", authenticateToken, logout);
 

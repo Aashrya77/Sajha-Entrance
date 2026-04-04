@@ -1,4 +1,7 @@
 import AdminJS from "adminjs";
+import componentsBundler from "../node_modules/adminjs/lib/backend/bundler/components.bundler.js";
+import generateAdminComponentEntry from "../node_modules/adminjs/lib/backend/bundler/generate-user-component-entry.js";
+import { ADMIN_JS_TMP_DIR } from "../node_modules/adminjs/lib/backend/bundler/utils/constants.js";
 import express from "express";
 import AdminJSExpress from "@adminjs/express";
 import * as AdminJSMongoose from "@adminjs/mongoose";
@@ -36,8 +39,8 @@ import ContactModel from "../models/Contact.js";
 import Student from "../models/Student.js";
 import OnlineClass from "../models/OnlineClass.js";
 import RecordedClass from "../models/RecordedClass.js";
+import ResultExam from "../models/ResultExam.js";
 import StudentResult from "../models/StudentResult.js";
-import { BulkUploadResults } from "../controllers/Result.js";
 import Payment from "../models/Payment.js";
 import UniversityModel, { UniversityFileModel } from "../models/University.js";
 import MockTestModel, { MockTestFileModel } from "../models/MockTest.js";
@@ -51,6 +54,26 @@ import LandingAdAdminResource from "./resources/landing-ad.resource.js";
 import CollegeAdminResource from "./resources/college.resource.js";
 import AdminUserAdminResource from "./resources/admin-user.resource.js";
 import AdminNotificationAdminResource from "./resources/admin-notification.resource.js";
+import {
+  CreateAdminResultExam,
+  DeleteResultExamSet,
+  DownloadResultTemplate,
+  GetAdminResultCourses,
+  GetAdminResultExams,
+  ImportBulkUploadResults,
+  PreviewBulkUploadResults,
+  PublishResultExam,
+  RecalculateExamRanks,
+  UpdateAdminResultExam,
+  UnpublishResultExam,
+} from "../controllers/Result.js";
+import {
+  deleteResultExamSet as deleteResultExamSetService,
+} from "../services/resultService.js";
+import {
+  getResultCourse,
+  normalizeCourseCode,
+} from "../constants/resultCourses.js";
 
 
 // Helper function to extract YouTube video ID from URL
@@ -98,6 +121,95 @@ const formatMonthSeries = (series) => {
     count: item.count,
     total: item.total,
   }));
+};
+
+const toIsoDateTimeString = (value) => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? "" : date.toISOString();
+};
+
+const syncSubjectsWithTemplate = (payload, templateSubjects = []) => {
+  if (!payload || !templateSubjects.length) {
+    return payload;
+  }
+
+  const existingSubjects = [];
+  let index = 0;
+  while (payload[`subjects.${index}.subjectName`] !== undefined || index < templateSubjects.length) {
+    existingSubjects.push({
+      subjectName: payload[`subjects.${index}.subjectName`],
+      fullMarks: payload[`subjects.${index}.fullMarks`],
+      passMarks: payload[`subjects.${index}.passMarks`],
+      obtainedMarks: payload[`subjects.${index}.obtainedMarks`],
+    });
+    index += 1;
+  }
+
+  templateSubjects.forEach((templateSubject, subjectIndex) => {
+    payload[`subjects.${subjectIndex}.subjectName`] = templateSubject.name || templateSubject;
+    if (existingSubjects[subjectIndex]?.fullMarks !== undefined) {
+      payload[`subjects.${subjectIndex}.fullMarks`] = existingSubjects[subjectIndex].fullMarks;
+    } else if (templateSubject.fullMarks !== undefined) {
+      payload[`subjects.${subjectIndex}.fullMarks`] = templateSubject.fullMarks;
+    }
+
+    if (existingSubjects[subjectIndex]?.passMarks !== undefined) {
+      payload[`subjects.${subjectIndex}.passMarks`] = existingSubjects[subjectIndex].passMarks;
+    } else if (templateSubject.passMarks !== undefined) {
+      payload[`subjects.${subjectIndex}.passMarks`] = templateSubject.passMarks;
+    }
+
+    if (existingSubjects[subjectIndex]?.obtainedMarks !== undefined) {
+      payload[`subjects.${subjectIndex}.obtainedMarks`] = existingSubjects[subjectIndex].obtainedMarks;
+    }
+  });
+
+  let extraIndex = templateSubjects.length;
+  while (payload[`subjects.${extraIndex}.subjectName`] !== undefined) {
+    delete payload[`subjects.${extraIndex}.subjectName`];
+    delete payload[`subjects.${extraIndex}.fullMarks`];
+    delete payload[`subjects.${extraIndex}.passMarks`];
+    delete payload[`subjects.${extraIndex}.obtainedMarks`];
+    extraIndex += 1;
+  }
+
+  return payload;
+};
+
+const ensureManualExamForPayload = async (payload) => {
+  if (!payload) {
+    return payload;
+  }
+
+  const normalizedCourseCode = normalizeCourseCode(payload.course);
+  const examId = String(payload.exam || "").trim();
+  const examDate = payload.examDate ? new Date(payload.examDate) : null;
+
+  let exam = null;
+
+  if (examId) {
+    exam = await ResultExam.findById(examId);
+  }
+
+  if (exam) {
+    payload.exam = `${exam._id}`;
+    payload.course = exam.course;
+    payload.examDate = toIsoDateTimeString(exam.examDate);
+    payload.publishedAt =
+      exam.status === "draft" ? "" : toIsoDateTimeString(exam.publishDate || new Date());
+    syncSubjectsWithTemplate(payload, exam.subjects || []);
+    return payload;
+  }
+
+  if (normalizedCourseCode) {
+    payload.course = normalizedCourseCode;
+    const defaultSubjects = (
+      getResultCourse(normalizedCourseCode)?.templateSubjects || []
+    ).map((subjectName) => ({ name: subjectName }));
+    syncSubjectsWithTemplate(payload, defaultSubjects);
+  }
+
+  return payload;
 };
 
 const startAdminPanel = async () => {
@@ -247,12 +359,129 @@ const startAdminPanel = async () => {
     },
   };
 
-  // Course-to-subjects mapping
-  const COURSE_SUBJECTS = {
-    BIT: ["English", "Computer", "Math"],
-    BCA: ["English", "GK", "Math"],
-    CMAT: ["English", "GK", "Math", "Logical Reasoning"],
-    CSIT: ["Physics", "English", "Math", "Chemistry"],
+  const resultExamResource = {
+    resource: ResultExam,
+    options: {
+      navigation: { name: "Exam Results", icon: "Events" },
+      listProperties: [
+        "title",
+        "course",
+        "examDate",
+        "status",
+        "resultCount",
+        "publishDate",
+        "lastImportedAt",
+      ],
+      filterProperties: ["course", "status", "examDate", "title"],
+      editProperties: [
+        "title",
+        "course",
+        "examDate",
+        "description",
+        "status",
+        "publishDate",
+        "subjects",
+      ],
+      showProperties: [
+        "title",
+        "course",
+        "courseName",
+        "examDate",
+        "status",
+        "publishDate",
+        "description",
+        "subjects",
+        "resultCount",
+        "lastImportedAt",
+        "createdAt",
+        "updatedAt",
+      ],
+      properties: {
+        title: { isTitle: true },
+        course: {
+          label: "Course",
+        },
+        examDate: {
+          type: "datetime",
+        },
+        publishDate: {
+          type: "datetime",
+        },
+        status: {
+          availableValues: [
+            { value: "draft", label: "Draft" },
+            { value: "scheduled", label: "Scheduled" },
+            { value: "published", label: "Published" },
+          ],
+        },
+        "subjects.name": {
+          label: "Subject Name",
+        },
+        "subjects.fullMarks": {
+          label: "Full Marks",
+          type: "number",
+        },
+        "subjects.passMarks": {
+          label: "Pass Marks",
+          type: "number",
+        },
+        "subjects.displayOrder": {
+          label: "Display Order",
+          type: "number",
+        },
+        resultCount: {
+          isVisible: { edit: false, list: true, show: true, filter: false },
+        },
+        lastImportedAt: {
+          type: "datetime",
+          isVisible: { edit: false, list: true, show: true, filter: false },
+        },
+        createdAt: {
+          type: "datetime",
+          isVisible: { edit: false, list: false, show: true, filter: false },
+        },
+        updatedAt: {
+          type: "datetime",
+          isVisible: { edit: false, list: false, show: true, filter: false },
+        },
+      },
+      actions: {
+        new: {
+          isAccessible: false,
+          isVisible: false,
+        },
+        bulkUpload: {
+          actionType: "resource",
+          icon: "Upload",
+          label: "Bulk Upload Workspace",
+          component: Components.BulkUploadResults,
+        },
+        delete: {
+          guard:
+            "This will remove the exam and all imported results under it. Do you want to continue?",
+          handler: async (request, response, context) => {
+            const recordId = context.record?.param("_id");
+            if (!recordId) {
+              return {
+                notice: {
+                  message: "Exam record could not be resolved.",
+                  type: "error",
+                },
+              };
+            }
+
+            await deleteResultExamSetService(recordId);
+            return {
+              notice: {
+                message: "Exam and related result set deleted successfully.",
+                type: "success",
+              },
+              redirectUrl: `/admin/resources/${context.resource.id()}`,
+            };
+          },
+        },
+      },
+    },
   };
 
   const studentResultResource = {
@@ -263,15 +492,18 @@ const startAdminPanel = async () => {
         "symbolNumber",
         "studentName",
         "course",
+        "exam",
+        "rank",
         "totalObtainedMarks",
-        "totalFullMarks",
         "percentage",
-        "result",
+        "resultStatus",
       ],
+      filterProperties: ["course", "exam", "symbolNumber", "studentName", "resultStatus"],
       editProperties: [
         "symbolNumber",
         "studentName",
         "course",
+        "exam",
         "examDate",
         "subjects",
         "remarks",
@@ -280,12 +512,15 @@ const startAdminPanel = async () => {
         "symbolNumber",
         "studentName",
         "course",
+        "exam",
         "examDate",
         "subjects",
         "totalFullMarks",
+        "totalPassMarks",
         "totalObtainedMarks",
         "percentage",
-        "result",
+        "rank",
+        "resultStatus",
         "remarks",
         "publishedAt",
       ],
@@ -299,12 +534,10 @@ const startAdminPanel = async () => {
         },
         course: {
           label: "Course",
-          availableValues: [
-            { value: "BIT", label: "BIT" },
-            { value: "BCA", label: "BCA" },
-            { value: "CMAT", label: "CMAT" },
-            { value: "CSIT", label: "CSIT" },
-          ],
+        },
+        exam: {
+          label: "Exam / Mock Test",
+          reference: "ResultExam",
         },
         examDate: {
           label: "Exam Date",
@@ -312,16 +545,6 @@ const startAdminPanel = async () => {
         },
         "subjects.subjectName": {
           label: "Subject Name",
-          availableValues: [
-            { value: "English", label: "English" },
-            { value: "Math", label: "Math" },
-            { value: "Computer", label: "Computer" },
-            { value: "GK", label: "GK" },
-            { value: "Physics", label: "Physics" },
-            { value: "Chemistry", label: "Chemistry" },
-            { value: "Logical Reasoning", label: "Logical Reasoning" },
-          ],
-          description: "Select subject for this row",
         },
         "subjects.fullMarks": {
           label: "Full Marks",
@@ -335,9 +558,17 @@ const startAdminPanel = async () => {
           label: "Obtained Marks",
           type: "number",
         },
+        "subjects.status": {
+          label: "Subject Status",
+          isVisible: { edit: false, list: false, show: true, filter: false },
+        },
         totalFullMarks: {
           label: "Total Full Marks",
           isVisible: { edit: false, list: true, show: true, filter: false },
+        },
+        totalPassMarks: {
+          label: "Total Pass Marks",
+          isVisible: { edit: false, list: false, show: true, filter: false },
         },
         totalObtainedMarks: {
           label: "Total Obtained Marks",
@@ -347,106 +578,35 @@ const startAdminPanel = async () => {
           label: "Percentage (%)",
           isVisible: { edit: false, list: true, show: true, filter: false },
         },
-        result: {
+        rank: {
+          label: "Rank",
+          isVisible: { edit: false, list: true, show: true, filter: true },
+        },
+        resultStatus: {
           label: "Result",
           isVisible: { edit: false, list: true, show: true, filter: true },
+        },
+        result: {
+          isVisible: false,
         },
         remarks: {
           label: "Remarks",
           type: "textarea",
         },
+        publishedAt: {
+          type: "datetime",
+          isVisible: { edit: false, list: false, show: true, filter: false },
+        },
       },
       actions: {
         new: {
-          before: async (request) => {
-            const { payload } = request;
-            if (payload && payload.course) {
-              const subjects = COURSE_SUBJECTS[payload.course];
-              if (subjects) {
-                // Collect any marks the admin already entered
-                const existingSubjects = [];
-                let i = 0;
-                while (payload[`subjects.${i}.subjectName`] !== undefined || i < subjects.length) {
-                  existingSubjects.push({
-                    subjectName: payload[`subjects.${i}.subjectName`],
-                    fullMarks: payload[`subjects.${i}.fullMarks`],
-                    passMarks: payload[`subjects.${i}.passMarks`],
-                    obtainedMarks: payload[`subjects.${i}.obtainedMarks`],
-                  });
-                  i++;
-                }
-                // Ensure subjects match the course
-                subjects.forEach((name, idx) => {
-                  payload[`subjects.${idx}.subjectName`] = name;
-                  if (!payload[`subjects.${idx}.fullMarks`]) {
-                    payload[`subjects.${idx}.fullMarks`] = existingSubjects[idx]?.fullMarks || '';
-                  }
-                  if (!payload[`subjects.${idx}.passMarks`]) {
-                    payload[`subjects.${idx}.passMarks`] = existingSubjects[idx]?.passMarks || '';
-                  }
-                  if (!payload[`subjects.${idx}.obtainedMarks`]) {
-                    payload[`subjects.${idx}.obtainedMarks`] = existingSubjects[idx]?.obtainedMarks || '';
-                  }
-                });
-                // Remove any extra subjects beyond what the course defines
-                let extra = subjects.length;
-                while (payload[`subjects.${extra}.subjectName`] !== undefined) {
-                  delete payload[`subjects.${extra}.subjectName`];
-                  delete payload[`subjects.${extra}.fullMarks`];
-                  delete payload[`subjects.${extra}.passMarks`];
-                  delete payload[`subjects.${extra}.obtainedMarks`];
-                  extra++;
-                }
-              }
-            }
-            return request;
-          },
-        },
-        bulkUpload: {
-          actionType: "resource",
-          icon: "Upload",
-          label: "Bulk Upload",
-          component: Components.BulkUploadResults,
+          isAccessible: false,
+          isVisible: false,
         },
         edit: {
           before: async (request) => {
             const { payload } = request;
-            if (payload && payload.course) {
-              const subjects = COURSE_SUBJECTS[payload.course];
-              if (subjects) {
-                const existingSubjects = [];
-                let i = 0;
-                while (payload[`subjects.${i}.subjectName`] !== undefined || i < subjects.length) {
-                  existingSubjects.push({
-                    subjectName: payload[`subjects.${i}.subjectName`],
-                    fullMarks: payload[`subjects.${i}.fullMarks`],
-                    passMarks: payload[`subjects.${i}.passMarks`],
-                    obtainedMarks: payload[`subjects.${i}.obtainedMarks`],
-                  });
-                  i++;
-                }
-                subjects.forEach((name, idx) => {
-                  payload[`subjects.${idx}.subjectName`] = name;
-                  if (!payload[`subjects.${idx}.fullMarks`]) {
-                    payload[`subjects.${idx}.fullMarks`] = existingSubjects[idx]?.fullMarks || '';
-                  }
-                  if (!payload[`subjects.${idx}.passMarks`]) {
-                    payload[`subjects.${idx}.passMarks`] = existingSubjects[idx]?.passMarks || '';
-                  }
-                  if (!payload[`subjects.${idx}.obtainedMarks`]) {
-                    payload[`subjects.${idx}.obtainedMarks`] = existingSubjects[idx]?.obtainedMarks || '';
-                  }
-                });
-                let extra = subjects.length;
-                while (payload[`subjects.${extra}.subjectName`] !== undefined) {
-                  delete payload[`subjects.${extra}.subjectName`];
-                  delete payload[`subjects.${extra}.fullMarks`];
-                  delete payload[`subjects.${extra}.passMarks`];
-                  delete payload[`subjects.${extra}.obtainedMarks`];
-                  extra++;
-                }
-              }
-            }
+            await ensureManualExamForPayload(payload);
             return request;
           },
         },
@@ -725,6 +885,7 @@ const startAdminPanel = async () => {
     studentResource,
     onlineClassResource,
     recordedClassResource,
+    resultExamResource,
     studentResultResource,
     paymentResource,
     {
@@ -895,6 +1056,14 @@ const startAdminPanel = async () => {
     await admin.watch();
   } else {
     await admin.initialize();
+
+    if (process.env.NODE_ENV !== "production") {
+      logger.info("Bundling AdminJS user components for development mode");
+      await componentsBundler.createEntry({
+        content: generateAdminComponentEntry(admin, ADMIN_JS_TMP_DIR),
+      });
+      await componentsBundler.build();
+    }
   }
 
   const sessionStore = new MongoStore({
@@ -929,13 +1098,79 @@ const startAdminPanel = async () => {
     }
   );
 
+  adminRouter.get(
+    "/api/result-courses",
+    requireAdminPermission("results", "view"),
+    GetAdminResultCourses
+  );
+
+  adminRouter.get(
+    "/api/result-exams",
+    requireAdminPermission("results", "view"),
+    GetAdminResultExams
+  );
+
   adminRouter.post(
-    "/api/results/bulk-upload",
+    "/api/result-exams",
     requireAdminPermission("results", "add"),
-    BulkUploadResults
+    CreateAdminResultExam
+  );
+
+  adminRouter.patch(
+    "/api/result-exams/:examId",
+    requireAdminPermission("results", "edit"),
+    UpdateAdminResultExam
+  );
+
+  adminRouter.post(
+    "/api/result-exams/:examId/publish",
+    requireAdminPermission("results", "edit"),
+    PublishResultExam
+  );
+
+  adminRouter.post(
+    "/api/result-exams/:examId/unpublish",
+    requireAdminPermission("results", "edit"),
+    UnpublishResultExam
+  );
+
+  adminRouter.post(
+    "/api/result-exams/:examId/recalculate-ranks",
+    requireAdminPermission("results", "edit"),
+    RecalculateExamRanks
+  );
+
+  adminRouter.delete(
+    "/api/result-exams/:examId",
+    requireAdminPermission("results", "delete"),
+    DeleteResultExamSet
+  );
+
+  adminRouter.get(
+    "/api/results/templates",
+    requireAdminPermission("results", "view"),
+    DownloadResultTemplate
+  );
+
+  adminRouter.post(
+    "/api/results/bulk-upload/preview",
+    requireAdminPermission("results", "add"),
+    PreviewBulkUploadResults
+  );
+
+  adminRouter.post(
+    "/api/results/bulk-upload/import",
+    requireAdminPermission("results", "add"),
+    ImportBulkUploadResults
   );
 
   const Router = express.Router();
+  Router.use(admin.options.rootPath, (req, res, next) => {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+    next();
+  });
   Router.use(admin.options.rootPath, adminRouter);
   return Router;
 };
