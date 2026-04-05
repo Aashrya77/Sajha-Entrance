@@ -16,6 +16,7 @@ export default function SidebarBranding() {
     <Link
       to={h.dashboardUrl()}
       data-css="sidebar-logo"
+      className="sajha-admin-sidebar-branding"
       style={{
         display: "block",
         textDecoration: "none",
@@ -24,6 +25,7 @@ export default function SidebarBranding() {
       }}
     >
       <Box
+        className="sajha-admin-sidebar-branding__card"
         style={{
           display: "flex",
           flexDirection: "column",

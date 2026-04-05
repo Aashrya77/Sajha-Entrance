@@ -25,10 +25,12 @@ export default function TopBar({ toggleSidebar }) {
   return (
     <Box
       data-css="topbar"
+      className="sajha-admin-topbar"
       style={{
         display: "flex",
         alignItems: "center",
-        gap: 16,
+        flexWrap: "nowrap",
+        gap: 12,
         padding: "14px 18px",
         minHeight: 78,
       }}
@@ -38,6 +40,7 @@ export default function TopBar({ toggleSidebar }) {
         px={["default", "lg"]}
         onClick={toggleSidebar}
         display={["block", "block", "block", "block", "none"]}
+        className="sajha-admin-topbar__menu"
         style={{
           cursor: "pointer",
           borderRadius: dashboardTheme.radius.md,
@@ -49,6 +52,7 @@ export default function TopBar({ toggleSidebar }) {
 
       <Link
         to={h.dashboardUrl()}
+        className="sajha-admin-topbar__brand"
         style={{
           textDecoration: "none",
           color: "inherit",
@@ -57,12 +61,12 @@ export default function TopBar({ toggleSidebar }) {
         }}
       >
         <Box
+          className="sajha-admin-topbar__brandCard"
           style={{
-            ...shell,
             display: "flex",
             alignItems: "center",
             gap: 14,
-            padding: "10px 14px",
+            padding: "8px 0",
             minWidth: 0,
           }}
         >
@@ -117,6 +121,7 @@ export default function TopBar({ toggleSidebar }) {
 
           <Box style={{ minWidth: 0 }}>
             <Box
+              className="sajha-admin-topbar__brandTitle"
               style={{
                 color: dashboardTheme.ink,
                 fontSize: 15,
@@ -130,6 +135,7 @@ export default function TopBar({ toggleSidebar }) {
               {hasLogo ? (branding?.companyName || adminBrandMeta.companyName) : adminBrandMeta.consoleName}
             </Box>
             <Text
+              className="sajha-admin-topbar__brandSubtitle"
               style={{
                 marginTop: 4,
                 color: dashboardTheme.muted,
@@ -148,6 +154,7 @@ export default function TopBar({ toggleSidebar }) {
       </Link>
 
       <Box
+        className="sajha-admin-topbar__actions"
         style={{
           display: "flex",
           alignItems: "center",

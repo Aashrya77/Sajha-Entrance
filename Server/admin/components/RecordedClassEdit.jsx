@@ -54,7 +54,7 @@ export default function RecordedClassEditComponent(props) {
   };
 
   return (
-    <div style={{ padding: "16px 0" }}>
+    <div className="sajha-admin-recorded-class" style={{ padding: "16px 0" }}>
       <div style={{ marginBottom: "16px" }}>
         <label style={{ display: "block", marginBottom: "8px", fontWeight: "500" }}>
           YouTube URL
@@ -119,6 +119,7 @@ export default function RecordedClassEditComponent(props) {
             src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
             alt="Video thumbnail"
             style={{
+              width: "100%",
               maxWidth: "200px",
               borderRadius: "4px",
               border: "1px solid #ddd",

@@ -705,6 +705,7 @@ export default function BulkUploadResults() {
 
   return (
     <Box
+      className="sajha-admin-workspace"
       style={{
         maxWidth: "1320px",
         margin: "0 auto",
@@ -714,6 +715,7 @@ export default function BulkUploadResults() {
       }}
     >
       <Box
+        className="sajha-admin-surface sajha-admin-workspace__hero"
         style={{
           ...surfaceStyle,
           padding: "30px",
@@ -731,6 +733,7 @@ export default function BulkUploadResults() {
 
       {pageError ? (
         <Box
+          className="sajha-admin-surface"
           style={{
             ...surfaceStyle,
             padding: "16px 18px",
@@ -745,6 +748,7 @@ export default function BulkUploadResults() {
 
       {pageMessage ? (
         <Box
+          className="sajha-admin-surface"
           style={{
             ...surfaceStyle,
             padding: "16px 18px",
@@ -758,13 +762,17 @@ export default function BulkUploadResults() {
       ) : null}
 
       <Box
+        className="sajha-admin-workspace__split"
         style={{
           display: "grid",
-          gridTemplateColumns: "minmax(360px, 1.2fr) minmax(360px, 1fr)",
+          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
           gap: "22px",
         }}
       >
-        <Box style={{ ...surfaceStyle, padding: "24px", display: "grid", gap: "18px" }}>
+        <Box
+          className="sajha-admin-surface"
+          style={{ ...surfaceStyle, padding: "24px", display: "grid", gap: "18px" }}
+        >
           <H4 style={{ marginBottom: "0" }}>1. Setup Result Set</H4>
 
           <Box
@@ -838,6 +846,7 @@ export default function BulkUploadResults() {
             ) : null}
 
             <Box
+              className="sajha-admin-surface"
               style={{
                 borderRadius: "16px",
                 border: "1px solid #e5e7eb",
@@ -893,7 +902,7 @@ export default function BulkUploadResults() {
                   </select>
                 </Box>
 
-                <Box style={buttonRowStyle}>
+                <Box className="sajha-admin-action-row" style={buttonRowStyle}>
                   <Button variant="outlined" size="sm" onClick={handleStartCreateExam}>
                     New Result Set
                   </Button>
@@ -987,7 +996,7 @@ export default function BulkUploadResults() {
                   />
                 </Box>
 
-                <Box style={buttonRowStyle}>
+                <Box className="sajha-admin-action-row" style={buttonRowStyle}>
                   <Button
                     size="sm"
                     disabled={!selectedCourseCode || savingExam}
@@ -1031,10 +1040,14 @@ export default function BulkUploadResults() {
           </Box>
         </Box>
 
-        <Box style={{ ...surfaceStyle, padding: "24px", display: "grid", gap: "18px" }}>
+        <Box
+          className="sajha-admin-surface"
+          style={{ ...surfaceStyle, padding: "24px", display: "grid", gap: "18px" }}
+        >
           <H4 style={{ marginBottom: "0" }}>2. Upload, Preview, and Import</H4>
 
           <Box
+            className="sajha-admin-workspace__dropzone"
             onDragOver={(event) => {
               event.preventDefault();
               setDragActive(true);
@@ -1080,7 +1093,10 @@ export default function BulkUploadResults() {
               style={{ display: "none" }}
             />
 
-            <Box style={{ ...buttonRowStyle, justifyContent: "center", marginTop: "18px" }}>
+            <Box
+              className="sajha-admin-action-row"
+              style={{ ...buttonRowStyle, justifyContent: "center", marginTop: "18px" }}
+            >
               <Button size="sm" onClick={handleBrowseClick}>
                 Browse File
               </Button>
@@ -1094,6 +1110,7 @@ export default function BulkUploadResults() {
 
           {file ? (
             <Box
+              className="sajha-admin-surface"
               style={{
                 ...surfaceStyle,
                 boxShadow: "none",
@@ -1136,7 +1153,7 @@ export default function BulkUploadResults() {
               </Box>
             </Box>
 
-            <Box style={buttonRowStyle}>
+            <Box className="sajha-admin-action-row" style={buttonRowStyle}>
               <Button
                 disabled={!selectedCourseCode || !examId || !file || previewing}
                 onClick={handlePreview}
@@ -1157,10 +1174,14 @@ export default function BulkUploadResults() {
       </Box>
 
       {selectedExam ? (
-        <Box style={{ ...surfaceStyle, padding: "24px", display: "grid", gap: "18px" }}>
+        <Box
+          className="sajha-admin-surface"
+          style={{ ...surfaceStyle, padding: "24px", display: "grid", gap: "18px" }}
+        >
           <H4 style={{ marginBottom: "0" }}>Result Set Actions</H4>
 
           <Box
+            className="sajha-admin-card-grid"
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
@@ -1201,7 +1222,7 @@ export default function BulkUploadResults() {
             </Box>
           </Box>
 
-          <Box style={buttonRowStyle}>
+          <Box className="sajha-admin-action-row" style={buttonRowStyle}>
             <Button
               size="sm"
               variant="outlined"
@@ -1248,10 +1269,14 @@ export default function BulkUploadResults() {
       ) : null}
 
       {previewResult ? (
-        <Box style={{ ...surfaceStyle, padding: "24px", display: "grid", gap: "20px" }}>
+        <Box
+          className="sajha-admin-surface"
+          style={{ ...surfaceStyle, padding: "24px", display: "grid", gap: "20px" }}
+        >
           <H4 style={{ marginBottom: "0" }}>Preview and Validation</H4>
 
           <Box
+            className="sajha-admin-card-grid"
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
@@ -1310,6 +1335,7 @@ export default function BulkUploadResults() {
             <Box style={{ display: "grid", gap: "10px" }}>
               <Text style={{ display: "block", fontWeight: 700 }}>Detected Column Mapping</Text>
               <Box
+                className="sajha-admin-card-grid sajha-admin-card-grid--mapping"
                 style={{
                   display: "grid",
                   gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
@@ -1341,7 +1367,7 @@ export default function BulkUploadResults() {
           {sampleRows.length ? (
             <Box style={{ display: "grid", gap: "10px" }}>
               <Text style={{ display: "block", fontWeight: 700 }}>First Parsed Records</Text>
-              <Box style={{ overflowX: "auto" }}>
+              <Box className="sajha-admin-table-scroll" style={{ overflowX: "auto" }}>
                 <table style={tableStyles}>
                   <thead>
                     <tr>
@@ -1375,7 +1401,7 @@ export default function BulkUploadResults() {
               <Text style={{ display: "block", fontWeight: 700 }}>
                 Calculated Preview of Importable Rows
               </Text>
-              <Box style={{ overflowX: "auto" }}>
+              <Box className="sajha-admin-table-scroll" style={{ overflowX: "auto" }}>
                 <table style={tableStyles}>
                   <thead>
                     <tr>
@@ -1424,7 +1450,7 @@ export default function BulkUploadResults() {
                 {previewResult.duplicateRows.length} row(s) matched existing results in this
                 result set.
               </Text>
-              <Box style={{ overflowX: "auto" }}>
+              <Box className="sajha-admin-table-scroll" style={{ overflowX: "auto" }}>
                 <table style={tableStyles}>
                   <thead>
                     <tr>
@@ -1466,7 +1492,7 @@ export default function BulkUploadResults() {
                 </Button>
               </Box>
 
-              <Box style={{ overflowX: "auto" }}>
+              <Box className="sajha-admin-table-scroll" style={{ overflowX: "auto" }}>
                 <table style={tableStyles}>
                   <thead>
                     <tr>
@@ -1501,9 +1527,12 @@ export default function BulkUploadResults() {
       ) : null}
 
       {exams.length ? (
-        <Box style={{ ...surfaceStyle, padding: "24px", display: "grid", gap: "18px" }}>
+        <Box
+          className="sajha-admin-surface"
+          style={{ ...surfaceStyle, padding: "24px", display: "grid", gap: "18px" }}
+        >
           <H4 style={{ marginBottom: "0" }}>Existing Result Sets</H4>
-          <Box style={{ overflowX: "auto" }}>
+          <Box className="sajha-admin-table-scroll" style={{ overflowX: "auto" }}>
             <table style={tableStyles}>
               <thead>
                 <tr>
@@ -1561,7 +1590,10 @@ export default function BulkUploadResults() {
       ) : null}
 
       {importResult ? (
-        <Box style={{ ...surfaceStyle, padding: "24px", display: "grid", gap: "12px" }}>
+        <Box
+          className="sajha-admin-surface"
+          style={{ ...surfaceStyle, padding: "24px", display: "grid", gap: "12px" }}
+        >
           <H4 style={{ marginBottom: "0" }}>Import Result</H4>
           <Text style={{ color: "#166534" }}>
             Imported {importResult.insertedCount || 0} new row(s) and updated{" "}

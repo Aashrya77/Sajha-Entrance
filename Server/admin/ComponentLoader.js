@@ -17,6 +17,7 @@ const Components = {
   ),
   ImageUpload: componentLoader.add("ImageUpload", path.join(__dirname, "./components/ImageUpload")),
   Login: componentLoader.override("Login", path.join(__dirname, "./components/Login")),
+  LoggedIn: componentLoader.override("LoggedIn", path.join(__dirname, "./components/LoggedIn")),
   TopBar: componentLoader.override("TopBar", path.join(__dirname, "./components/TopBar")),
   SidebarBranding: componentLoader.override("SidebarBranding", path.join(__dirname, "./components/SidebarBranding")),
 };

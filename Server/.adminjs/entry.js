@@ -7,6 +7,8 @@ import ImageUpload from '../admin/components/ImageUpload'
 AdminJS.UserComponents.ImageUpload = ImageUpload
 import Login from '../admin/components/Login'
 AdminJS.UserComponents.Login = Login
+import LoggedIn from '../admin/components/LoggedIn'
+AdminJS.UserComponents.LoggedIn = LoggedIn
 import TopBar from '../admin/components/TopBar'
 AdminJS.UserComponents.TopBar = TopBar
 import SidebarBranding from '../admin/components/SidebarBranding'

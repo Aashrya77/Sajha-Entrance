@@ -410,7 +410,7 @@ export default function ImageUpload(props) {
       : "Choose image";
 
   return (
-    <FormGroup>
+    <FormGroup className="sajha-admin-image-upload">
       <Label required={property.isRequired}>
         {translateProperty(property.label, property.resourceId)}
       </Label>
@@ -419,6 +419,7 @@ export default function ImageUpload(props) {
         {...getRootProps({
           onClick: openFileDialog,
         })}
+        className="sajha-admin-image-upload__dropzone"
         style={{
           border: `2px dashed ${
             isDragReject ? "#d73a49" : isDragAccept || isDragActive ? "#2251cc" : "#c9d1d9"
@@ -433,6 +434,7 @@ export default function ImageUpload(props) {
         <input {...getInputProps()} />
 
         <Box
+          className="sajha-admin-image-upload__header"
           style={{
             display: "flex",
             alignItems: "center",
@@ -479,6 +481,7 @@ export default function ImageUpload(props) {
 
         {!isMultiple && previewSrc ? (
           <Box
+            className="sajha-admin-image-upload__previewCard"
             style={{
               marginTop: "18px",
               padding: "14px",
@@ -553,6 +556,7 @@ export default function ImageUpload(props) {
 
         {isMultiple && hasGalleryItems ? (
           <Box
+            className="sajha-admin-image-upload__gallery"
             style={{
               marginTop: "20px",
               display: "grid",
@@ -692,6 +696,7 @@ export default function ImageUpload(props) {
       {modalItem?.src ? (
         <Box
           onClick={closeModal}
+          className="sajha-admin-image-upload__modal"
           style={{
             position: "fixed",
             inset: 0,
@@ -705,6 +710,7 @@ export default function ImageUpload(props) {
         >
           <Box
             onClick={(event) => event.stopPropagation()}
+            className="sajha-admin-image-upload__modalCard"
             style={{
               width: "min(92vw, 920px)",
               maxHeight: "90vh",

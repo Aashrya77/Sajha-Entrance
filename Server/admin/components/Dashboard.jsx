@@ -120,12 +120,12 @@ const AreaTrendChart = ({
     return <Empty label="No trend data available." />;
   }
 
-  const width = Math.max(760, data.length * 124);
-  const height = 336;
-  const chartTop = 28;
-  const chartBottom = 258;
-  const leftPad = 76;
-  const rightPad = 28;
+  const width = Math.max(460, data.length * 96);
+  const height = 296;
+  const chartTop = 24;
+  const chartBottom = 222;
+  const leftPad = 64;
+  const rightPad = 24;
   const drawableHeight = chartBottom - chartTop;
   const max = Math.max(...data.map((item) => item[valueKey] || 0), 1);
   const step = data.length > 1 ? (width - leftPad - rightPad) / (data.length - 1) : 0;
@@ -155,7 +155,13 @@ const AreaTrendChart = ({
       className="dashboard-trend-chart"
       onMouseLeave={() => setActiveIndex(points.length - 1)}
     >
-      <svg width={width} height={height} className="dashboard-trend-chart__svg">
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        width="100%"
+        height="auto"
+        preserveAspectRatio="xMidYMid meet"
+        className="dashboard-trend-chart__svg"
+      >
         <defs>
           <linearGradient id={gradientId} x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stopColor={palette.line} stopOpacity="0.22" />
@@ -680,7 +686,7 @@ export default function Dashboard() {
         />
       </div>
 
-      <div className="dashboard-stack dashboard-stack--trends">
+      <div className="dashboard-grid dashboard-grid--trends">
         <Panel
           title="Student registrations"
           detail="Six-month trend of account creation across the student pipeline."

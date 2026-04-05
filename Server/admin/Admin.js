@@ -2,6 +2,7 @@ import AdminJS from "adminjs";
 import componentsBundler from "../node_modules/adminjs/lib/backend/bundler/components.bundler.js";
 import generateAdminComponentEntry from "../node_modules/adminjs/lib/backend/bundler/generate-user-component-entry.js";
 import { ADMIN_JS_TMP_DIR } from "../node_modules/adminjs/lib/backend/bundler/utils/constants.js";
+import populator from "../node_modules/adminjs/lib/backend/utils/populator/populator.js";
 import express from "express";
 import AdminJSExpress from "@adminjs/express";
 import * as AdminJSMongoose from "@adminjs/mongoose";
@@ -68,6 +69,8 @@ import {
   UnpublishResultExam,
 } from "../controllers/Result.js";
 import {
+  calculateResultMetrics,
+  recalculateExamRanks as recalculateExamRanksService,
   deleteResultExamSet as deleteResultExamSetService,
 } from "../services/resultService.js";
 import {
@@ -126,6 +129,156 @@ const formatMonthSeries = (series) => {
 const toIsoDateTimeString = (value) => {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? "" : date.toISOString();
+};
+
+const STUDENT_RESULT_SUBJECT_FIELD_PATTERN =
+  /^subjects\.(\d+)\.(subjectName|fullMarks|passMarks|obtainedMarks)$/;
+
+const resolveSubjectStringValue = (value, fallback = "") => {
+  if (value === undefined || value === null) {
+    return String(fallback || "").trim();
+  }
+
+  const normalizedValue = String(value).trim();
+  return normalizedValue || String(fallback || "").trim();
+};
+
+const resolveSubjectNumericValue = (value, fallback = 0) => {
+  if (value === undefined || value === null || value === "") {
+    const parsedFallback = Number(fallback);
+    return Number.isFinite(parsedFallback) ? parsedFallback : 0;
+  }
+
+  const parsedValue = Number(value);
+  if (Number.isFinite(parsedValue)) {
+    return parsedValue;
+  }
+
+  const parsedFallback = Number(fallback);
+  return Number.isFinite(parsedFallback) ? parsedFallback : 0;
+};
+
+const getSubjectPayloadByIndex = (payload = {}, index) => {
+  const subjects = payload?.subjects;
+
+  if (Array.isArray(subjects)) {
+    return subjects[index] || null;
+  }
+
+  if (subjects && typeof subjects === "object") {
+    return subjects[index] || subjects[String(index)] || null;
+  }
+
+  return null;
+};
+
+const buildSubjectsFromPayload = (payload = {}, existingSubjects = []) => {
+  const subjectIndexes = new Set(
+    Array.isArray(existingSubjects)
+      ? existingSubjects.map((_, index) => index)
+      : []
+  );
+
+  if (Array.isArray(payload?.subjects)) {
+    payload.subjects.forEach((_, index) => subjectIndexes.add(index));
+  } else if (payload?.subjects && typeof payload.subjects === "object") {
+    Object.keys(payload.subjects)
+      .filter((key) => /^\d+$/.test(key))
+      .forEach((key) => subjectIndexes.add(Number(key)));
+  }
+
+  Object.keys(payload).forEach((key) => {
+    const match = key.match(STUDENT_RESULT_SUBJECT_FIELD_PATTERN);
+    if (match) {
+      subjectIndexes.add(Number(match[1]));
+    }
+  });
+
+  return Array.from(subjectIndexes)
+    .sort((left, right) => left - right)
+    .map((index) => {
+      const existingSubject = existingSubjects[index] || {};
+      const payloadSubject = getSubjectPayloadByIndex(payload, index) || {};
+
+      return {
+        subjectName: resolveSubjectStringValue(
+          payloadSubject.subjectName ?? payload[`subjects.${index}.subjectName`],
+          existingSubject.subjectName
+        ),
+        fullMarks: resolveSubjectNumericValue(
+          payloadSubject.fullMarks ?? payload[`subjects.${index}.fullMarks`],
+          existingSubject.fullMarks
+        ),
+        passMarks: resolveSubjectNumericValue(
+          payloadSubject.passMarks ?? payload[`subjects.${index}.passMarks`],
+          existingSubject.passMarks
+        ),
+        obtainedMarks: resolveSubjectNumericValue(
+          payloadSubject.obtainedMarks ?? payload[`subjects.${index}.obtainedMarks`],
+          existingSubject.obtainedMarks
+        ),
+      };
+    })
+    .filter(
+      (subject) =>
+        subject.subjectName ||
+        subject.fullMarks > 0 ||
+        subject.passMarks > 0 ||
+        subject.obtainedMarks > 0
+    );
+};
+
+const applyCalculatedMetricsToPayload = (payload, metrics) => {
+  if (!payload || !metrics) {
+    return payload;
+  }
+
+  (metrics.subjects || []).forEach((subject, index) => {
+    payload[`subjects.${index}.subjectName`] = subject.subjectName;
+    payload[`subjects.${index}.fullMarks`] = subject.fullMarks;
+    payload[`subjects.${index}.passMarks`] = subject.passMarks;
+    payload[`subjects.${index}.obtainedMarks`] = subject.obtainedMarks;
+    payload[`subjects.${index}.status`] = subject.status;
+  });
+
+  payload.totalFullMarks = metrics.totalFullMarks;
+  payload.totalPassMarks = metrics.totalPassMarks;
+  payload.totalObtainedMarks = metrics.totalObtainedMarks;
+  payload.percentage = metrics.percentage;
+  payload.resultStatus = metrics.resultStatus;
+  payload.result = metrics.result;
+
+  const recalculatedAt = new Date();
+  payload.lastCalculatedAt = recalculatedAt;
+  payload.updatedAt = recalculatedAt;
+
+  return payload;
+};
+
+const syncStudentResultResponse = (response, result) => {
+  if (!response?.record?.params || !result) {
+    return response;
+  }
+
+  response.record.params.totalFullMarks = result.totalFullMarks;
+  response.record.params.totalPassMarks = result.totalPassMarks;
+  response.record.params.totalObtainedMarks = result.totalObtainedMarks;
+  response.record.params.percentage = result.percentage;
+  response.record.params.rank = result.rank;
+  response.record.params.resultStatus = result.resultStatus;
+  response.record.params.result = result.result;
+  response.record.params.lastCalculatedAt = result.lastCalculatedAt;
+  response.record.params.updatedAt = result.updatedAt;
+
+  (result.subjects || []).forEach((subject, index) => {
+    response.record.params[`subjects.${index}.subjectName`] = subject.subjectName;
+    response.record.params[`subjects.${index}.fullMarks`] = subject.fullMarks;
+    response.record.params[`subjects.${index}.passMarks`] = subject.passMarks;
+    response.record.params[`subjects.${index}.obtainedMarks`] = subject.obtainedMarks;
+    response.record.params[`subjects.${index}.status`] = subject.status;
+  });
+
+  return response;
 };
 
 const syncSubjectsWithTemplate = (payload, templateSubjects = []) => {
@@ -604,10 +757,103 @@ const startAdminPanel = async () => {
           isVisible: false,
         },
         edit: {
-          before: async (request) => {
-            const { payload } = request;
+          handler: async (request, response, context) => {
+            const {
+              record,
+              resource,
+              currentAdmin,
+              h,
+            } = context;
+
+            if (!record) {
+              throw new Error("Result record could not be found.");
+            }
+
+            if (String(request.method || "").toLowerCase() === "get") {
+              return {
+                record: record.toJSON(currentAdmin),
+              };
+            }
+
+            const payload =
+              request.payload && typeof request.payload === "object"
+                ? { ...request.payload }
+                : {};
+
             await ensureManualExamForPayload(payload);
-            return request;
+
+            const existingResult = await StudentResult.findById(record.param("_id"));
+            if (!existingResult) {
+              throw new Error("Result record could not be found.");
+            }
+
+            const previousExamId = existingResult.exam ? `${existingResult.exam}` : "";
+            const subjects = buildSubjectsFromPayload(payload, existingResult.subjects || []);
+            const metrics = calculateResultMetrics(subjects);
+
+            if (payload.symbolNumber !== undefined) {
+              existingResult.symbolNumber = payload.symbolNumber;
+            }
+            if (payload.studentName !== undefined) {
+              existingResult.studentName = payload.studentName;
+            }
+            if (payload.course !== undefined) {
+              existingResult.course = payload.course;
+            }
+            if (payload.exam !== undefined) {
+              existingResult.exam = payload.exam || null;
+            }
+            if (payload.examDate !== undefined) {
+              existingResult.examDate = payload.examDate || existingResult.examDate;
+            }
+            if (payload.remarks !== undefined) {
+              existingResult.remarks = payload.remarks;
+            }
+            if (payload.publishedAt !== undefined) {
+              existingResult.publishedAt = payload.publishedAt || null;
+            }
+
+            existingResult.subjects = metrics.subjects;
+            existingResult.totalFullMarks = metrics.totalFullMarks;
+            existingResult.totalPassMarks = metrics.totalPassMarks;
+            existingResult.totalObtainedMarks = metrics.totalObtainedMarks;
+            existingResult.percentage = metrics.percentage;
+            existingResult.resultStatus = metrics.resultStatus;
+            existingResult.result = metrics.result;
+            existingResult.lastCalculatedAt = new Date();
+
+            await existingResult.save();
+
+            const currentExamId = existingResult.exam ? `${existingResult.exam}` : "";
+            const examIdsToRefresh = Array.from(
+              new Set([previousExamId, currentExamId].filter(Boolean))
+            );
+
+            for (const examId of examIdsToRefresh) {
+              await recalculateExamRanksService(examId);
+            }
+
+            const refreshedResult = await StudentResult.findById(existingResult._id).lean();
+            const refreshedRecord = resource.build({
+              ...refreshedResult,
+              _id: refreshedResult?._id,
+            });
+            const [populatedRecord] = await populator([refreshedRecord], context);
+            context.record = populatedRecord;
+
+            return syncStudentResultResponse(
+              {
+                redirectUrl: h.resourceUrl({
+                  resourceId: resource._decorated?.id() || resource.id(),
+                }),
+                notice: {
+                  message: "successfullyUpdated",
+                  type: "success",
+                },
+                record: populatedRecord.toJSON(currentAdmin),
+              },
+              refreshedResult
+            );
           },
         },
       },
