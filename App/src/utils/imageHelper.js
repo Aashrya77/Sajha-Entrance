@@ -10,5 +10,9 @@ export const getImageUrl = (imagePath, folder = '') => {
   const cleanPath = imagePath.replace(/^\/+/, '');
   const withFolder = cleanFolder ? `${cleanFolder}/${cleanPath}` : cleanPath;
 
-  return `http://localhost:5000/${withFolder}`;
+  const baseUrl = import.meta.env.PROD 
+    ? 'https://sajhaentrance.org' 
+    : 'http://localhost:5000';
+  
+  return `${baseUrl}/${withFolder}`;
 };
