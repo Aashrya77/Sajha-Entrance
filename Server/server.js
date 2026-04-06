@@ -72,7 +72,6 @@ const imageDirectoryMappings = [
   },
 ];
 
-
 // ================= MIDDLEWARE =================
 app.use(
   cors({
@@ -86,9 +85,6 @@ app.use(
 );
 
 app.use(cookieParser());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
 
 // ================= STATIC FILES (FIXED) =================
 
@@ -168,6 +164,10 @@ const startServer = async () => {
 
     const adminRouter = await startAdminPanel();
     app.use(adminRouter);
+
+    // Body parser AFTER AdminJS router (required by AdminJS)
+    app.use(express.json());
+    app.use(express.urlencoded({ extended: true }));
 
     app.listen(PORT, () => {
       logger.info(`Server running on http://localhost:${PORT}`);
