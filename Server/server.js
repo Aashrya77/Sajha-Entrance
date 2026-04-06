@@ -5,6 +5,7 @@ import cors from "cors";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+
 import connectDB from "./db/connectDB.js";
 import CourseRoutes from "./routes/Course.js";
 import CollegeRoutes from "./routes/College.js";
@@ -18,6 +19,7 @@ import MockTestRoutes from "./routes/MockTest.js";
 import BlogUploadRoutes from "./routes/BlogUpload.js";
 import BookPaymentRoutes from "./routes/BookPayment.js";
 import InquiryRoutes from "./routes/Inquiry.js";
+
 import { startAdminPanel } from "./admin/Admin.js";
 import { adminBrandAssets } from "./admin/config/branding.js";
 import { createLogger } from "./utils/logger.js";
@@ -28,10 +30,13 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 const logger = createLogger("server");
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const publicDirectory = path.join(__dirname, "public");
 
+
+// ================= IMAGE MAPPINGS =================
 const imageDirectoryMappings = [
   {
     routes: ["/blog", "/blogs"],
@@ -68,17 +73,36 @@ const imageDirectoryMappings = [
   },
 ];
 
+
+// ================= MIDDLEWARE =================
 app.use(
   cors({
-    origin: ["http://localhost:3000", "http://localhost:5000", "https://sajhaentrance.org"],
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:5000",
+      "https://sajhaentrance.org",
+    ],
     credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
 app.use(cookieParser());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
+
+// ================= STATIC FILES (FIXED) =================
+
+// 1. Serve entire public folder
+app.use(express.static(publicDirectory));
+
+// 2. Global uploads fallback (VERY IMPORTANT)
+app.use(
+  "/uploads",
+  express.static(path.join(publicDirectory, "uploads"))
+);
+
+// 3. AdminJS assets
 if (fs.existsSync(adminBrandAssets.appPublicDirectory)) {
   app.use(
     adminBrandAssets.publicMountPath,
@@ -91,20 +115,42 @@ if (fs.existsSync(adminBrandAssets.appPublicDirectory)) {
   );
 }
 
+// 4. Advanced image mappings (your system)
 imageDirectoryMappings.forEach(({ routes, current, legacy }) => {
   routes.forEach((route) => {
-    app.use(route, express.static(current));
+    if (fs.existsSync(current)) {
+      app.use(route, express.static(current));
+    }
 
-    legacy
-      .filter((directory) => fs.existsSync(directory))
-      .forEach((directory) => {
+    legacy.forEach((directory) => {
+      if (fs.existsSync(directory)) {
         app.use(route, express.static(directory));
-      });
+      }
+    });
   });
 });
 
-app.use(express.static(publicDirectory));
 
+// ================= ROUTES =================
+app.use("/api", HomeRoutes);
+app.use("/api", BlogRoutes);
+app.use("/api", CourseRoutes);
+app.use("/api", CollegeRoutes);
+app.use("/api/student", AuthRoutes);
+app.use("/api", ResultRoutes);
+app.use("/api", PaymentRoutes);
+app.use("/api", UniversityRoutes);
+app.use("/api", MockTestRoutes);
+app.use("/api", BlogUploadRoutes);
+app.use("/api", BookPaymentRoutes);
+app.use("/api", InquiryRoutes);
+
+app.use("/api/*", (req, res) => {
+  res.status(404).json({ error: "API endpoint not found" });
+});
+
+
+// ================= START SERVER =================
 const startServer = async () => {
   try {
     await connectDB();
@@ -114,39 +160,20 @@ const startServer = async () => {
       const legacyMigration = await backfillLegacyResultExams();
       if (legacyMigration.migratedResults > 0) {
         logger.info(
-          `Backfilled ${legacyMigration.migratedResults} legacy results across ${legacyMigration.migratedGroups} exam group(s)`
+          `Backfilled ${legacyMigration.migratedResults} legacy results`
         );
       }
-    } catch (migrationError) {
-      logger.error("Legacy result migration failed:", migrationError.message);
+    } catch (err) {
+      logger.error("Migration error:", err.message);
     }
 
     const adminRouter = await startAdminPanel();
     app.use(adminRouter);
 
-    app.use(express.json());
-    app.use(express.urlencoded({ extended: true }));
-
-    app.use("/api", HomeRoutes);
-    app.use("/api", BlogRoutes);
-    app.use("/api", CourseRoutes);
-    app.use("/api", CollegeRoutes);
-    app.use("/api/student", AuthRoutes);
-    app.use("/api", ResultRoutes);
-    app.use("/api", PaymentRoutes);
-    app.use("/api", UniversityRoutes);
-    app.use("/api", MockTestRoutes);
-    app.use("/api", BlogUploadRoutes);
-    app.use("/api", BookPaymentRoutes);
-    app.use("/api", InquiryRoutes);
-
-    app.use("/api/*", (req, res) => {
-      res.status(404).json({ error: "API endpoint not found" });
-    });
-
     app.listen(PORT, () => {
       logger.info(`Server running on http://localhost:${PORT}`);
     });
+
   } catch (error) {
     logger.error("Failed to start server:", error.message);
     process.exit(1);
