@@ -62,11 +62,7 @@
 
 /* Search Card */
 .search-card {
-  background: linear-gradient(135deg, #ffffff 0%, #f8f8f8 100%);
-  padding: 30px;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 116, 34, 0.08);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  padding: 30px; 
 }
 
 .search-row {
@@ -227,8 +223,6 @@
   margin-top: 25px;
   padding: 20px;
   background: white;
-  border-radius: 15px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
 .stat {
