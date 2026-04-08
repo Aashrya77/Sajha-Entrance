@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import fs from "fs";
+import path from "path";
 
 import connectDB from "./db/connectDB.js";
 import CourseRoutes from "./routes/Course.js";
@@ -22,6 +23,8 @@ import { startAdminPanel } from "./admin/Admin.js";
 import { adminBrandAssets } from "./admin/config/branding.js";
 import { createLogger } from "./utils/logger.js";
 import {
+  findLegacyMediaFile,
+  MEDIA_TYPES,
   mediaRootDirectory,
   publicDirectory,
 } from "./utils/media.js";
@@ -57,10 +60,42 @@ app.use(cookieParser());
 // 1. Serve entire public folder
 app.use(express.static(publicDirectory, staticFileOptions));
 
-// 2. Canonical media route
+// 2. Backfill missing media files from legacy folders on demand
+app.get("/media/:type/:filename", async (req, res, next) => {
+  const { type, filename } = req.params;
+  const mediaType = MEDIA_TYPES[type];
+
+  if (!mediaType) {
+    return next();
+  }
+
+  const safeFilename = path.basename(filename);
+  const targetDirectory = path.join(mediaRootDirectory, mediaType);
+  const targetPath = path.join(targetDirectory, safeFilename);
+
+  if (fs.existsSync(targetPath)) {
+    return next();
+  }
+
+  try {
+    const legacyFilePath = await findLegacyMediaFile(mediaType, safeFilename);
+    if (!legacyFilePath) {
+      return next();
+    }
+
+    await fs.promises.mkdir(targetDirectory, { recursive: true });
+    await fs.promises.copyFile(legacyFilePath, targetPath);
+    return res.sendFile(targetPath);
+  } catch (error) {
+    logger.error(`Media fallback failed for ${mediaType}/${safeFilename}:`, error.message);
+    return next();
+  }
+});
+
+// 3. Canonical media route
 app.use("/media", express.static(mediaRootDirectory, staticFileOptions));
 
-// 3. AdminJS assets
+// 4. AdminJS assets
 if (fs.existsSync(adminBrandAssets.appPublicDirectory)) {
   app.use(
     adminBrandAssets.publicMountPath,

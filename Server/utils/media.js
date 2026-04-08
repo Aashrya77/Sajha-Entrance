@@ -1,3 +1,4 @@
+import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -14,6 +15,34 @@ export const MEDIA_TYPES = Object.freeze({
   landing: "landing",
   college: "college",
   university: "university",
+});
+
+export const legacyMediaDirectories = Object.freeze({
+  [MEDIA_TYPES.blog]: [
+    path.join(publicDirectory, "blogs"),
+    path.join(publicDirectory, "uploads", "blog"),
+    path.join(publicDirectory, "uploads", "blogs"),
+  ],
+  [MEDIA_TYPES.advertisement]: [
+    path.join(publicDirectory, "advertisements"),
+    path.join(publicDirectory, "uploads", "advertisement"),
+  ],
+  [MEDIA_TYPES.popup]: [
+    path.join(publicDirectory, "popups"),
+    path.join(publicDirectory, "uploads", "popup"),
+  ],
+  [MEDIA_TYPES.landing]: [
+    path.join(publicDirectory, "landingads"),
+    path.join(publicDirectory, "uploads", "landing"),
+  ],
+  [MEDIA_TYPES.college]: [
+    path.join(publicDirectory, "colleges"),
+    path.join(publicDirectory, "uploads", "college"),
+  ],
+  [MEDIA_TYPES.university]: [
+    path.join(publicDirectory, "universities"),
+    path.join(publicDirectory, "uploads", "university"),
+  ],
 });
 
 export const mediaFieldMaps = Object.freeze({
@@ -103,3 +132,41 @@ export const normalizeMediaFields = (record, fieldMap = {}) => {
 
 export const normalizeCollectionMedia = (records, fieldMap = {}) =>
   Array.isArray(records) ? records.map((record) => normalizeMediaFields(record, fieldMap)) : [];
+
+const findFileRecursive = async (directory, filename) => {
+  if (!fs.existsSync(directory)) {
+    return null;
+  }
+
+  const entries = await fs.promises.readdir(directory, { withFileTypes: true });
+  for (const entry of entries) {
+    const fullPath = path.join(directory, entry.name);
+
+    if (entry.isFile() && entry.name === filename) {
+      return fullPath;
+    }
+
+    if (entry.isDirectory()) {
+      const nestedMatch = await findFileRecursive(fullPath, filename);
+      if (nestedMatch) {
+        return nestedMatch;
+      }
+    }
+  }
+
+  return null;
+};
+
+export const findLegacyMediaFile = async (type, filename) => {
+  const cleanFilename = path.basename(filename);
+  const directories = legacyMediaDirectories[type] || [];
+
+  for (const directory of directories) {
+    const match = await findFileRecursive(directory, cleanFilename);
+    if (match) {
+      return match;
+    }
+  }
+
+  return null;
+};
