@@ -11,7 +11,7 @@ const {
   label: "Landing ad image",
   entityName: "landing ad image",
   storageFolder: "landing",
-  publicBaseUrl: "/landingads",
+  publicBaseUrl: "/media/landing",
   description: "Upload the image displayed in the landing-page ad slots.",
 });
 

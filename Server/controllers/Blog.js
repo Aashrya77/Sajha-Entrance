@@ -3,6 +3,11 @@ import Notice from "../models/Notice.js";
 import Advertisement from "../models/Advertisement.js";
 import Popup from "../models/Popup.js";
 import mongoose from "mongoose";
+import {
+  mediaFieldMaps,
+  normalizeCollectionMedia,
+  normalizeMediaFields,
+} from "../utils/media.js";
 
 const GetBlogs = async (req, res) => {
   try {
@@ -45,13 +50,13 @@ const GetBlogs = async (req, res) => {
     res.json({
       success: true,
       data: {
-        blogs,
+        blogs: normalizeCollectionMedia(blogs, mediaFieldMaps.blog),
         notice,
         previousPage,
         nextPage,
         search,
-        advertisement,
-        popup,
+        advertisement: normalizeMediaFields(advertisement, mediaFieldMaps.advertisement),
+        popup: normalizeMediaFields(popup, mediaFieldMaps.popup),
         totalBlogs: blogsLength,
         currentPage: page
       }
@@ -81,11 +86,11 @@ const GetBlogData = async (req, res) => {
     res.json({
       success: true,
       data: {
-        blogData,
-        relatedBlogs: blogs,
+        blogData: normalizeMediaFields(blogData, mediaFieldMaps.blog),
+        relatedBlogs: normalizeCollectionMedia(blogs, mediaFieldMaps.blog),
         notice,
-        advertisement,
-        popup
+        advertisement: normalizeMediaFields(advertisement, mediaFieldMaps.advertisement),
+        popup: normalizeMediaFields(popup, mediaFieldMaps.popup)
       }
     });
   } catch (error) {
@@ -103,7 +108,7 @@ const SearchBlog = async (req, res) => {
     res.json({
       success: true,
       data: {
-        blogs,
+        blogs: normalizeCollectionMedia(blogs, mediaFieldMaps.blog),
         searchTerm
       }
     });

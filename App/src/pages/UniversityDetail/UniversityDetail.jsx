@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { universityAPI } from '../../api/services';
-import { getImageUrl } from '../../utils/imageHelper';
+import { getImageFieldUrl, getImageList } from '../../utils/imageHelper';
 import Loader from '../../components/Loader/Loader';
 import InquiryButton from '../../components/InquiryForm/InquiryButton';
 
@@ -76,6 +76,10 @@ const UniversityDetail = () => {
   }
 
   const { universityData: university, courses, colleges } = universityData;
+  const coverImageUrl = getImageFieldUrl(university, 'universityCover', 'universities');
+  const logoImageUrl = getImageFieldUrl(university, 'universityLogo', 'universities');
+  const chancellorImageUrl = getImageFieldUrl(university, 'chancellorImage', 'universities');
+  const galleryImages = getImageList(university, 'gallery', 'universities');
 
   return (
     <div className="college-profile">
@@ -87,17 +91,17 @@ const UniversityDetail = () => {
       {/* Cover Image Section */}
       <div 
         className="college-cover-section"
-        style={university.universityCover ? {
-          backgroundImage: `url(${getImageUrl(university.universityCover, 'universities')})`,
+        style={coverImageUrl ? {
+          backgroundImage: `url(${coverImageUrl})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center'
         } : {}}
       >
-        <div className="college-cover-placeholder" style={university.universityCover ? {background: 'rgba(0,0,0,0.3)'} : {}}>
+        <div className="college-cover-placeholder" style={coverImageUrl ? {background: 'rgba(0,0,0,0.3)'} : {}}>
           <div className="college-logo-circle">
-            {university.universityLogo ? (
+            {logoImageUrl ? (
               <img
-                src={getImageUrl(university.universityLogo, 'universities')}
+                src={logoImageUrl}
                 alt={`${university.universityName} logo`}
                 className="college-logo-image"
               />
@@ -338,7 +342,7 @@ const UniversityDetail = () => {
                               }}>
                                 {college.collegeLogo ? (
                                   <img
-                                    src={getImageUrl(college.collegeLogo, 'colleges')}
+                                    src={getImageFieldUrl(college, 'collegeLogo', 'colleges')}
                                     alt={college.collegeName}
                                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                   />
@@ -405,15 +409,15 @@ const UniversityDetail = () => {
                 )}
 
                 {/* Gallery Section */}
-                {university.gallery && university.gallery.length > 0 && (
+                {galleryImages.length > 0 && (
                   <div className="college-section university-section" id="gallery">
                     <div className="college-section-header">
                       <h2 className="college-section-title">Gallery</h2>
                     </div>
                     <div className="college-gallery-grid">
-                      {university.gallery.map((image, index) => (
+                      {galleryImages.map((image, index) => (
                         <div key={index} className="college-gallery-item">
-                          <img src={getImageUrl(image, 'universities')} alt="University Gallery" loading="lazy" />
+                          <img src={image} alt="University Gallery" loading="lazy" />
                         </div>
                       ))}
                     </div>
@@ -496,13 +500,13 @@ const UniversityDetail = () => {
               </div>
 
               {/* Chancellor Preview Card */}
-              {(university.chancellorName || university.chancellorMessage || university.chancellorImage) && (
+              {(university.chancellorName || university.chancellorMessage || chancellorImageUrl) && (
                 <div className="college-chairman-preview university-section" id="chancellor">
                   <div className="college-chairman-preview-title">Chancellor</div>
-                  {university.chancellorImage && (
+                  {chancellorImageUrl && (
                     <div className="college-chairman-image-container">
                       <img 
-                        src={getImageUrl(university.chancellorImage, 'universities')} 
+                        src={chancellorImageUrl} 
                         alt={university.chancellorName} 
                         className="college-chairman-image" 
                         loading="lazy" 

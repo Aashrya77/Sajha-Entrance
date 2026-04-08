@@ -1,8 +1,33 @@
 import axios from 'axios';
 
+const trimTrailingSlashes = (value = '') => value.replace(/\/+$/g, '');
+const ensureLeadingSlash = (value = '') => (value.startsWith('/') ? value : `/${value}`);
+
+const configuredBaseUrl = trimTrailingSlashes(import.meta.env.VITE_API_BASE_URL || '');
+export const baseURL = configuredBaseUrl || '/api';
+
+export const backendBaseUrl = baseURL.endsWith('/api')
+  ? baseURL.slice(0, -4) || '/'
+  : baseURL;
+
+export const resolveBackendPath = (path = '') => {
+  const normalizedPath = ensureLeadingSlash(path);
+  const cleanBackendBaseUrl = trimTrailingSlashes(backendBaseUrl);
+
+  if (!cleanBackendBaseUrl || cleanBackendBaseUrl === '/') {
+    return normalizedPath;
+  }
+
+  if (/^https?:\/\//i.test(cleanBackendBaseUrl)) {
+    return `${cleanBackendBaseUrl}${normalizedPath}`;
+  }
+
+  return `${cleanBackendBaseUrl}${normalizedPath}`;
+};
+
 // Create axios instance with base configuration
 const API = axios.create({
-  baseURL: 'https://sajhaentrance.org/api',
+  baseURL,
   headers: {
     'Content-Type': 'application/json',
   },

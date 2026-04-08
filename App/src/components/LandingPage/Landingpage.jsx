@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import './LandingPageResponsive.css';
 import { Search, Building2, MapPin, GraduationCap, BookOpen, X, Loader2 } from 'lucide-react';
 import { collegeAPI, universityAPI, courseAPI } from '../../api/services';
-import { getImageUrl } from '../../utils/imageHelper';
+import { getImageFieldUrl } from '../../utils/imageHelper';
 
 const Counter = ({ end, duration = 2000 }) => {
   const [count, setCount] = React.useState(0);
@@ -238,7 +238,7 @@ const LandingPage = ({ landingAds = [] }) => {
                       >
                         <div className="result-card-image">
                           {college.collegeLogo ? (
-                            <img src={getImageUrl(college.collegeLogo, 'colleges')} alt={college.collegeName} />
+                            <img src={getImageFieldUrl(college, 'collegeLogo', 'colleges')} alt={college.collegeName} />
                           ) : (
                             <div className="result-card-placeholder">
                               <Building2 size={24} />
@@ -264,7 +264,7 @@ const LandingPage = ({ landingAds = [] }) => {
                       >
                         <div className="result-card-image">
                           {university.universityLogo ? (
-                            <img src={getImageUrl(university.universityLogo, 'universities')} alt={university.universityName} />
+                            <img src={getImageFieldUrl(university, 'universityLogo', 'universities')} alt={university.universityName} />
                           ) : (
                             <div className="result-card-placeholder">
                               <GraduationCap size={24} />
@@ -320,10 +320,10 @@ const LandingPage = ({ landingAds = [] }) => {
               <div className="ad-box" key={ad._id || index}>
                 {ad.adLink ? (
                   <a href={ad.adLink} target="_blank" rel="noopener noreferrer">
-                    <img src={ad.adImage && (ad.adImage.startsWith('http') ? ad.adImage : `http://localhost:5000/landingads/${ad.adImage}`)} alt={ad.title || `Ad ${index + 1}`} />
+                    <img src={getImageFieldUrl(ad, 'adImage', 'landingads')} alt={ad.title || `Ad ${index + 1}`} />
                   </a>
                 ) : (
-                  <img src={ad.adImage && (ad.adImage.startsWith('http') ? ad.adImage : `http://localhost:5000/landingads/${ad.adImage}`)} alt={ad.title || `Ad ${index + 1}`} />
+                  <img src={getImageFieldUrl(ad, 'adImage', 'landingads')} alt={ad.title || `Ad ${index + 1}`} />
                 )}
               </div>
             ))

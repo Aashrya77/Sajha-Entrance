@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { universityAPI } from '../../api/services';
-import { getImageUrl } from '../../utils/imageHelper';
+import { getImageFieldUrl } from '../../utils/imageHelper';
 import Loader from '../../components/Loader/Loader';
 import InquiryButton from '../../components/InquiryForm/InquiryButton';
 
@@ -167,7 +167,7 @@ const Universities = () => {
                             justifyContent: 'center',
                           }}>
                             <img
-                              src={getImageUrl(uni.universityLogo, 'universities')}
+                              src={getImageFieldUrl(uni, 'universityLogo', 'universities')}
                               alt={uni.universityName}
                               style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain', padding: '16px' }}
                             />

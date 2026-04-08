@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { collegeAPI } from '../../api/services';
-import { getImageUrl } from '../../utils/imageHelper';
+import { getImageFieldUrl, getImageList } from '../../utils/imageHelper';
 import './CollegeDetail.css';
 import Loader from '../../components/Loader/Loader';
 import InquiryButton from '../../components/InquiryForm/InquiryButton';
@@ -77,6 +77,10 @@ const CollegeDetail = () => {
   }
 
   const { collegeData: college, courses } = collegeData;
+  const galleryImages = getImageList(college, 'gallery', 'colleges');
+  const coverImageUrl = getImageFieldUrl(college, 'collegeCover', 'colleges');
+  const logoImageUrl = getImageFieldUrl(college, 'collegeLogo', 'colleges');
+  const chairmanImageUrl = getImageFieldUrl(college, 'chairmanImage', 'colleges');
 
   return (
     <div className="college-profile">
@@ -88,17 +92,17 @@ const CollegeDetail = () => {
       {/* Cover Image Section */}
       <div 
         className="college-cover-section"
-        style={college.collegeCover ? {
-          backgroundImage: `url(${getImageUrl(college.collegeCover, 'colleges')})`,
+        style={coverImageUrl ? {
+          backgroundImage: `url(${coverImageUrl})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center'
         } : {}}
       >
-        <div className="college-cover-placeholder" style={college.collegeCover ? {background: 'rgba(0,0,0,0.3)'} : {}}>
+        <div className="college-cover-placeholder" style={coverImageUrl ? {background: 'rgba(0,0,0,0.3)'} : {}}>
           <div className="college-logo-circle">
-            {college.collegeLogo ? (
+            {logoImageUrl ? (
               <img
-                src={getImageUrl(college.collegeLogo, 'colleges')}
+                src={logoImageUrl}
                 alt={`${college.collegeName} logo`}
                 className="college-logo-image"
               />
@@ -325,15 +329,15 @@ const CollegeDetail = () => {
                 )}
 
                 {/* Gallery Section */}
-                {college.gallery && college.gallery.length > 0 && (
+                {galleryImages.length > 0 && (
                   <div className="college-section" id="gallery">
                     <div className="college-section-header">
                       <h2 className="college-section-title">Gallery</h2>
                     </div>
                     <div className="college-gallery-grid">
-                      {college.gallery.map((image, index) => (
+                      {galleryImages.map((image, index) => (
                         <div key={index} className="college-gallery-item">
-                          <img src={getImageUrl(image, 'colleges')} alt="College Gallery" loading="lazy" />
+                          <img src={image} alt="College Gallery" loading="lazy" />
                         </div>
                       ))}
                     </div>
@@ -416,13 +420,13 @@ const CollegeDetail = () => {
               </div>
 
               {/* Chairman Preview Card */}
-              {(college.chairmanName || college.chairmanMessage || college.chairmanImage) && (
+              {(college.chairmanName || college.chairmanMessage || chairmanImageUrl) && (
                 <div className="college-chairman-preview" id="chairman">
                   <div className="college-chairman-preview-title">Chairman</div>
-                  {college.chairmanImage && (
+                  {chairmanImageUrl && (
                     <div className="college-chairman-image-container">
                       <img 
-                        src={getImageUrl(college.chairmanImage, 'colleges')} 
+                        src={chairmanImageUrl} 
                         alt={college.chairmanName} 
                         className="college-chairman-image" 
                         loading="lazy" 

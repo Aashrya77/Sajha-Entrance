@@ -3,8 +3,6 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
 
 import connectDB from "./db/connectDB.js";
 import CourseRoutes from "./routes/Course.js";
@@ -23,6 +21,10 @@ import InquiryRoutes from "./routes/Inquiry.js";
 import { startAdminPanel } from "./admin/Admin.js";
 import { adminBrandAssets } from "./admin/config/branding.js";
 import { createLogger } from "./utils/logger.js";
+import {
+  mediaRootDirectory,
+  publicDirectory,
+} from "./utils/media.js";
 import { backfillLegacyResultExams } from "./services/resultService.js";
 
 dotenv.config();
@@ -31,46 +33,10 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const logger = createLogger("server");
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const publicDirectory = path.join(__dirname, "public");
-
-// ================= IMAGE MAPPINGS =================
-const imageDirectoryMappings = [
-  {
-    routes: ["/blog", "/blogs"],
-    current: path.join(publicDirectory, "uploads", "blog"),
-    legacy: [
-      path.join(publicDirectory, "uploads", "blogs"),
-      path.join(publicDirectory, "blogs"),
-    ],
-  },
-  {
-    routes: ["/advertisement", "/advertisements"],
-    current: path.join(publicDirectory, "uploads", "advertisement"),
-    legacy: [path.join(publicDirectory, "advertisements")],
-  },
-  {
-    routes: ["/popup", "/popups"],
-    current: path.join(publicDirectory, "uploads", "popup"),
-    legacy: [path.join(publicDirectory, "popups")],
-  },
-  {
-    routes: ["/landing", "/landingads"],
-    current: path.join(publicDirectory, "uploads", "landing"),
-    legacy: [path.join(publicDirectory, "landingads")],
-  },
-  {
-    routes: ["/popup-section", "/popup-sections"],
-    current: path.join(publicDirectory, "uploads", "popup-section"),
-    legacy: [],
-  },
-  {
-    routes: ["/college", "/colleges"],
-    current: path.join(publicDirectory, "uploads", "college"),
-    legacy: [path.join(publicDirectory, "colleges")],
-  },
-];
+const staticFileOptions = {
+  fallthrough: true,
+  maxAge: "7d",
+};
 
 // ================= MIDDLEWARE =================
 app.use(
@@ -89,42 +55,23 @@ app.use(cookieParser());
 // ================= STATIC FILES (FIXED) =================
 
 // 1. Serve entire public folder
-app.use(express.static(publicDirectory));
+app.use(express.static(publicDirectory, staticFileOptions));
 
-// 2. Global uploads fallback (VERY IMPORTANT)
-app.use(
-  "/uploads",
-  express.static(path.join(publicDirectory, "uploads"))
-);
+// 2. Canonical media route
+app.use("/media", express.static(mediaRootDirectory, staticFileOptions));
 
 // 3. AdminJS assets
 if (fs.existsSync(adminBrandAssets.appPublicDirectory)) {
   app.use(
     adminBrandAssets.publicMountPath,
-    express.static(adminBrandAssets.appPublicDirectory)
+    express.static(adminBrandAssets.appPublicDirectory, staticFileOptions)
   );
 
   app.use(
     "/brand-assets",
-    express.static(adminBrandAssets.appPublicDirectory)
+    express.static(adminBrandAssets.appPublicDirectory, staticFileOptions)
   );
 }
-
-// 4. Advanced image mappings (your system)
-imageDirectoryMappings.forEach(({ routes, current, legacy }) => {
-  routes.forEach((route) => {
-    if (fs.existsSync(current)) {
-      app.use(route, express.static(current));
-    }
-
-    legacy.forEach((directory) => {
-      if (fs.existsSync(directory)) {
-        app.use(route, express.static(directory));
-      }
-    });
-  });
-});
-
 
 // ================= ROUTES =================
 app.use("/api", HomeRoutes);

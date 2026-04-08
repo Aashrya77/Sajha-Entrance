@@ -3,10 +3,7 @@ import multer from "multer";
 import sharp from "sharp";
 import path from "path";
 import fs from "fs";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { mediaRootDirectory } from "../utils/media.js";
 
 const Router = express.Router();
 
@@ -14,10 +11,9 @@ const Router = express.Router();
 const BLOG_IMAGE_WIDTH = 800;
 const BLOG_IMAGE_HEIGHT = 480;
 
-// Ensure blogs directory exists
-const blogsDir = path.join(__dirname, "../public/blogs");
-if (!fs.existsSync(blogsDir)) {
-  fs.mkdirSync(blogsDir, { recursive: true });
+const blogUploadsDir = path.join(mediaRootDirectory, "blog");
+if (!fs.existsSync(blogUploadsDir)) {
+  fs.mkdirSync(blogUploadsDir, { recursive: true });
 }
 
 // Multer config - store in memory for sharp processing
@@ -46,8 +42,8 @@ Router.post("/blog/upload-image", upload.single("blogImage"), async (req, res) =
     // Generate unique filename
     const timestamp = Date.now();
     const ext = ".jpg"; // Always output as jpg for consistency
-    const filename = `blog-${timestamp}${ext}`;
-    const outputPath = path.join(blogsDir, filename);
+    const filename = `editor-${timestamp}${ext}`;
+    const outputPath = path.join(blogUploadsDir, filename);
 
     // Resize with sharp to exact fixed dimensions
     await sharp(req.file.buffer)
@@ -64,7 +60,8 @@ Router.post("/blog/upload-image", upload.single("blogImage"), async (req, res) =
         filename,
         width: BLOG_IMAGE_WIDTH,
         height: BLOG_IMAGE_HEIGHT,
-        url: `/blogs/${filename}`,
+        key: filename,
+        url: `/media/blog/${filename}`,
       },
     });
   } catch (error) {
