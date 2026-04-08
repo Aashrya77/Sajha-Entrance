@@ -28,6 +28,34 @@ const Counter = ({ end, duration = 2000 }) => {
   return <span>{count}</span>;
 };
 
+const normalizeAdHref = (href = '') => {
+  if (typeof href !== 'string') {
+    return null;
+  }
+
+  const trimmedHref = href.trim();
+  if (!trimmedHref) {
+    return null;
+  }
+
+  if (
+    trimmedHref.startsWith('/') ||
+    trimmedHref.startsWith('#') ||
+    trimmedHref.startsWith('?')
+  ) {
+    return trimmedHref;
+  }
+
+  if (/^(?:https?:)?\/\//i.test(trimmedHref) || /^(mailto|tel):/i.test(trimmedHref)) {
+    return trimmedHref;
+  }
+
+  return `https://${trimmedHref.replace(/^\/+/, '')}`;
+};
+
+const isExternalAdHref = (href = '') =>
+  /^(?:https?:)?\/\//i.test(href) || /^(mailto|tel):/i.test(href);
+
 const LandingPage = ({ landingAds = [] }) => {
   const [location, setLocation] = useState('All Locations');
   const [showDropdown, setShowDropdown] = useState(false);
@@ -126,74 +154,54 @@ const LandingPage = ({ landingAds = [] }) => {
     "/CollegeImage/texas.jpg", "/CollegeImage/sagarmatha.jpg", "/CollegeImage/shikshyalaya.jpg",
   ];
 
-  const defaultLandingAds = [
-    { position: 1, imageUrl: "/RightAds/entrance1.gif", title: "Ad 1" },
-    { position: 2, imageUrl: "/RightAds/entrance2.jpg", title: "Ad 2" },
-    { position: 3, imageUrl: "/RightAds/entrance3.gif", title: "Ad 3" },
-    { position: 4, imageUrl: "/RightAds/entrance4.gif", title: "Ad 4" },
-  ];
-
   const resolvedLandingAds = landingAds
-    .map((ad) => ({
-      ...ad,
-      resolvedImageUrl: getImageFieldUrl(ad, 'adImage', 'landingads'),
-    }))
-    .filter((ad) => ad.resolvedImageUrl);
+    .map((ad, index) => {
+      const imageUrl = getImageFieldUrl(ad, 'adImage', 'landing');
+      if (!imageUrl) {
+        return null;
+      }
 
-  const landingAdsByPosition = resolvedLandingAds.reduce((adsMap, ad) => {
-    if (ad.position >= 1 && ad.position <= 4 && !adsMap[ad.position]) {
-      adsMap[ad.position] = ad;
-    }
+      const parsedPosition = Number(ad.position);
 
-    return adsMap;
-  }, {});
-
-  const landingAdSlots = defaultLandingAds.map((defaultAd) => {
-    const uploadedAd = landingAdsByPosition[defaultAd.position];
-
-    if (!uploadedAd) {
       return {
-        ...defaultAd,
-        defaultImageUrl: defaultAd.imageUrl,
-        href: null,
-        key: `default-${defaultAd.position}`,
+        ...ad,
+        href: normalizeAdHref(ad.adLink),
+        imageUrl,
+        key: ad._id || `landing-ad-${parsedPosition || index + 1}`,
+        position:
+          Number.isFinite(parsedPosition) && parsedPosition > 0
+            ? parsedPosition
+            : Number.MAX_SAFE_INTEGER,
+        title: ad.title?.trim() || 'Sajha Entrance advertisement',
       };
-    }
+    })
+    .filter(Boolean)
+    .sort((firstAd, secondAd) => {
+      if (firstAd.position !== secondAd.position) {
+        return firstAd.position - secondAd.position;
+      }
 
-    return {
-      position: defaultAd.position,
-      imageUrl: uploadedAd.resolvedImageUrl,
-      defaultImageUrl: defaultAd.imageUrl,
-      href: uploadedAd.adLink || null,
-      title: uploadedAd.title || defaultAd.title,
-      key: uploadedAd._id || `landing-${defaultAd.position}`,
-    };
-  });
+      return new Date(firstAd.createdAt || 0) - new Date(secondAd.createdAt || 0);
+    });
 
-  const getAdImageUrl = (ad) => (
-    failedAdKeys[ad.key] ? ad.defaultImageUrl : ad.imageUrl
-  );
+  const visibleLandingAds = resolvedLandingAds.filter((ad) => !failedAdKeys[ad.key]);
 
-  const handleAdImageError = (ad) => {
-    if (!ad.defaultImageUrl || ad.imageUrl === ad.defaultImageUrl) {
-      return;
-    }
-
+  const handleAdImageError = (adKey) => {
     setFailedAdKeys((current) => {
-      if (current[ad.key]) {
+      if (current[adKey]) {
         return current;
       }
 
       return {
         ...current,
-        [ad.key]: true,
+        [adKey]: true,
       };
     });
   };
 
   return (
     <div className="landing-container container-fluid px-lg-5">
-      <main className="main-content">
+      <main className={`main-content ${visibleLandingAds.length ? 'main-content--with-ads' : 'main-content--full'}`}>
         {/* Left Section */}
         <div className="hero-left">
           <div className="hero-text">
@@ -380,27 +388,47 @@ const LandingPage = ({ landingAds = [] }) => {
         </div>
 
         {/* Right Section: Ads */}
-        <aside className="ads-column">
-          {landingAdSlots.map((ad) => (
-            <div className="ad-box" key={ad.key}>
-              {ad.href ? (
-                <a href={ad.href} target="_blank" rel="noopener noreferrer">
-                  <img
-                    src={getAdImageUrl(ad)}
-                    alt={ad.title}
-                    onError={() => handleAdImageError(ad)}
-                  />
-                </a>
-              ) : (
-                <img
-                  src={getAdImageUrl(ad)}
-                  alt={ad.title}
-                  onError={() => handleAdImageError(ad)}
-                />
-              )}
+        {visibleLandingAds.length > 0 && (
+          <aside className="ads-column" aria-label="Landing page advertisements">
+            <div className="ads-column__inner">
+              {visibleLandingAds.map((ad) => (
+                <div className="ad-box" key={ad.key}>
+                  {ad.href && ad.href.startsWith('/') ? (
+                    <Link to={ad.href} className="ad-box__link">
+                      <img
+                        src={ad.imageUrl}
+                        alt={ad.title}
+                        loading="lazy"
+                        onError={() => handleAdImageError(ad.key)}
+                      />
+                    </Link>
+                  ) : ad.href ? (
+                    <a
+                      href={ad.href}
+                      target={isExternalAdHref(ad.href) ? '_blank' : undefined}
+                      rel={isExternalAdHref(ad.href) ? 'noopener noreferrer' : undefined}
+                      className="ad-box__link"
+                    >
+                      <img
+                        src={ad.imageUrl}
+                        alt={ad.title}
+                        loading="lazy"
+                        onError={() => handleAdImageError(ad.key)}
+                      />
+                    </a>
+                  ) : (
+                    <img
+                      src={ad.imageUrl}
+                      alt={ad.title}
+                      loading="lazy"
+                      onError={() => handleAdImageError(ad.key)}
+                    />
+                  )}
+                </div>
+              ))}
             </div>
-          ))}
-        </aside>
+          </aside>
+        )}
       </main>
 
       {/* Marquee Footer (Updated for Seamless Loop) */}
