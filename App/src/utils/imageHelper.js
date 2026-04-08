@@ -1,6 +1,19 @@
 import { resolveBackendPath } from "../api/config";
 
 const trimSlashes = (value = "") => value.replace(/^\/+|\/+$/g, "");
+const appendVersion = (url, record) => {
+  if (!url || !record || /^data:/i.test(url)) {
+    return url;
+  }
+
+  const version = record.updatedAt || record.createdAt;
+  if (!version) {
+    return url;
+  }
+
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}v=${encodeURIComponent(version)}`;
+};
 
 const mediaFolderMap = {
   blog: "blog",
@@ -43,7 +56,10 @@ export const getImageFieldUrl = (record, fieldName, folder = "") => {
     return null;
   }
 
-  return record[`${fieldName}Url`] || getImageUrl(record[fieldName], folder);
+  return appendVersion(
+    record[`${fieldName}Url`] || getImageUrl(record[fieldName], folder),
+    record
+  );
 };
 
 export const getImageList = (record, fieldName, folder = "") => {
@@ -52,12 +68,14 @@ export const getImageList = (record, fieldName, folder = "") => {
   }
 
   if (Array.isArray(record[`${fieldName}Urls`])) {
-    return record[`${fieldName}Urls`].filter(Boolean);
+    return record[`${fieldName}Urls`]
+      .filter(Boolean)
+      .map((url) => appendVersion(url, record));
   }
 
   if (Array.isArray(record[fieldName])) {
     return record[fieldName]
-      .map((imagePath) => getImageUrl(imagePath, folder))
+      .map((imagePath) => appendVersion(getImageUrl(imagePath, folder), record))
       .filter(Boolean);
   }
 
