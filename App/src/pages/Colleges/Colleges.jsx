@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { collegeAPI, courseAPI } from '../../api/services';
-import { getImageUrl } from '../../utils/imageHelper';
+import { getImageFieldUrl } from '../../utils/imageHelper';
 import Loader from '../../components/Loader/Loader';
 
 const Colleges = () => {
@@ -222,7 +222,7 @@ const Colleges = () => {
                           <div className="college-banner">
                             {college.collegeLogo ? (
                               <img
-                                src={getImageUrl(college.collegeLogo, 'colleges')}
+                                src={getImageFieldUrl(college, 'collegeLogo', 'colleges')}
                                 alt="college-banner"
                                 className="college-banner-image"
                               />

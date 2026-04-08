@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { blogAPI } from '../../api/services';
-import { getImageUrl } from '../../utils/imageHelper';
+import { getImageFieldUrl } from '../../utils/imageHelper';
 import Loader from '../../components/Loader/Loader';
 import '../../styles/blog.css';
 
@@ -114,7 +114,7 @@ const Blogs = () => {
                 <div className="blog-card">
                   <div className="blog-card-image">
                     <img 
-                      src={blog.blogImage ? getImageUrl(blog.blogImage, 'blogs') : 'https://placehold.co/400x240?text=No+Image'} 
+                      src={blog.blogImage ? getImageFieldUrl(blog, 'blogImage', 'blogs') : 'https://placehold.co/400x240?text=No+Image'} 
                       alt={blog.blogTitle} 
                       onError={(e) => { e.target.src = 'https://placehold.co/400x240?text=No+Image'; }}
                     />

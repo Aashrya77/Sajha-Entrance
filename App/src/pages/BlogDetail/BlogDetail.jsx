@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { blogAPI } from '../../api/services';
-import { getImageUrl } from '../../utils/imageHelper';
+import { getImageFieldUrl } from '../../utils/imageHelper';
 import Loader from '../../components/Loader/Loader';
 import '../../styles/blog.css';
 
@@ -127,7 +127,7 @@ const BlogDetail = () => {
 
               {blog.blogImage && (
                 <div className="blog-detail-image-container">
-                  <img src={getImageUrl(blog.blogImage, 'blogs')} alt={blog.blogTitle} className="blog-detail-image" />
+                  <img src={getImageFieldUrl(blog, 'blogImage', 'blogs')} alt={blog.blogTitle} className="blog-detail-image" />
                 </div>
               )}
 
@@ -146,7 +146,7 @@ const BlogDetail = () => {
                         <div className="card">
                           {relatedBlog.blogImage && (
                             <div style={{ width: '100%', aspectRatio: '5/3', overflow: 'hidden', background: '#f5f5f5' }}>
-                              <img src={getImageUrl(relatedBlog.blogImage, 'blogs')} className="card-img-top" alt={relatedBlog.blogTitle} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              <img src={getImageFieldUrl(relatedBlog, 'blogImage', 'blogs')} className="card-img-top" alt={relatedBlog.blogTitle} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                             </div>
                           )}
                           <div className="card-body">

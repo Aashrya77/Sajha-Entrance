@@ -11,8 +11,8 @@ const {
   label: "Landing ad image",
   entityName: "landing ad image",
   storageFolder: "landing",
-  publicBaseUrl: "/landingads",
-  description: "Upload the image displayed in the landing-page ad slots.",
+  publicBaseUrl: "/media/landing",
+  description: "Upload the image displayed in the landing-page right sidebar.",
 });
 
 const LandingAdAdminResource = {
@@ -21,7 +21,7 @@ const LandingAdAdminResource = {
   options: {
     id: "LandingAd",
     navigation: { name: "Content", icon: "Image" },
-    listProperties: ["title", fields.fileProperty, "position", "isActive"],
+    listProperties: ["title", fields.fileProperty, "position", "isActive", "updatedAt"],
     editProperties: ["title", fields.fileProperty, "adLink", "position", "isActive"],
     showProperties: [
       "title",
@@ -40,15 +40,14 @@ const LandingAdAdminResource = {
       },
       adLink: {
         label: "Target link",
+        description:
+          "Optional. Use internal paths like /courses or plain domains like example.com, which will be saved as https://example.com.",
       },
       position: {
         type: "number",
-        availableValues: [
-          { value: 1, label: "Ad Slot 1 (Top)" },
-          { value: 2, label: "Ad Slot 2" },
-          { value: 3, label: "Ad Slot 3" },
-          { value: 4, label: "Ad Slot 4 (Bottom)" },
-        ],
+        label: "Display order",
+        description:
+          "Lower numbers appear first in the landing page sidebar. Leave blank to place a new ad after the current last item.",
       },
       isActive: {
         type: "boolean",

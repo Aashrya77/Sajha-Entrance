@@ -7,10 +7,10 @@
   --primary-black: #232323;
 }
 
-body {
+/* body {
   background-image: url(/img/body-bg.png);
   background-size: cover;
-}
+} */
 
 * {
   font-family: "Roboto", sans-serif;

@@ -85,7 +85,7 @@ const StudentLogin = ({ setStudentData, setIsAuthenticated }) => {
                 value={formData.email}
                 onChange={handleChange}
               />
-              <span>Email or Contact No.</span>
+              <span>Email</span>
             </label>
 
             <label>

@@ -45,6 +45,13 @@ const StudentSchema = new mongoose.Schema({
     enum: ["Unpaid", "Paid"],
     default: "Unpaid",
   },
+  passwordResetToken: {
+    type: String,
+    trim: true,
+  },
+  passwordResetExpires: {
+    type: Date,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

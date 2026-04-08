@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import './LandingPageResponsive.css';
 import { Search, Building2, MapPin, GraduationCap, BookOpen, X, Loader2 } from 'lucide-react';
 import { collegeAPI, universityAPI, courseAPI } from '../../api/services';
-import { getImageUrl } from '../../utils/imageHelper';
+import { getImageFieldUrl } from '../../utils/imageHelper';
 
 const Counter = ({ end, duration = 2000 }) => {
   const [count, setCount] = React.useState(0);
@@ -28,6 +28,34 @@ const Counter = ({ end, duration = 2000 }) => {
   return <span>{count}</span>;
 };
 
+const normalizeAdHref = (href = '') => {
+  if (typeof href !== 'string') {
+    return null;
+  }
+
+  const trimmedHref = href.trim();
+  if (!trimmedHref) {
+    return null;
+  }
+
+  if (
+    trimmedHref.startsWith('/') ||
+    trimmedHref.startsWith('#') ||
+    trimmedHref.startsWith('?')
+  ) {
+    return trimmedHref;
+  }
+
+  if (/^(?:https?:)?\/\//i.test(trimmedHref) || /^(mailto|tel):/i.test(trimmedHref)) {
+    return trimmedHref;
+  }
+
+  return `https://${trimmedHref.replace(/^\/+/, '')}`;
+};
+
+const isExternalAdHref = (href = '') =>
+  /^(?:https?:)?\/\//i.test(href) || /^(mailto|tel):/i.test(href);
+
 const LandingPage = ({ landingAds = [] }) => {
   const [location, setLocation] = useState('All Locations');
   const [showDropdown, setShowDropdown] = useState(false);
@@ -44,6 +72,7 @@ const LandingPage = ({ landingAds = [] }) => {
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchPerformed, setSearchPerformed] = useState(false);
   const [searchError, setSearchError] = useState('');
+  const [failedAdKeys, setFailedAdKeys] = useState({});
 
   const getCategoryIcon = () => {
     switch (category) {
@@ -125,9 +154,54 @@ const LandingPage = ({ landingAds = [] }) => {
     "/CollegeImage/texas.jpg", "/CollegeImage/sagarmatha.jpg", "/CollegeImage/shikshyalaya.jpg",
   ];
 
+  const resolvedLandingAds = landingAds
+    .map((ad, index) => {
+      const imageUrl = getImageFieldUrl(ad, 'adImage', 'landing');
+      if (!imageUrl) {
+        return null;
+      }
+
+      const parsedPosition = Number(ad.position);
+
+      return {
+        ...ad,
+        href: normalizeAdHref(ad.adLink),
+        imageUrl,
+        key: ad._id || `landing-ad-${parsedPosition || index + 1}`,
+        position:
+          Number.isFinite(parsedPosition) && parsedPosition > 0
+            ? parsedPosition
+            : Number.MAX_SAFE_INTEGER,
+        title: ad.title?.trim() || 'Sajha Entrance advertisement',
+      };
+    })
+    .filter(Boolean)
+    .sort((firstAd, secondAd) => {
+      if (firstAd.position !== secondAd.position) {
+        return firstAd.position - secondAd.position;
+      }
+
+      return new Date(firstAd.createdAt || 0) - new Date(secondAd.createdAt || 0);
+    });
+
+  const visibleLandingAds = resolvedLandingAds.filter((ad) => !failedAdKeys[ad.key]);
+
+  const handleAdImageError = (adKey) => {
+    setFailedAdKeys((current) => {
+      if (current[adKey]) {
+        return current;
+      }
+
+      return {
+        ...current,
+        [adKey]: true,
+      };
+    });
+  };
+
   return (
     <div className="landing-container container-fluid px-lg-5">
-      <main className="main-content">
+      <main className={`main-content ${visibleLandingAds.length ? 'main-content--with-ads' : 'main-content--full'}`}>
         {/* Left Section */}
         <div className="hero-left">
           <div className="hero-text">
@@ -238,7 +312,7 @@ const LandingPage = ({ landingAds = [] }) => {
                       >
                         <div className="result-card-image">
                           {college.collegeLogo ? (
-                            <img src={getImageUrl(college.collegeLogo, 'colleges')} alt={college.collegeName} />
+                            <img src={getImageFieldUrl(college, 'collegeLogo', 'colleges')} alt={college.collegeName} />
                           ) : (
                             <div className="result-card-placeholder">
                               <Building2 size={24} />
@@ -264,7 +338,7 @@ const LandingPage = ({ landingAds = [] }) => {
                       >
                         <div className="result-card-image">
                           {university.universityLogo ? (
-                            <img src={getImageUrl(university.universityLogo, 'universities')} alt={university.universityName} />
+                            <img src={getImageFieldUrl(university, 'universityLogo', 'universities')} alt={university.universityName} />
                           ) : (
                             <div className="result-card-placeholder">
                               <GraduationCap size={24} />
@@ -314,28 +388,47 @@ const LandingPage = ({ landingAds = [] }) => {
         </div>
 
         {/* Right Section: Ads */}
-        <aside className="ads-column">
-          {landingAds.length > 0 ? (
-            landingAds.map((ad, index) => (
-              <div className="ad-box" key={ad._id || index}>
-                {ad.adLink ? (
-                  <a href={ad.adLink} target="_blank" rel="noopener noreferrer">
-                    <img src={ad.adImage && (ad.adImage.startsWith('http') ? ad.adImage : `http://localhost:5000/landingads/${ad.adImage}`)} alt={ad.title || `Ad ${index + 1}`} />
-                  </a>
-                ) : (
-                  <img src={ad.adImage && (ad.adImage.startsWith('http') ? ad.adImage : `http://localhost:5000/landingads/${ad.adImage}`)} alt={ad.title || `Ad ${index + 1}`} />
-                )}
-              </div>
-            ))
-          ) : (
-            <>
-              <div className="ad-box"><img src="/RightAds/entrance1.gif" alt="Ad 1" /></div>
-              <div className="ad-box"><img src="/RightAds/entrance2.jpg" alt="Ad 2" /></div>
-              <div className="ad-box"><img src="/RightAds/entrance3.gif" alt="Ad 3" /></div>
-              <div className="ad-box"><img src="/RightAds/entrance4.gif" alt="Ad 4" /></div>
-            </>
-          )}
-        </aside>
+        {visibleLandingAds.length > 0 && (
+          <aside className="ads-column" aria-label="Landing page advertisements">
+            <div className="ads-column__inner">
+              {visibleLandingAds.map((ad) => (
+                <div className="ad-box" key={ad.key}>
+                  {ad.href && ad.href.startsWith('/') ? (
+                    <Link to={ad.href} className="ad-box__link">
+                      <img
+                        src={ad.imageUrl}
+                        alt={ad.title}
+                        loading="lazy"
+                        onError={() => handleAdImageError(ad.key)}
+                      />
+                    </Link>
+                  ) : ad.href ? (
+                    <a
+                      href={ad.href}
+                      target={isExternalAdHref(ad.href) ? '_blank' : undefined}
+                      rel={isExternalAdHref(ad.href) ? 'noopener noreferrer' : undefined}
+                      className="ad-box__link"
+                    >
+                      <img
+                        src={ad.imageUrl}
+                        alt={ad.title}
+                        loading="lazy"
+                        onError={() => handleAdImageError(ad.key)}
+                      />
+                    </a>
+                  ) : (
+                    <img
+                      src={ad.imageUrl}
+                      alt={ad.title}
+                      loading="lazy"
+                      onError={() => handleAdImageError(ad.key)}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          </aside>
+        )}
       </main>
 
       {/* Marquee Footer (Updated for Seamless Loop) */}

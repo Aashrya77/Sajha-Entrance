@@ -11,7 +11,7 @@ const {
   label: "Featured image",
   entityName: "blog image",
   storageFolder: "blog",
-  publicBaseUrl: "/blogs",
+  publicBaseUrl: "/media/blog",
   description: "Upload the cover image used on the blog cards and detail page.",
 });
 

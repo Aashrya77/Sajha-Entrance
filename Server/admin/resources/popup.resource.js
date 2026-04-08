@@ -11,7 +11,7 @@ const {
   label: "Popup image",
   entityName: "popup image",
   storageFolder: "popup",
-  publicBaseUrl: "/popups",
+  publicBaseUrl: "/media/popup",
   description: "Used when the popup type is set to Image.",
 });
 

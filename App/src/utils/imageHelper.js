@@ -1,31 +1,83 @@
-// Helper function to convert image paths to full URLs
-export const getImageUrl = (imagePath, folder = '') => {
+import { resolveBackendPath } from "../api/config";
+
+const trimSlashes = (value = "") => value.replace(/^\/+|\/+$/g, "");
+const appendVersion = (url, record) => {
+  if (!url || !record || /^data:/i.test(url)) {
+    return url;
+  }
+
+  const version = record.updatedAt || record.createdAt;
+  if (!version) {
+    return url;
+  }
+
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}v=${encodeURIComponent(version)}`;
+};
+
+const mediaFolderMap = {
+  blog: "blog",
+  blogs: "blog",
+  advertisement: "advertisement",
+  advertisements: "advertisement",
+  popup: "popup",
+  popups: "popup",
+  landing: "landing",
+  landingads: "landing",
+  college: "college",
+  colleges: "college",
+  university: "university",
+  universities: "university",
+};
+
+export const getImageUrl = (imagePath, folder = "") => {
   if (!imagePath) return null;
 
-  // Already a full URL
-  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+  if (/^(?:https?:)?\/\//i.test(imagePath) || imagePath.startsWith("data:")) {
     return imagePath;
   }
 
-  // Clean the path
-  const cleanPath = imagePath.replace(/^\/+/, '');
-  const cleanFolder = (folder || '').replace(/^\/+|\/+$/g, '');
+  const cleanPath = trimSlashes(imagePath);
+  const cleanFolder = trimSlashes(folder);
+  if (imagePath.startsWith("/")) {
+    return resolveBackendPath(imagePath);
+  }
 
-  const baseUrl = import.meta.env.PROD 
-    ? 'https://sajhaentrance.org' 
-    : 'http://localhost:5000';
-  
-  // If path already includes folder structure (new format), use as-is under /uploads
-  if (cleanPath.includes('/')) {
-    return `${baseUrl}/uploads/${cleanPath}`;
+  const resolvedFolder = mediaFolderMap[cleanFolder] || cleanFolder;
+  if (resolvedFolder) {
+    return resolveBackendPath(`/media/${resolvedFolder}/${cleanPath.split("/").pop()}`);
   }
-  
-  // If folder is provided, use it directly as route (legacy format)
-  // e.g., folder='colleges' -> /colleges/pcps.jpg
-  if (cleanFolder) {
-    return `${baseUrl}/${cleanFolder}/${cleanPath}`;
+
+  return resolveBackendPath(cleanPath.startsWith("media/") ? `/${cleanPath}` : `/media/${cleanPath}`);
+};
+
+export const getImageFieldUrl = (record, fieldName, folder = "") => {
+  if (!record || !fieldName) {
+    return null;
   }
-  
-  // Fallback: assume it's in uploads root
-  return `${baseUrl}/uploads/${cleanPath}`;
+
+  return appendVersion(
+    record[`${fieldName}Url`] || getImageUrl(record[fieldName], folder),
+    record
+  );
+};
+
+export const getImageList = (record, fieldName, folder = "") => {
+  if (!record || !fieldName) {
+    return [];
+  }
+
+  if (Array.isArray(record[`${fieldName}Urls`])) {
+    return record[`${fieldName}Urls`]
+      .filter(Boolean)
+      .map((url) => appendVersion(url, record));
+  }
+
+  if (Array.isArray(record[fieldName])) {
+    return record[fieldName]
+      .map((imagePath) => appendVersion(getImageUrl(imagePath, folder), record))
+      .filter(Boolean);
+  }
+
+  return [];
 };

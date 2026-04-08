@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { homeAPI } from '../../api/services';
-import { getImageUrl } from '../../utils/imageHelper';
+import { getImageFieldUrl } from '../../utils/imageHelper';
 import Loader from '../../components/Loader/Loader';
 import LandingPage from '../../components/LandingPage/Landingpage';
 import './Home.css';
@@ -150,7 +150,7 @@ const Home = () => {
                     <div className="college-banner">
                       {college.collegeLogo ? (
                         <img
-                          src={getImageUrl(college.collegeLogo, 'colleges')}
+                          src={getImageFieldUrl(college, 'collegeLogo', 'colleges')}
                           alt="college-banner"
                           className="college-banner-image"
                         />
@@ -386,7 +386,7 @@ const Home = () => {
                 onClick={(e) => !popupData.redirectUrl && e.preventDefault()}
               >
                 <img 
-                  src={getImageUrl(popupData.popupImage, 'popups')} 
+                  src={getImageFieldUrl(popupData, 'popupImage', 'popups')} 
                   alt={popupData.popupTitle || 'Popup'} 
                   className="popup-image"
                 />

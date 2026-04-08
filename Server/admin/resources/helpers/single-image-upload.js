@@ -4,11 +4,11 @@ import { flat } from "adminjs";
 import uploadFeature from "@adminjs/upload";
 import componentLoader, { Components } from "../../ComponentLoader.js";
 import UploadProvider from "../../UploadProvider.js";
+import { mediaRootDirectory } from "../../../utils/media.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const PUBLIC_UPLOADS_ROOT = path.join(__dirname, "../../../public/uploads");
 const DEFAULT_IMAGE_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const DEFAULT_MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 const UPLOAD_CONTEXT_NAMESPACE = "adminjs-upload";
@@ -38,11 +38,10 @@ const toArray = (value) => {
   return [value];
 };
 
-const defaultUploadPath = (record, filename) =>
-  path.posix.join(record.id().toString(), formatUploadFilename(filename));
+const defaultUploadPath = (_record, filename) => formatUploadFilename(filename);
 
-const createPrefixedUploadPath = (prefix) => (record, filename) =>
-  path.posix.join(prefix, record.id().toString(), formatUploadFilename(filename));
+const createPrefixedUploadPath = (prefix) => (_record, filename) =>
+  formatUploadFilename(`${prefix}-${filename}`);
 
 const buildExistingToken = (key) => `existing:${key}`;
 const buildNewToken = (index) => `new:${index}`;
@@ -215,7 +214,7 @@ const createImageUpload = ({
 }) => {
   const fields = buildUploadFieldMap({ keyProperty, propertyBase });
   const provider = new UploadProvider({
-    bucket: path.join(PUBLIC_UPLOADS_ROOT, storageFolder),
+    bucket: path.join(mediaRootDirectory, storageFolder),
     baseUrl: publicBaseUrl,
   });
 
@@ -249,7 +248,7 @@ const createImageUpload = ({
       custom: {
         entityName: entityName || label.toLowerCase(),
         storageFolder,
-        uploadPath: uploadPathLabel || `/public/uploads/${storageFolder}`,
+        uploadPath: uploadPathLabel || `/public/media/${storageFolder}`,
         orderProperty: multiple ? fields.orderProperty : undefined,
       },
     },

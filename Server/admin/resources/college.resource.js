@@ -11,8 +11,8 @@ const logoUpload = createSingleImageUpload({
   label: "College logo",
   entityName: "college logo",
   storageFolder: "college",
-  publicBaseUrl: "/colleges",
-  uploadPathLabel: "/public/uploads/college/logo",
+  publicBaseUrl: "/media/college",
+  uploadPathLabel: "/public/media/college",
   uploadPath: createPrefixedUploadPath("logo"),
   description: "Upload the logo shown on cards, listings, and college detail pages.",
 });
@@ -23,8 +23,8 @@ const coverUpload = createSingleImageUpload({
   label: "Cover image",
   entityName: "cover image",
   storageFolder: "college",
-  publicBaseUrl: "/colleges",
-  uploadPathLabel: "/public/uploads/college/cover",
+  publicBaseUrl: "/media/college",
+  uploadPathLabel: "/public/media/college",
   uploadPath: createPrefixedUploadPath("cover"),
   description: "Upload the hero image used at the top of the college detail page.",
 });
@@ -35,8 +35,8 @@ const chairmanUpload = createSingleImageUpload({
   label: "Chairman image",
   entityName: "chairman image",
   storageFolder: "college",
-  publicBaseUrl: "/colleges",
-  uploadPathLabel: "/public/uploads/college/chairman",
+  publicBaseUrl: "/media/college",
+  uploadPathLabel: "/public/media/college",
   uploadPath: createPrefixedUploadPath("chairman"),
   description: "Upload the portrait displayed alongside the chairman message.",
 });
@@ -47,8 +47,8 @@ const galleryUpload = createMultipleImageUpload({
   label: "Gallery",
   entityName: "gallery image",
   storageFolder: "college",
-  publicBaseUrl: "/colleges",
-  uploadPathLabel: "/public/uploads/college/gallery",
+  publicBaseUrl: "/media/college",
+  uploadPathLabel: "/public/media/college",
   uploadPath: createPrefixedUploadPath("gallery"),
   description:
     "Upload multiple campus images. Thumbnails can be previewed, removed, and reordered before saving.",

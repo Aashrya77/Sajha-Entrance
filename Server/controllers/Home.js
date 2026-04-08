@@ -8,6 +8,11 @@ import dotenv from "dotenv";
 import { MailHandler } from "./MailHandler.js";
 import NewsletterModel from "../models/Newsletter.js";
 import ContactModel from "../models/Contact.js";
+import {
+  mediaFieldMaps,
+  normalizeCollectionMedia,
+  normalizeMediaFields,
+} from "../utils/media.js";
 
 dotenv.config();
 
@@ -17,15 +22,21 @@ const HomeDetails = async (req, res) => {
     const courses = await Course.find().limit(4).exec();
     const colleges = await College.find().limit(4).exec();
     const popup = await Popup.findOne({ isActive: true }).exec();
-    const landingAds = await LandingAd.find({ isActive: true }).sort({ position: 1 }).exec();
+    const landingAds = await LandingAd.find({
+      isActive: true,
+      adImage: { $nin: ["", null] },
+    })
+      .sort({ position: 1, createdAt: 1 })
+      .exec();
+
     res.json({
       success: true,
       data: {
         notice,
         courses,
-        colleges,
-        popup,
-        landingAds,
+        colleges: normalizeCollectionMedia(colleges, mediaFieldMaps.college),
+        popup: normalizeMediaFields(popup, mediaFieldMaps.popup),
+        landingAds: normalizeCollectionMedia(landingAds, mediaFieldMaps.landingAd),
       }
     });
   } catch (error) {
@@ -43,7 +54,7 @@ const ContactPage = async (req, res) => {
       data: {
         notice,
         courses,
-        popup,
+        popup: normalizeMediaFields(popup, mediaFieldMaps.popup),
       }
     });
   } catch (error) {
@@ -103,7 +114,7 @@ const GetServices = async (req, res) => {
       success: true,
       data: {
         notice,
-        popup,
+        popup: normalizeMediaFields(popup, mediaFieldMaps.popup),
       }
     });
   } catch (error) {
@@ -127,10 +138,10 @@ const GetAbout = async (req, res) => {
     res.json({
       success: true,
       data: {
-        blogs,
+        blogs: normalizeCollectionMedia(blogs, mediaFieldMaps.blog),
         courses,
         notice,
-        popup,
+        popup: normalizeMediaFields(popup, mediaFieldMaps.popup),
       }
     });
   } catch (error) {

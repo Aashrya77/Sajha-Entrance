@@ -18,9 +18,7 @@ export default class UploadProvider extends BaseProvider {
     this.baseUrl = normalizeBaseUrl(options.baseUrl);
 
     if (!existsSync(this.storageRoot)) {
-      throw new Error(
-        `directory: "${this.storageRoot}" does not exist. Create it before running the upload provider`
-      );
+      fs.mkdirSync(this.storageRoot, { recursive: true });
     }
   }
 

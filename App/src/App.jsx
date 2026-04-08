@@ -125,7 +125,9 @@ function App() {
 
   const location = useLocation();
   const authPages = ['/student/login', '/student/register', '/forgot-password'];
-  const isAuthPage = authPages.includes(location.pathname);
+  const isAuthPage =
+    authPages.includes(location.pathname) ||
+    location.pathname.startsWith('/reset-password/');
 
   return (
     <div className="App">
@@ -157,6 +159,7 @@ function App() {
         <Route path="/student/register" element={<StudentRegister />} />
         <Route path="/student/profile" element={<StudentProfile studentData={studentData} setStudentData={setStudentData} setIsAuthenticated={setIsAuthenticated} />} />
         <Route path="/forgot-password" element={<ForgotPasswordForm />} />
+        <Route path="/reset-password/:token" element={<ForgotPasswordForm />} />
         <Route path="/payment/success" element={<PaymentSuccess />} />
         <Route path="/payment/failure" element={<PaymentFailure />} />
         <Route path="*" element={<NotFound />} />

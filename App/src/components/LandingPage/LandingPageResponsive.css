@@ -25,6 +25,14 @@
   align-items: flex-start;
 }
 
+.main-content--full .hero-left {
+  flex: 1;
+}
+
+.main-content--with-ads .hero-left {
+  min-width: 0;
+}
+
 /* Hero Left Section */
 .hero-left {
   flex: 2.5;
@@ -246,7 +254,13 @@
 
 /* Ads Column */
 .ads-column {
-  flex: 0.8;
+  flex: 0 0 min(320px, 28%);
+  min-width: 280px;
+}
+
+.ads-column__inner {
+  position: sticky;
+  top: 110px;
   display: flex;
   flex-direction: column;
   gap: 15px;
@@ -258,15 +272,27 @@
   overflow: hidden;
   border: 1px solid #eee;
   background: white;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ad-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.12);
 }
 
 .ad-box img {
   width: 100%;
   height: auto;
   display: block;
+  object-fit: contain;
 }
 
 .ad-box a {
+  display: block;
+}
+
+.ad-box__link {
   display: block;
 }
 
@@ -471,7 +497,7 @@
    ============================================ */
 
 /* Tablet - 1024px */
-@media (max-width: 1024px) {
+@media (max-width: 900px) {
   .main-content {
     flex-direction: column;
     gap: 25px;
@@ -482,9 +508,15 @@
   }
 
   .ads-column {
-    flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: center;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .ads-column__inner {
+    position: static;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 15px;
   }
 
 
@@ -554,6 +586,10 @@
   }
 
   .ads-column {
+    gap: 10px;
+  }
+
+  .ads-column__inner {
     gap: 10px;
   }
 
@@ -695,8 +731,13 @@
 
   .ads-column {
     margin-top: 40px;
-    gap: 25px;
+    min-width: 0;
     padding: 0 5px;
+  }
+
+  .ads-column__inner {
+    display: flex;
+    gap: 25px;
   }
 
   .ad-box {
@@ -845,6 +886,10 @@
     gap: 8px;
   }
 
+  .ads-column__inner {
+    gap: 8px;
+  }
+
 
 
   .partner-marquee {
@@ -980,8 +1025,14 @@
   }
 
   .ads-column {
-    flex-direction: row;
-    flex-wrap: wrap;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .ads-column__inner {
+    position: static;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   }
 
 

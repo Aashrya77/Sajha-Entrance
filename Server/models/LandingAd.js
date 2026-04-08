@@ -1,9 +1,40 @@
 import mongoose from "mongoose";
 
+const DEFAULT_LANDING_AD_TITLE = "Ad";
+
+const normalizeLandingAdLink = (value = "") => {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  const trimmedValue = value.trim();
+  if (!trimmedValue) {
+    return "";
+  }
+
+  if (
+    trimmedValue.startsWith("/") ||
+    trimmedValue.startsWith("#") ||
+    trimmedValue.startsWith("?")
+  ) {
+    return trimmedValue;
+  }
+
+  if (
+    /^(?:https?:)?\/\//i.test(trimmedValue) ||
+    /^(mailto|tel):/i.test(trimmedValue)
+  ) {
+    return trimmedValue;
+  }
+
+  return `https://${trimmedValue.replace(/^\/+/, "")}`;
+};
+
 const LandingAdSchema = new mongoose.Schema({
   title: {
     type: String,
-    default: "Ad"
+    default: DEFAULT_LANDING_AD_TITLE,
+    trim: true,
   },
   adImage: {
     type: String,
@@ -23,29 +54,65 @@ const LandingAdSchema = new mongoose.Schema({
   },
   adLink: {
     type: String,
-    default: ""
+    default: "",
+    set: normalizeLandingAdLink,
   },
   position: {
     type: Number,
-    enum: [1, 2, 3, 4],
+    min: 1,
     required: true,
-    unique: true
+    unique: true,
   },
   isActive: {
     type: Boolean,
-    default: true
+    default: true,
   },
   createdAt: {
     type: Date,
-    default: Date.now
+    default: Date.now,
   },
   updatedAt: {
     type: Date,
-    default: Date.now
+    default: Date.now,
+  },
+});
+
+LandingAdSchema.pre("validate", async function assignDisplayOrder(next) {
+  try {
+    if (!this.title?.trim()) {
+      this.title = DEFAULT_LANDING_AD_TITLE;
+    }
+
+    if (this.position === undefined || this.position === null || this.position === "") {
+      const lastLandingAd = await this.constructor
+        .findOne()
+        .sort({ position: -1 })
+        .select("position")
+        .lean();
+
+      this.position = (lastLandingAd?.position || 0) + 1;
+    }
+
+    const conflictingLandingAd = await this.constructor
+      .findOne()
+      .where("_id")
+      .ne(this._id)
+      .where("position")
+      .equals(this.position)
+      .select("_id")
+      .lean();
+
+    if (conflictingLandingAd) {
+      this.invalidate("position", "Display order must be unique.");
+    }
+
+    next();
+  } catch (error) {
+    next(error);
   }
 });
 
-LandingAdSchema.pre('save', function(next) {
+LandingAdSchema.pre("save", function updateTimestamp(next) {
   this.updatedAt = Date.now();
   next();
 });
@@ -73,12 +140,6 @@ export const LandingAdFileModel = {
       position: {
         type: "number",
         isVisible: { list: true, show: true, edit: true, filter: true },
-        availableValues: [
-          { value: 1, label: "Ad Slot 1 (Top)" },
-          { value: 2, label: "Ad Slot 2" },
-          { value: 3, label: "Ad Slot 3" },
-          { value: 4, label: "Ad Slot 4 (Bottom)" },
-        ],
       },
       isActive: {
         type: "boolean",

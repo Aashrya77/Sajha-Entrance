@@ -4,6 +4,11 @@ import Course from "../models/Course.js";
 import Advertisement from "../models/Advertisement.js";
 import Popup from "../models/Popup.js";
 import mongoose from "mongoose";
+import {
+  mediaFieldMaps,
+  normalizeCollectionMedia,
+  normalizeMediaFields,
+} from "../utils/media.js";
 
 const CollegeDetail = async (req, res) => {
   try {
@@ -28,11 +33,11 @@ const CollegeDetail = async (req, res) => {
     res.json({
       success: true,
       data: {
-        collegeData,
+        collegeData: normalizeMediaFields(collegeData, mediaFieldMaps.college),
         courses,
         notice,
-        advertisement,
-        popup
+        advertisement: normalizeMediaFields(advertisement, mediaFieldMaps.advertisement),
+        popup: normalizeMediaFields(popup, mediaFieldMaps.popup),
       }
     });
   } catch (error) {
@@ -105,15 +110,15 @@ const GetColleges = async (req, res) => {
     res.json({
       success: true,
       data: {
-        colleges,
+        colleges: normalizeCollectionMedia(colleges, mediaFieldMaps.college),
         notice,
-        advertisement,
+        advertisement: normalizeMediaFields(advertisement, mediaFieldMaps.advertisement),
         courses,
         previousPage,
         nextPage,
         search,
         location,
-        popup,
+        popup: normalizeMediaFields(popup, mediaFieldMaps.popup),
         noResult,
       }
     });

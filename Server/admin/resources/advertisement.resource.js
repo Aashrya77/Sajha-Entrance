@@ -11,7 +11,7 @@ const {
   label: "Advertisement image",
   entityName: "advertisement image",
   storageFolder: "advertisement",
-  publicBaseUrl: "/advertisements",
+  publicBaseUrl: "/media/advertisement",
   description: "Upload the creative shown across the public pages.",
 });
 

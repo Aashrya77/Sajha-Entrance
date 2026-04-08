@@ -2,6 +2,9 @@ import express from "express";
 import {
   register,
   login,
+  forgotPassword,
+  resetPassword,
+  validateResetToken,
   getProfile,
   updateProfile,
   getClasses,
@@ -14,6 +17,9 @@ const Router = express.Router();
 // Public routes
 Router.post("/register", register);
 Router.post("/login", login);
+Router.post("/forgot-password", forgotPassword);
+Router.get("/reset-password/:token", validateResetToken);
+Router.post("/reset-password/:token", resetPassword);
 
 // Protected routes
 Router.get("/profile", authenticateToken, getProfile);
