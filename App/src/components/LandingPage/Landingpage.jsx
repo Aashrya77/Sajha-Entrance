@@ -125,6 +125,48 @@ const LandingPage = ({ landingAds = [] }) => {
     "/CollegeImage/texas.jpg", "/CollegeImage/sagarmatha.jpg", "/CollegeImage/shikshyalaya.jpg",
   ];
 
+  const defaultLandingAds = [
+    { position: 1, imageUrl: "/RightAds/entrance1.gif", title: "Ad 1" },
+    { position: 2, imageUrl: "/RightAds/entrance2.jpg", title: "Ad 2" },
+    { position: 3, imageUrl: "/RightAds/entrance3.gif", title: "Ad 3" },
+    { position: 4, imageUrl: "/RightAds/entrance4.gif", title: "Ad 4" },
+  ];
+
+  const resolvedLandingAds = landingAds
+    .map((ad) => ({
+      ...ad,
+      resolvedImageUrl: getImageFieldUrl(ad, 'adImage', 'landingads'),
+    }))
+    .filter((ad) => ad.resolvedImageUrl);
+
+  const landingAdsByPosition = resolvedLandingAds.reduce((adsMap, ad) => {
+    if (ad.position >= 1 && ad.position <= 4 && !adsMap[ad.position]) {
+      adsMap[ad.position] = ad;
+    }
+
+    return adsMap;
+  }, {});
+
+  const landingAdSlots = defaultLandingAds.map((defaultAd) => {
+    const uploadedAd = landingAdsByPosition[defaultAd.position];
+
+    if (!uploadedAd) {
+      return {
+        ...defaultAd,
+        href: null,
+        key: `default-${defaultAd.position}`,
+      };
+    }
+
+    return {
+      position: defaultAd.position,
+      imageUrl: uploadedAd.resolvedImageUrl,
+      href: uploadedAd.adLink || null,
+      title: uploadedAd.title || defaultAd.title,
+      key: uploadedAd._id || `landing-${defaultAd.position}`,
+    };
+  });
+
   return (
     <div className="landing-container container-fluid px-lg-5">
       <main className="main-content">
@@ -315,26 +357,17 @@ const LandingPage = ({ landingAds = [] }) => {
 
         {/* Right Section: Ads */}
         <aside className="ads-column">
-          {landingAds.length > 0 ? (
-            landingAds.map((ad, index) => (
-              <div className="ad-box" key={ad._id || index}>
-                {ad.adLink ? (
-                  <a href={ad.adLink} target="_blank" rel="noopener noreferrer">
-                    <img src={getImageFieldUrl(ad, 'adImage', 'landingads')} alt={ad.title || `Ad ${index + 1}`} />
-                  </a>
-                ) : (
-                  <img src={getImageFieldUrl(ad, 'adImage', 'landingads')} alt={ad.title || `Ad ${index + 1}`} />
-                )}
-              </div>
-            ))
-          ) : (
-            <>
-              <div className="ad-box"><img src="/RightAds/entrance1.gif" alt="Ad 1" /></div>
-              <div className="ad-box"><img src="/RightAds/entrance2.jpg" alt="Ad 2" /></div>
-              <div className="ad-box"><img src="/RightAds/entrance3.gif" alt="Ad 3" /></div>
-              <div className="ad-box"><img src="/RightAds/entrance4.gif" alt="Ad 4" /></div>
-            </>
-          )}
+          {landingAdSlots.map((ad) => (
+            <div className="ad-box" key={ad.key}>
+              {ad.href ? (
+                <a href={ad.href} target="_blank" rel="noopener noreferrer">
+                  <img src={ad.imageUrl} alt={ad.title} />
+                </a>
+              ) : (
+                <img src={ad.imageUrl} alt={ad.title} />
+              )}
+            </div>
+          ))}
         </aside>
       </main>
 
