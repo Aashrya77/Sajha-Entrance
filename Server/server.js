@@ -108,23 +108,24 @@ if (fs.existsSync(adminBrandAssets.appPublicDirectory)) {
   );
 }
 
-// ================= ROUTES =================
-app.use("/api", HomeRoutes);
-app.use("/api", BlogRoutes);
-app.use("/api", CourseRoutes);
-app.use("/api", CollegeRoutes);
-app.use("/api/student", AuthRoutes);
-app.use("/api", ResultRoutes);
-app.use("/api", PaymentRoutes);
-app.use("/api", UniversityRoutes);
-app.use("/api", MockTestRoutes);
-app.use("/api", BlogUploadRoutes);
-app.use("/api", BookPaymentRoutes);
-app.use("/api", InquiryRoutes);
+const registerApiRoutes = () => {
+  app.use("/api", HomeRoutes);
+  app.use("/api", BlogRoutes);
+  app.use("/api", CourseRoutes);
+  app.use("/api", CollegeRoutes);
+  app.use("/api/student", AuthRoutes);
+  app.use("/api", ResultRoutes);
+  app.use("/api", PaymentRoutes);
+  app.use("/api", UniversityRoutes);
+  app.use("/api", MockTestRoutes);
+  app.use("/api", BlogUploadRoutes);
+  app.use("/api", BookPaymentRoutes);
+  app.use("/api", InquiryRoutes);
 
-app.use("/api/*", (req, res) => {
-  res.status(404).json({ error: "API endpoint not found" });
-});
+  app.use("/api/*", (req, res) => {
+    res.status(404).json({ error: "API endpoint not found" });
+  });
+};
 
 
 // ================= START SERVER =================
@@ -147,9 +148,10 @@ const startServer = async () => {
     const adminRouter = await startAdminPanel();
     app.use(adminRouter);
 
-    // Body parser AFTER AdminJS router (required by AdminJS)
+    // Body parser after AdminJS router, before JSON API routes.
     app.use(express.json());
     app.use(express.urlencoded({ extended: true }));
+    registerApiRoutes();
 
     app.listen(PORT, () => {
       logger.info(`Server running on http://localhost:${PORT}`);

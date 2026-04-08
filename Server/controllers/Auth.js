@@ -2,20 +2,40 @@ import Student from "../models/Student.js";
 import OnlineClass from "../models/OnlineClass.js";
 import RecordedClass from "../models/RecordedClass.js";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import { getClassStatus } from "./Class.js";
+import { MailHandler } from "./MailHandler.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 const JWT_EXPIRY = process.env.JWT_EXPIRY || "7d";
+const PASSWORD_RESET_EXPIRY_MS = 1000 * 60 * 30;
 
 // Generate JWT Token
 const generateToken = (id, studentId, email) => {
   return jwt.sign({ id, studentId, email }, JWT_SECRET, { expiresIn: JWT_EXPIRY });
 };
 
+const buildFrontendUrl = (req) => {
+  const configuredFrontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL;
+  if (configuredFrontendUrl) {
+    return configuredFrontendUrl.replace(/\/+$/g, "");
+  }
+
+  const requestOrigin = req.get("origin");
+  if (requestOrigin) {
+    return requestOrigin.replace(/\/+$/g, "");
+  }
+
+  return `${req.protocol}://${req.get("host")}`.replace(/\/+$/g, "");
+};
+
+const hashResetToken = (token) =>
+  crypto.createHash("sha256").update(token).digest("hex");
+
 // Student Register
 export const register = async (req, res) => {
   try {
-    const { name, email, password, phone, address, collegeName, course } = req.body;
+    const { name, email, password, phone, address, collegeName, course } = req.body || {};
 
     if (!name || !email || !password || !course) {
       return res.status(400).json({ success: false, error: "Name, email, password and course are required." });
@@ -55,7 +75,7 @@ export const register = async (req, res) => {
 // Student Login
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body || {};
 
     if (!email || !password) {
       return res.status(400).json({ success: false, error: "Email and password are required." });
@@ -97,6 +117,123 @@ export const login = async (req, res) => {
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ success: false, error: "Login failed. Please try again." });
+  }
+};
+
+export const forgotPassword = async (req, res) => {
+  try {
+    const email = String(req.body?.email || "").toLowerCase().trim();
+
+    if (!email) {
+      return res.status(400).json({ success: false, error: "Email is required." });
+    }
+
+    const student = await Student.findOne({ email });
+
+    if (!student) {
+      return res.json({
+        success: true,
+        message:
+          "If an account with that email exists, a password reset link has been sent.",
+      });
+    }
+
+    const rawResetToken = crypto.randomBytes(32).toString("hex");
+    student.passwordResetToken = hashResetToken(rawResetToken);
+    student.passwordResetExpires = new Date(Date.now() + PASSWORD_RESET_EXPIRY_MS);
+    await student.save();
+
+    const resetUrl = `${buildFrontendUrl(req)}/reset-password/${rawResetToken}`;
+
+    await MailHandler.sendMail({
+      from: process.env.MAIL_USERNAME,
+      to: student.email,
+      subject: "Reset your Sajha Entrance password",
+      text: [
+        `Hello ${student.name},`,
+        "",
+        "We received a request to reset your Sajha Entrance password.",
+        `Open this link to choose a new password: ${resetUrl}`,
+        "",
+        "This link will expire in 30 minutes.",
+        "If you did not request a password reset, you can ignore this email.",
+      ].join("\n"),
+      html: `
+        <p>Hello ${student.name},</p>
+        <p>We received a request to reset your Sajha Entrance password.</p>
+        <p><a href="${resetUrl}">Reset your password</a></p>
+        <p>This link will expire in 30 minutes.</p>
+        <p>If you did not request a password reset, you can ignore this email.</p>
+      `,
+    });
+
+    res.json({
+      success: true,
+      message:
+        "If an account with that email exists, a password reset link has been sent.",
+    });
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to send reset email. Please try again.",
+    });
+  }
+};
+
+export const validateResetToken = async (req, res) => {
+  try {
+    const token = String(req.params.token || "").trim();
+    if (!token) {
+      return res.status(400).json({ success: false, error: "Reset token is required." });
+    }
+
+    const student = await Student.findOne({
+      passwordResetToken: hashResetToken(token),
+      passwordResetExpires: { $gt: new Date() },
+    }).select("_id");
+
+    if (!student) {
+      return res.status(400).json({ success: false, error: "Reset link is invalid or has expired." });
+    }
+
+    res.json({ success: true, message: "Reset link is valid." });
+  } catch (error) {
+    console.error("Validate reset token error:", error);
+    res.status(500).json({ success: false, error: "Failed to validate reset link." });
+  }
+};
+
+export const resetPassword = async (req, res) => {
+  try {
+    const token = String(req.params.token || "").trim();
+    const password = String(req.body?.password || "");
+
+    if (!token || !password) {
+      return res.status(400).json({ success: false, error: "Reset token and password are required." });
+    }
+
+    const student = await Student.findOne({
+      passwordResetToken: hashResetToken(token),
+      passwordResetExpires: { $gt: new Date() },
+    });
+
+    if (!student) {
+      return res.status(400).json({ success: false, error: "Reset link is invalid or has expired." });
+    }
+
+    student.password = password;
+    student.passwordResetToken = undefined;
+    student.passwordResetExpires = undefined;
+    await student.save();
+
+    res.json({
+      success: true,
+      message: "Password reset successful. Please log in with your new password.",
+    });
+  } catch (error) {
+    console.error("Reset password error:", error);
+    res.status(500).json({ success: false, error: "Failed to reset password. Please try again." });
   }
 };
 
