@@ -44,6 +44,7 @@ const LandingPage = ({ landingAds = [] }) => {
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchPerformed, setSearchPerformed] = useState(false);
   const [searchError, setSearchError] = useState('');
+  const [failedAdKeys, setFailedAdKeys] = useState({});
 
   const getCategoryIcon = () => {
     switch (category) {
@@ -153,6 +154,7 @@ const LandingPage = ({ landingAds = [] }) => {
     if (!uploadedAd) {
       return {
         ...defaultAd,
+        defaultImageUrl: defaultAd.imageUrl,
         href: null,
         key: `default-${defaultAd.position}`,
       };
@@ -161,11 +163,33 @@ const LandingPage = ({ landingAds = [] }) => {
     return {
       position: defaultAd.position,
       imageUrl: uploadedAd.resolvedImageUrl,
+      defaultImageUrl: defaultAd.imageUrl,
       href: uploadedAd.adLink || null,
       title: uploadedAd.title || defaultAd.title,
       key: uploadedAd._id || `landing-${defaultAd.position}`,
     };
   });
+
+  const getAdImageUrl = (ad) => (
+    failedAdKeys[ad.key] ? ad.defaultImageUrl : ad.imageUrl
+  );
+
+  const handleAdImageError = (ad) => {
+    if (!ad.defaultImageUrl || ad.imageUrl === ad.defaultImageUrl) {
+      return;
+    }
+
+    setFailedAdKeys((current) => {
+      if (current[ad.key]) {
+        return current;
+      }
+
+      return {
+        ...current,
+        [ad.key]: true,
+      };
+    });
+  };
 
   return (
     <div className="landing-container container-fluid px-lg-5">
@@ -361,10 +385,18 @@ const LandingPage = ({ landingAds = [] }) => {
             <div className="ad-box" key={ad.key}>
               {ad.href ? (
                 <a href={ad.href} target="_blank" rel="noopener noreferrer">
-                  <img src={ad.imageUrl} alt={ad.title} />
+                  <img
+                    src={getAdImageUrl(ad)}
+                    alt={ad.title}
+                    onError={() => handleAdImageError(ad)}
+                  />
                 </a>
               ) : (
-                <img src={ad.imageUrl} alt={ad.title} />
+                <img
+                  src={getAdImageUrl(ad)}
+                  alt={ad.title}
+                  onError={() => handleAdImageError(ad)}
+                />
               )}
             </div>
           ))}
