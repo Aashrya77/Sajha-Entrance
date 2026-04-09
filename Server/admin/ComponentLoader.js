@@ -19,6 +19,10 @@ const Components = {
     "RichTextEditor",
     path.join(__dirname, "./components/RichTextEditor")
   ),
+  RecordedClassEdit: componentLoader.add(
+    "RecordedClassEdit",
+    path.join(__dirname, "./components/RecordedClassEdit")
+  ),
   ImageUpload: componentLoader.add("ImageUpload", path.join(__dirname, "./components/ImageUpload")),
   Login: componentLoader.override("Login", path.join(__dirname, "./components/Login")),
   LoggedIn: componentLoader.override("LoggedIn", path.join(__dirname, "./components/LoggedIn")),

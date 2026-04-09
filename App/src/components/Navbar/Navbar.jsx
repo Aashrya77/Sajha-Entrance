@@ -36,7 +36,7 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
     { to: '/blogs', label: 'BLOGS', group: 'Blogs' },
     { to: '/services', label: 'SERVICES', group: 'Services' },
     { to: '/results', label: 'RESULTS', group: 'Results' },
-    { to: '/mocktests', label: 'MOCK TEST', group: 'MockTest' },
+    {to: '/universities', label: 'UNIVERSITIES', group: 'University' },
     { to: '/contact', label: 'CONTACT', group: 'Contact' },
   ];
 
@@ -122,13 +122,13 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
                 <Link to="/colleges" className="nav-link" onClick={handleMobileNavClose} style={{color: parentGroup === 'College' ? '#ff6b35' : '#333', fontWeight: parentGroup === 'College' ? 700 : 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>COLLEGES</Link>
               </li>
               <li className="nav-item">
-                <Link to="/universities" className="nav-link" onClick={handleMobileNavClose} style={{color: parentGroup === 'University' ? '#ff6b35' : '#333', fontWeight: parentGroup === 'University' ? 700 : 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>UNIVERSITIES</Link>
+                <Link to="/mocktests" className="nav-link" onClick={handleMobileNavClose} style={{color: parentGroup === 'MockTest' ? '#ff6b35' : '#333', fontWeight: parentGroup === 'MockTest' ? 700 : 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>MOCK TEST</Link>
               </li>
               <li className="nav-item">
                 <Link to="/courses" className="nav-link" onClick={handleMobileNavClose} style={{color: parentGroup === 'Course' ? '#ff6b35' : '#333', fontWeight: parentGroup === 'Course' ? 700 : 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>COURSES</Link>
               </li>
-              <li className="nav-item">
-                <Link to="/books" className="nav-link" onClick={handleMobileNavClose} style={{color: parentGroup === 'Books' ? '#ff6b35' : '#333', fontWeight: parentGroup === 'Books' ? 700 : 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>BOOKS</Link>
+              <li className='nav-item'>
+                <Link to="/books" className="nav-link" onClick={handleMobileNavClose} style={{color: parentGroup === 'BOOKS' ? '#ff6b35' : '#333', fontWeight: parentGroup === 'BOOKS' ? 700 : 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>BOOKS</Link>
               </li>
               <li className="nav-item dropdown d-none d-lg-block">
                 <button className="nav-link dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" style={{background: 'none', border: 'none', cursor: 'pointer', color: '#333', fontWeight: 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>
@@ -179,11 +179,14 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
                 )}
               </Link>
               {isAuthenticated && studentData ? (
-                <>
-                  <Link to="/student/profile" className="btn btn-link text-decoration-none" style={{color: '#555', fontSize: '13px', fontWeight: 500, padding: '4px 8px', transition: 'color 0.2s ease'}}>
-                    For Students <i className="fa-solid fa-chevron-right" style={{fontSize: '10px', marginLeft: '4px'}}></i>
-                  </Link>
-                </>
+                <Link
+                  to="/student/profile"
+                  className="navbar-profile-icon-link text-decoration-none"
+                  aria-label="Profile"
+                  title="Profile"
+                >
+                  <i className="fa-solid fa-user"></i>
+                </Link>
               ) : (
                 <>
                   <Link to="/student/login" className="btn" style={{border: '1.5px solid #ff6b35', color: '#ff6b35', backgroundColor: 'transparent', fontWeight: 600, fontSize: '13px', padding: '6px 16px', borderRadius: '5px', textDecoration: 'none', transition: 'all 0.2s ease'}}>
@@ -191,9 +194,6 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
                   </Link>
                   <Link to="/student/register" className="btn btn-register" style={{backgroundColor: '#ff6b35', color: '#fff', fontWeight: 600, fontSize: '13px', padding: '6px 16px', borderRadius: '5px', border: 'none', textDecoration: 'none', transition: 'all 0.2s ease'}}>
                     Register
-                  </Link>
-                  <Link to="/student/profile" className="btn btn-link text-decoration-none d-none d-lg-block" style={{color: '#555', fontSize: '13px', fontWeight: 500, padding: '4px 8px', transition: 'color 0.2s ease'}}>
-                    For Students <i className="fa-solid fa-chevron-right" style={{fontSize: '10px', marginLeft: '4px'}}></i>
                   </Link>
                 </>
               )}

@@ -10,6 +10,7 @@ import {
   getClasses,
   logout,
 } from "../controllers/Auth.js";
+import { getRecordedClassDetails } from "../controllers/RecordedClass.js";
 import { authenticateToken } from "../middleware/auth.js";
 
 const Router = express.Router();
@@ -25,6 +26,7 @@ Router.post("/reset-password/:token", resetPassword);
 Router.get("/profile", authenticateToken, getProfile);
 Router.put("/profile", authenticateToken, updateProfile);
 Router.get("/classes", authenticateToken, getClasses);
+Router.get("/classes/recorded/:classId", authenticateToken, getRecordedClassDetails);
 Router.post("/logout", authenticateToken, logout);
 
 export default Router;

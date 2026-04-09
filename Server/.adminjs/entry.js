@@ -5,6 +5,8 @@ import BulkUploadResults from '../admin/components/BulkUploadResults'
 AdminJS.UserComponents.BulkUploadResults = BulkUploadResults
 import RichTextEditor from '../admin/components/RichTextEditor'
 AdminJS.UserComponents.RichTextEditor = RichTextEditor
+import RecordedClassEdit from '../admin/components/RecordedClassEdit'
+AdminJS.UserComponents.RecordedClassEdit = RecordedClassEdit
 import ImageUpload from '../admin/components/ImageUpload'
 AdminJS.UserComponents.ImageUpload = ImageUpload
 import Login from '../admin/components/Login'

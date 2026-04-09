@@ -242,6 +242,25 @@
     color: white !important;
 }
 
+.navbar-profile-icon-link {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  border: 1px solid #ffcfb3;
+  background: #fff7f2;
+  color: #ff6b35;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.navbar-profile-icon-link:hover {
+  color: #ffffff;
+  background: #ff6b35;
+  border-color: #ff6b35;
+}
+
 .navbar-mobile-layout {
   display: none;
 }

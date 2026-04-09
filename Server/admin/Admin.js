@@ -470,6 +470,7 @@ const startAdminPanel = async () => {
       listProperties: [
         "subject",
         "topicName",
+        "contentType",
         "courseIds",
         "youtubeUrl",
         "classDate",
@@ -477,8 +478,10 @@ const startAdminPanel = async () => {
       showProperties: [
         "subject",
         "topicName",
+        "contentType",
         "courseIds",
         "videoId",
+        "playlistId",
         "youtubeUrl",
         "classDate",
         "description",
@@ -507,14 +510,31 @@ const startAdminPanel = async () => {
           type: "textarea",
           description: "Enter course IDs separated by commas. Example: BIT, BCA, BE",
         },
+        contentType: {
+          label: "Media Type",
+          availableValues: [
+            { value: "video", label: "Single Video" },
+            { value: "playlist", label: "Playlist" },
+          ],
+        },
         videoId: {
           label: "Video ID",
           type: "string",
           isVisible: { edit: false },
         },
-        youtubeUrl: {
-          label: "YouTube URL",
+        playlistId: {
+          label: "Playlist ID",
           type: "string",
+          isVisible: { edit: false, list: false, show: true, filter: false },
+        },
+        youtubeUrl: {
+          label: "YouTube Video or Playlist URL",
+          type: "string",
+          components: {
+            edit: Components.RecordedClassEdit,
+          },
+          description:
+            "Paste either a single YouTube video link or a playlist link from the Sajha Entrance channel.",
         },
         classDate: {
           label: "Class Date",

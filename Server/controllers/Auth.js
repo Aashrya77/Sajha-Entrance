@@ -5,6 +5,8 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { getClassStatus } from "./Class.js";
 import { MailHandler } from "./MailHandler.js";
+import { resolveRecordedClassMedia } from "../utils/youtube.js";
+import { getCourseRegexMatchers } from "../utils/courseAccess.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 const JWT_EXPIRY = process.env.JWT_EXPIRY || "7d";
@@ -318,9 +320,10 @@ export const getClasses = async (req, res) => {
     }
 
     const isPaid = student.accountStatus === "Paid";
+    const courseMatchers = getCourseRegexMatchers(student.course);
 
     // Get live/upcoming classes for student's course
-    const classes = await OnlineClass.find({ course: student.course.trim() })
+    const classes = await OnlineClass.find({ course: { $in: courseMatchers } })
       .sort({ classDateTime: 1 })
       .exec();
 
@@ -341,20 +344,26 @@ export const getClasses = async (req, res) => {
 
     // Get recorded classes
     const recordedClasses = await RecordedClass.find({
-      courseIds: { $in: [student.course.trim()] },
+      courseIds: { $in: courseMatchers },
     })
       .sort({ classDate: -1 })
       .exec();
 
-    const formattedRecorded = recordedClasses.map((cls) => ({
-      id: cls._id.toString(),
-      subject: cls.subject,
-      topicName: cls.topicName,
-      videoId: isPaid ? cls.videoId : null,
-      youtubeUrl: isPaid ? cls.youtubeUrl : null,
-      classDate: cls.classDate,
-      description: cls.description,
-    }));
+    const formattedRecorded = recordedClasses.map((cls) => {
+      const media = resolveRecordedClassMedia(cls);
+
+      return {
+        id: cls._id.toString(),
+        subject: cls.subject,
+        topicName: cls.topicName,
+        contentType: media.contentType,
+        videoId: isPaid ? media.videoId : null,
+        playlistId: isPaid ? media.playlistId : null,
+        youtubeUrl: isPaid ? media.youtubeUrl : null,
+        classDate: cls.classDate,
+        description: cls.description,
+      };
+    });
 
     res.json({
       success: true,

@@ -74,6 +74,45 @@ const formatJoinedDate = (dateStr) => {
   });
 };
 
+const getRecordedContentType = (recordedClass = {}) =>
+  recordedClass.contentType === 'playlist' || recordedClass.playlistId ? 'playlist' : 'video';
+
+const buildYoutubeEmbedUrl = (recordedClass = {}) => {
+  const contentType = getRecordedContentType(recordedClass);
+  const videoId = String(recordedClass.videoId || '').trim();
+  const playlistId = String(recordedClass.playlistId || '').trim();
+  const params = new URLSearchParams({
+    rel: '0',
+    modestbranding: '1',
+  });
+
+  if (contentType === 'playlist' && playlistId) {
+    params.set('list', playlistId);
+
+    if (videoId) {
+      return `https://www.youtube-nocookie.com/embed/${videoId}?${params.toString()}`;
+    }
+
+    return `https://www.youtube-nocookie.com/embed/videoseries?${params.toString()}`;
+  }
+
+  if (!videoId) {
+    return '';
+  }
+
+  return `https://www.youtube-nocookie.com/embed/${videoId}?${params.toString()}`;
+};
+
+const createRecordedViewerState = () => ({
+  isOpen: false,
+  loading: false,
+  error: '',
+  classItem: null,
+  playlistTitle: '',
+  playlistVideos: [],
+  selectedVideoId: '',
+});
+
 const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState(studentData || null);
@@ -86,6 +125,7 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
   const [savingProfile, setSavingProfile] = useState(false);
   const [editError, setEditError] = useState('');
   const [pageMessage, setPageMessage] = useState(null);
+  const [recordedViewer, setRecordedViewer] = useState(createRecordedViewerState);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -118,6 +158,21 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isEditOpen]);
+
+  useEffect(() => {
+    if (!recordedViewer.isOpen) {
+      return undefined;
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setRecordedViewer(createRecordedViewerState());
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [recordedViewer.isOpen]);
 
   const fetchDashboardData = async () => {
     try {
@@ -169,6 +224,10 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
     setEditForm(buildEditForm(profile));
   };
 
+  const closeRecordedViewer = () => {
+    setRecordedViewer(createRecordedViewerState());
+  };
+
   const handleEditChange = (event) => {
     const { name, value } = event.target;
     setEditForm((current) => ({
@@ -212,6 +271,73 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
     } finally {
       setSavingProfile(false);
     }
+  };
+
+  const handleRecordedClassOpen = async (recordedClass) => {
+    if (!recordedClass?.youtubeUrl) {
+      return;
+    }
+
+    const contentType = getRecordedContentType(recordedClass);
+
+    setRecordedViewer({
+      isOpen: true,
+      loading: contentType === 'playlist',
+      error: '',
+      classItem: recordedClass,
+      playlistTitle: recordedClass.topicName || 'Recorded Playlist',
+      playlistVideos: [],
+      selectedVideoId: recordedClass.videoId || '',
+    });
+
+    if (contentType !== 'playlist') {
+      return;
+    }
+
+    try {
+      const response = await authAPI.getRecordedClassDetails(recordedClass.id);
+      const details = response.data || {};
+      const playlistVideos = Array.isArray(details.playlist?.videos) ? details.playlist.videos : [];
+
+      setRecordedViewer({
+        isOpen: true,
+        loading: false,
+        error: '',
+        classItem: {
+          ...recordedClass,
+          ...details,
+        },
+        playlistTitle:
+          details.playlist?.title || details.topicName || recordedClass.topicName || 'Playlist',
+        playlistVideos,
+        selectedVideoId:
+          details.videoId || playlistVideos[0]?.videoId || recordedClass.videoId || '',
+      });
+    } catch (error) {
+      console.error('Error loading recorded class details:', error);
+
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token');
+        navigate('/student/login');
+        return;
+      }
+
+      const message =
+        error.response?.data?.error || 'We could not load this playlist right now.';
+
+      setRecordedViewer((current) => ({
+        ...current,
+        loading: false,
+        error: message,
+      }));
+    }
+  };
+
+  const handlePlaylistVideoSelect = (videoId) => {
+    setRecordedViewer((current) => ({
+      ...current,
+      selectedVideoId: videoId,
+    }));
   };
 
   if (loading) {
@@ -278,6 +404,14 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
       icon: 'fa-solid fa-circle-play',
     },
   ];
+
+  const recordedViewerType = getRecordedContentType(recordedViewer.classItem || {});
+  const recordedViewerEmbedUrl = recordedViewer.classItem
+    ? buildYoutubeEmbedUrl({
+        ...recordedViewer.classItem,
+        videoId: recordedViewer.selectedVideoId || recordedViewer.classItem.videoId,
+      })
+    : '';
 
   return (
     <div className="student-dashboard">
@@ -530,12 +664,22 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
                       classData.recordedClasses.map((cls) => (
                         <div className="dashboard-class-card" key={cls.id}>
                           <div className="dashboard-class-card__icon is-recorded">
-                            <i className="fa-solid fa-circle-play"></i>
+                            <i
+                              className={
+                                getRecordedContentType(cls) === 'playlist'
+                                  ? 'fa-solid fa-list-ul'
+                                  : 'fa-solid fa-circle-play'
+                              }
+                            ></i>
                           </div>
 
                           <div className="dashboard-class-card__content">
                             <div className="dashboard-class-card__topline">
-                              <span className="dashboard-class-chip">Recorded Lesson</span>
+                              <span className="dashboard-class-chip">
+                                {getRecordedContentType(cls) === 'playlist'
+                                  ? 'Recorded Playlist'
+                                  : 'Recorded Lesson'}
+                              </span>
                             </div>
 
                             <h3>{cls.topicName}</h3>
@@ -562,15 +706,22 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
 
                           <div className="dashboard-class-card__actions">
                             {cls.youtubeUrl ? (
-                              <a
-                                href={cls.youtubeUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                              <button
+                                type="button"
                                 className="join-btn"
+                                onClick={() => handleRecordedClassOpen(cls)}
                               >
-                                <i className="fa-brands fa-youtube"></i>
-                                Watch
-                              </a>
+                                <i
+                                  className={
+                                    getRecordedContentType(cls) === 'playlist'
+                                      ? 'fa-solid fa-list-check'
+                                      : 'fa-brands fa-youtube'
+                                  }
+                                ></i>
+                                {getRecordedContentType(cls) === 'playlist'
+                                  ? 'Open Playlist'
+                                  : 'Watch Here'}
+                              </button>
                             ) : (
                               <span
                                 className="join-btn locked"
@@ -694,6 +845,134 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {recordedViewer.isOpen && (
+        <div
+          className="recorded-viewer-backdrop"
+          role="presentation"
+          onClick={closeRecordedViewer}
+        >
+          <div
+            className="recorded-viewer-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="recorded-viewer-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="recorded-viewer-header">
+              <div>
+                <p className="profile-modal__eyebrow">Recorded Classes</p>
+                <h2 id="recorded-viewer-title">
+                  {recordedViewer.classItem?.topicName || 'Recorded Class'}
+                </h2>
+                <div className="recorded-viewer-meta">
+                  <span className="student-meta-pill recorded-viewer-pill">
+                    <i className="fa-solid fa-book"></i>
+                    {recordedViewer.classItem?.subject || 'Subject'}
+                  </span>
+                  <span className="student-meta-pill recorded-viewer-pill">
+                    <i
+                      className={
+                        recordedViewerType === 'playlist'
+                          ? 'fa-solid fa-list-ul'
+                          : 'fa-solid fa-circle-play'
+                      }
+                    ></i>
+                    {recordedViewerType === 'playlist' ? 'Playlist' : 'Single Video'}
+                  </span>
+                  {recordedViewer.classItem?.classDate && (
+                    <span className="student-meta-pill recorded-viewer-pill">
+                      <i className="fa-regular fa-calendar"></i>
+                      {formatDate(recordedViewer.classItem.classDate)}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <button
+                className="profile-modal-close"
+                onClick={closeRecordedViewer}
+                type="button"
+              >
+                <i className="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+
+            <div className="recorded-viewer-layout">
+              <div className="recorded-viewer-player-panel">
+                {recordedViewerEmbedUrl ? (
+                  <div className="recorded-player-frame">
+                    <iframe
+                      src={recordedViewerEmbedUrl}
+                      title={recordedViewer.classItem?.topicName || 'Recorded class player'}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                    ></iframe>
+                  </div>
+                ) : (
+                  <div className="recorded-viewer-status error">
+                    This class does not have a playable YouTube video yet.
+                  </div>
+                )}
+
+                {recordedViewer.classItem?.description && (
+                  <p className="recorded-viewer-description">
+                    {recordedViewer.classItem.description}
+                  </p>
+                )}
+
+                {recordedViewer.error && (
+                  <div className="recorded-viewer-status error">{recordedViewer.error}</div>
+                )}
+              </div>
+
+              {recordedViewerType === 'playlist' && (
+                <aside className="recorded-playlist-panel">
+                  <div className="recorded-playlist-panel__header">
+                    <div>
+                      <h3>{recordedViewer.playlistTitle || 'Playlist Videos'}</h3>
+                      <p>Watch any lesson from this playlist without leaving Sajha Entrance.</p>
+                    </div>
+                    <span>{recordedViewer.playlistVideos.length} videos</span>
+                  </div>
+
+                  {recordedViewer.loading ? (
+                    <div className="recorded-viewer-status">Loading playlist videos...</div>
+                  ) : recordedViewer.playlistVideos.length > 0 ? (
+                    <div className="recorded-playlist-list">
+                      {recordedViewer.playlistVideos.map((video, index) => (
+                        <button
+                          type="button"
+                          key={video.id || `${video.videoId}-${index}`}
+                          className={`recorded-playlist-item ${
+                            recordedViewer.selectedVideoId === video.videoId ? 'active' : ''
+                          }`}
+                          onClick={() => handlePlaylistVideoSelect(video.videoId)}
+                        >
+                          <img
+                            src={video.thumbnailUrl}
+                            alt={video.title}
+                            className="recorded-playlist-thumb"
+                          />
+                          <span className="recorded-playlist-item__content">
+                            <strong>{video.title}</strong>
+                            <small>{video.publishedAt ? formatDate(video.publishedAt) : ''}</small>
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="recorded-viewer-status">
+                      Playlist videos could not be loaded right now. You can still use the
+                      embedded player above.
+                    </div>
+                  )}
+                </aside>
+              )}
+            </div>
           </div>
         </div>
       )}

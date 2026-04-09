@@ -56,6 +56,13 @@ const normalizeAdHref = (href = '') => {
 const isExternalAdHref = (href = '') =>
   /^(?:https?:)?\/\//i.test(href) || /^(mailto|tel):/i.test(href);
 
+const MOBILE_LOCATION_LABELS = {
+  'All Locations': 'ALL',
+  Kathmandu: 'KTM',
+  Bhaktapur: 'BKT',
+  Lalitpur: 'LTP',
+};
+
 const LandingPage = ({ landingAds = [] }) => {
   const [location, setLocation] = useState('All Locations');
   const [showDropdown, setShowDropdown] = useState(false);
@@ -86,6 +93,9 @@ const LandingPage = ({ landingAds = [] }) => {
         return <Building2 size={18} className="icon" />;
     }
   };
+
+  const getMobileLocationLabel = (value) =>
+    MOBILE_LOCATION_LABELS[value] || String(value || '').trim().slice(0, 3).toUpperCase();
 
   const handleSearch = async () => {
     if (!searchTerm.trim()) {
@@ -240,9 +250,13 @@ const LandingPage = ({ landingAds = [] }) => {
               />
               
               <div className="location-wrapper">
-                <div className="location-selector" onClick={() => setShowDropdown(!showDropdown)}>
+                <div
+                  className={`location-selector ${location === 'All Locations' ? 'location-selector--all' : ''}`}
+                  onClick={() => setShowDropdown(!showDropdown)}
+                >
                   <MapPin size={18} className="icon" />
                   <span className="location-text"> {location}</span>
+                  <span className="location-short-text">{getMobileLocationLabel(location)}</span>
                 </div>
                 {showDropdown && (
                   <ul className="location-dropdown custom-dropdown">

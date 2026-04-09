@@ -1,8 +1,26 @@
 import RecordedClass from "../models/RecordedClass.js";
 import Student from "../models/Student.js";
 import jwt from "jsonwebtoken";
+import { fetchYoutubePlaylistDetails, resolveRecordedClassMedia } from "../utils/youtube.js";
+import { getCourseRegexMatchers, hasCourseAccess } from "../utils/courseAccess.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
+
+const formatRecordedClass = (recordedClass, isPaid) => {
+  const media = resolveRecordedClassMedia(recordedClass);
+
+  return {
+    id: recordedClass._id.toString(),
+    subject: recordedClass.subject,
+    topicName: recordedClass.topicName,
+    contentType: media.contentType,
+    videoId: isPaid ? media.videoId : null,
+    playlistId: isPaid ? media.playlistId : null,
+    youtubeUrl: isPaid ? media.youtubeUrl : null,
+    classDate: recordedClass.classDate,
+    description: recordedClass.description,
+  };
+};
 
 // Get all recorded classes for a student's course
 export const getRecordedClasses = async (req, res) => {
@@ -19,14 +37,21 @@ export const getRecordedClasses = async (req, res) => {
       return res.json({ classes: [] });
     }
 
+    const isPaid = student.accountStatus === "Paid";
+    const courseMatchers = getCourseRegexMatchers(student.course);
+
     // Fetch recorded classes where student's course is in courseIds array
     const recordedClasses = await RecordedClass.find({
-      courseIds: { $in: [student.course.trim()] }
+      courseIds: { $in: courseMatchers }
     }).sort({
       classDate: -1,
     });
 
-    res.json({ classes: recordedClasses });
+    res.json({
+      classes: recordedClasses.map((recordedClass) =>
+        formatRecordedClass(recordedClass, isPaid)
+      ),
+    });
   } catch (error) {
     console.error("Get recorded classes error:", error);
     res.json({ classes: [] });
@@ -50,6 +75,11 @@ export const getRecordedClassDetails = async (req, res) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
+    const isPaid = student.accountStatus === "Paid";
+    if (!isPaid) {
+      return res.status(403).json({ error: "Complete payment to access recorded classes." });
+    }
+
     const recordedClass = await RecordedClass.findById(classId);
 
     if (!recordedClass) {
@@ -58,11 +88,35 @@ export const getRecordedClassDetails = async (req, res) => {
 
     // Verify student has access to this class
     // Check if student's course is in the video's courseIds array
-    if (!recordedClass.courseIds.includes(student.course.trim())) {
+    if (!hasCourseAccess(student.course, recordedClass.courseIds)) {
       return res.status(403).json({ error: "Access denied" });
     }
 
-    res.json(recordedClass);
+    const media = resolveRecordedClassMedia(recordedClass);
+    let playlist =
+      media.contentType === "playlist" && media.playlistId
+        ? {
+            playlistId: media.playlistId,
+            title: recordedClass.topicName,
+            videos: [],
+          }
+        : null;
+
+    if (media.contentType === "playlist" && media.playlistId) {
+      try {
+        const playlistDetails = await fetchYoutubePlaylistDetails(media.playlistId);
+        if (playlistDetails) {
+          playlist = playlistDetails;
+        }
+      } catch (playlistError) {
+        console.error("Fetch YouTube playlist details error:", playlistError);
+      }
+    }
+
+    res.json({
+      ...formatRecordedClass(recordedClass, true),
+      playlist,
+    });
   } catch (error) {
     console.error("Get recorded class details error:", error);
     res.status(500).json({ error: "An error occurred" });

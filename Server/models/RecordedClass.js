@@ -1,24 +1,9 @@
 import mongoose from "mongoose";
-
-const extractVideoId = (url) => {
-  if (!url) return "";
-
-  const patterns = [
-    /youtu\.be\/([a-zA-Z0-9_-]+)/,
-    /youtube\.com\/watch\?v=([a-zA-Z0-9_-]+)/,
-    /youtube\.com\/embed\/([a-zA-Z0-9_-]+)/,
-    /youtube\.com\/v\/([a-zA-Z0-9_-]+)/,
-  ];
-
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match && match[1]) {
-      return match[1];
-    }
-  }
-
-  return "";
-};
+import {
+  extractYoutubePlaylistId,
+  extractYoutubeVideoId,
+  resolveRecordedClassMedia,
+} from "../utils/youtube.js";
 
 const RecordedClassSchema = new mongoose.Schema({
   subject: {
@@ -41,12 +26,44 @@ const RecordedClassSchema = new mongoose.Schema({
       message: "At least one course must be selected",
     },
   },
+  contentType: {
+    type: String,
+    enum: ["video", "playlist"],
+    default: "video",
+    trim: true,
+  },
   youtubeUrl: {
     type: String,
     required: true,
     trim: true,
+    validate: {
+      validator(value) {
+        const normalizedUrl = String(value || "").trim();
+
+        if (!normalizedUrl) {
+          return false;
+        }
+
+        if (this.contentType === "playlist") {
+          return Boolean(extractYoutubePlaylistId(normalizedUrl));
+        }
+
+        if (this.contentType === "video") {
+          return Boolean(extractYoutubeVideoId(normalizedUrl));
+        }
+
+        return Boolean(
+          extractYoutubeVideoId(normalizedUrl) || extractYoutubePlaylistId(normalizedUrl)
+        );
+      },
+      message: "Provide a valid YouTube video or playlist URL",
+    },
   },
   videoId: {
+    type: String,
+    trim: true,
+  },
+  playlistId: {
     type: String,
     trim: true,
   },
@@ -76,9 +93,10 @@ RecordedClassSchema.pre("save", function preSave(next) {
       .filter((id) => id.length > 0);
   }
 
-  if (this.youtubeUrl && !this.videoId) {
-    this.videoId = extractVideoId(this.youtubeUrl);
-  }
+  const media = resolveRecordedClassMedia(this);
+  this.contentType = media.contentType;
+  this.videoId = media.videoId;
+  this.playlistId = media.contentType === "playlist" ? media.playlistId : "";
 
   this.updatedAt = Date.now();
   next();
