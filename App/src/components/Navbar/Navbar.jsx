@@ -1,9 +1,18 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  useEffect(() => {
+    setIsMenuOpen(false);
+
+    const navbarContent = document.getElementById('navbarContent');
+    if (navbarContent) {
+      navbarContent.classList.remove('show');
+    }
+  }, [location.pathname]);
   
   const getParentGroup = () => {
     const path = location.pathname;
@@ -17,85 +26,148 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
     if (path.includes('/service')) return 'Services';
     if (path.includes('/book') || path.includes('/cart')) return 'Books';
     if (path.includes('/result')) return 'Results';
+    if (path.includes('/contact')) return 'Contact';
     return '';
   };
 
   const parentGroup = getParentGroup();
+  const moreLinks = [
+    { to: '/about', label: 'ABOUT', group: 'About' },
+    { to: '/blogs', label: 'BLOGS', group: 'Blogs' },
+    { to: '/services', label: 'SERVICES', group: 'Services' },
+    { to: '/results', label: 'RESULTS', group: 'Results' },
+    { to: '/mocktests', label: 'MOCK TEST', group: 'MockTest' },
+    { to: '/contact', label: 'CONTACT', group: 'Contact' },
+  ];
+
+  const handleMobileNavClose = () => {
+    setIsMenuOpen(false);
+
+    const navbarContent = document.getElementById('navbarContent');
+    if (navbarContent) {
+      navbarContent.classList.remove('show');
+    }
+  };
 
   return (
     <>
       <nav className="navbar navbar-expand-lg fixed-top" id="navbar" style={{backgroundColor: '#fff', boxShadow: '0 2px 4px rgba(0,0,0,0.08)', padding: '19px 0', zIndex: 1030}}>
         <div className="container-fluid">
-          <Link to="/" className="d-flex align-items-center text-decoration-none">
+          <div className="navbar-mobile-layout d-lg-none">
+            <div className="navbar-mobile-start">
+              <button 
+                className="navbar-toggler mobile-nav-toggle" 
+                type="button" 
+                data-bs-toggle="collapse" 
+                data-bs-target="#navbarContent" 
+                aria-controls="navbarContent" 
+                aria-expanded={isMenuOpen} 
+                aria-label="Toggle navigation"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                style={{ border: 'none', outline: 'none', boxShadow: 'none' }}
+              >
+                {isMenuOpen ? (
+                  <i className="fa-solid fa-xmark" style={{ fontSize: '20px' }}></i>
+                ) : (
+                  <i className="fa-solid fa-bars" style={{ fontSize: '18px' }}></i>
+                )}
+              </button>
+
+              <Link to="/" className="navbar-mobile-brand text-decoration-none">
+                <img src="/img/adminlogo.png" className="navbar-logo navbar-logo--mobile" alt="Sajha Entrance" />
+              </Link>
+            </div>
+
+            <div className="navbar-mobile-actions">
+              <Link to="/cart" className="navbar-mobile-quick-link navbar-mobile-quick-link--cart text-decoration-none">
+                <span className="navbar-mobile-quick-link__icon">
+                  <i className="fa-solid fa-cart-shopping"></i>
+                  {cartCount > 0 && (
+                    <span className="navbar-mobile-cart-count">{cartCount}</span>
+                  )}
+                </span>
+                <span className="navbar-mobile-quick-link__label">Cart</span>
+              </Link>
+
+              {isAuthenticated && studentData ? (
+                <Link
+                  to="/student/profile"
+                  className="navbar-mobile-quick-link navbar-mobile-quick-link--primary navbar-mobile-quick-link--profile text-decoration-none"
+                  aria-label="Profile"
+                  title="Profile"
+                >
+                  <i className="fa-solid fa-user"></i>
+                </Link>
+              ) : (
+                <Link
+                  to="/student/login"
+                  className="navbar-mobile-quick-link navbar-mobile-quick-link--primary navbar-mobile-quick-link--login text-decoration-none"
+                >
+                  <i className="fa-solid fa-right-to-bracket"></i>
+                  <span className="navbar-mobile-quick-link__label">Login</span>
+                </Link>
+              )}
+            </div>
+          </div>
+
+          <Link to="/" className="d-none d-lg-flex align-items-center text-decoration-none">
             <img src="/img/adminlogo.png" className="navbar-logo" alt="Sajha Entrance" style={{height: '80px', width: '140px'}} />
           </Link>
-          <div className="d-flex align-items-center d-lg-none" style={{gap: '12px'}}>
-            <Link to="/cart" className="btn btn-link text-decoration-none position-relative" style={{color: '#333', fontSize: '18px', padding: '4px 8px'}}>
-              <i className="fa-solid fa-cart-shopping"></i>
-              {cartCount > 0 && (
-                <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style={{fontSize: '9px'}}>
-                  {cartCount}
-                </span>
-              )}
-            </Link>
-            <button 
-              className="navbar-toggler" 
-              type="button" 
-              data-bs-toggle="collapse" 
-              data-bs-target="#navbarContent" 
-              aria-controls="navbarContent" 
-              aria-expanded={isMenuOpen} 
-              aria-label="Toggle navigation"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              style={{ border: 'none', padding: '0', outline: 'none', boxShadow: 'none' }}
-            >
-              {isMenuOpen ? (
-                <i className="fa-solid fa-xmark" style={{ fontSize: '24px', color: '#333' }}></i>
-              ) : (
-                <span className="navbar-toggler-icon"></span>
-              )}
-            </button>
-          </div>
           <div className="collapse navbar-collapse" id="navbarContent">
             <ul className="navbar-nav mx-auto mb-2 mb-lg-0">
               <li className="nav-item">
-                <Link to="/" className="nav-link" style={{color: parentGroup === 'Home' ? '#ff6b35' : '#333', fontWeight: parentGroup === 'Home' ? 700 : 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>HOME</Link>
+                <Link to="/" className="nav-link" onClick={handleMobileNavClose} style={{color: parentGroup === 'Home' ? '#ff6b35' : '#333', fontWeight: parentGroup === 'Home' ? 700 : 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>HOME</Link>
               </li>
               <li className="nav-item">
-                <Link to="/colleges" className="nav-link" style={{color: parentGroup === 'College' ? '#ff6b35' : '#333', fontWeight: parentGroup === 'College' ? 700 : 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>COLLEGES</Link>
+                <Link to="/colleges" className="nav-link" onClick={handleMobileNavClose} style={{color: parentGroup === 'College' ? '#ff6b35' : '#333', fontWeight: parentGroup === 'College' ? 700 : 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>COLLEGES</Link>
               </li>
               <li className="nav-item">
-                <Link to="/universities" className="nav-link" style={{color: parentGroup === 'University' ? '#ff6b35' : '#333', fontWeight: parentGroup === 'University' ? 700 : 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>UNIVERSITIES</Link>
+                <Link to="/universities" className="nav-link" onClick={handleMobileNavClose} style={{color: parentGroup === 'University' ? '#ff6b35' : '#333', fontWeight: parentGroup === 'University' ? 700 : 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>UNIVERSITIES</Link>
               </li>
               <li className="nav-item">
-                <Link to="/courses" className="nav-link" style={{color: parentGroup === 'Course' ? '#ff6b35' : '#333', fontWeight: parentGroup === 'Course' ? 700 : 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>COURSES</Link>
+                <Link to="/courses" className="nav-link" onClick={handleMobileNavClose} style={{color: parentGroup === 'Course' ? '#ff6b35' : '#333', fontWeight: parentGroup === 'Course' ? 700 : 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>COURSES</Link>
               </li>
               <li className="nav-item">
-                <Link to="/books" className="nav-link" style={{color: parentGroup === 'Books' ? '#ff6b35' : '#333', fontWeight: parentGroup === 'Books' ? 700 : 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>BOOKS</Link>
+                <Link to="/books" className="nav-link" onClick={handleMobileNavClose} style={{color: parentGroup === 'Books' ? '#ff6b35' : '#333', fontWeight: parentGroup === 'Books' ? 700 : 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>BOOKS</Link>
               </li>
-              <li className="nav-item dropdown">
+              <li className="nav-item dropdown d-none d-lg-block">
                 <button className="nav-link dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" style={{background: 'none', border: 'none', cursor: 'pointer', color: '#333', fontWeight: 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>
                   MORE
                 </button>
                 <ul className="dropdown-menu">
-                  <li><Link className="dropdown-item" to="/about" style={parentGroup === 'About' ? {color: '#ff6b35', fontWeight: 600} : {color: '#333'}}>ABOUT</Link></li>
-                  <li><Link className="dropdown-item" to="/blogs" style={parentGroup === 'Blogs' ? {color: '#ff6b35', fontWeight: 600} : {color: '#333'}}>BLOGS</Link></li>
-                  <li><Link className="dropdown-item" to="/services" style={parentGroup === 'Services' ? {color: '#ff6b35', fontWeight: 600} : {color: '#333'}}>SERVICES</Link></li>
-                  <li><Link className="dropdown-item" to="/results" style={parentGroup === 'Results' ? {color: '#ff6b35', fontWeight: 600} : {color: '#333'}}>RESULTS</Link></li>
-                  <li><Link className="dropdown-item" to="/mocktests" style={parentGroup === 'MockTest' ? {color: '#ff6b35', fontWeight: 600} : {color: '#333'}}>MOCK TEST</Link></li>
-                  <li><Link className="dropdown-item" to="/contact" style={parentGroup === 'Contact' ? {color: '#ff6b35', fontWeight: 600} : {color: '#333'}}>CONTACT</Link></li>
+                  {moreLinks.map((link) => (
+                    <li key={link.to}>
+                      <Link
+                        className="dropdown-item"
+                        to={link.to}
+                        onClick={handleMobileNavClose}
+                        style={parentGroup === link.group ? {color: '#ff6b35', fontWeight: 600} : {color: '#333'}}
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
                 </ul>
               </li>
-              <li className="nav-item d-lg-none">
-                {isAuthenticated && studentData ? (
-                  <Link to="/student/profile" className="nav-link" style={{color: '#333', fontWeight: 600, fontSize: '14px', padding: '8px 12px'}}>PROFILE</Link>
-                ) : (
+              {moreLinks.map((link) => (
+                <li key={`mobile-${link.to}`} className="nav-item d-lg-none">
+                  <Link
+                    to={link.to}
+                    className="nav-link"
+                    onClick={handleMobileNavClose}
+                    style={{color: parentGroup === link.group ? '#ff6b35' : '#333', fontWeight: parentGroup === link.group ? 700 : 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+              {!isAuthenticated && !studentData && (
+                <li className="nav-item d-lg-none">
                   <div className="d-flex flex-column gap-2 p-2">
-                    <Link to="/student/login" className="btn btn-outline-primary btn-sm">LOGIN</Link>
-                    <Link to="/student/register" className="btn btn-primary btn-sm">REGISTER</Link>
+                    <Link to="/student/register" onClick={handleMobileNavClose} className="btn btn-primary btn-sm">REGISTER</Link>
                   </div>
-                )}
-              </li>
+                </li>
+              )}
             </ul>
             <div className="d-flex align-items-center d-none d-lg-flex" style={{gap: '8px'}}>
               <Link to="/cart" className="btn btn-link text-decoration-none position-relative" style={{color: '#333', fontSize: '18px', padding: '4px 8px'}}>
