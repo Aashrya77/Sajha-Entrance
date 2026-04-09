@@ -15,6 +15,10 @@ const Components = {
     "BulkUploadResults",
     path.join(__dirname, "./components/BulkUploadResults")
   ),
+  RichTextEditor: componentLoader.add(
+    "RichTextEditor",
+    path.join(__dirname, "./components/RichTextEditor")
+  ),
   ImageUpload: componentLoader.add("ImageUpload", path.join(__dirname, "./components/ImageUpload")),
   Login: componentLoader.override("Login", path.join(__dirname, "./components/Login")),
   LoggedIn: componentLoader.override("LoggedIn", path.join(__dirname, "./components/LoggedIn")),

@@ -18,8 +18,12 @@ const CollegeDetail = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      const sections = document.querySelectorAll('.college-section');
-      let currentSection = 'admission';
+      const sections = document.querySelectorAll('[data-nav-section]');
+      if (!sections.length) {
+        return;
+      }
+
+      let currentSection = sections[0].getAttribute('id') || 'admission';
       
       sections.forEach(section => {
         const sectionTop = section.offsetTop - 150;
@@ -31,9 +35,10 @@ const CollegeDetail = () => {
       setActiveSection(currentSection);
     };
 
-    window.addEventListener('scroll', handleScroll);
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [collegeData]);
 
   const fetchCollegeDetail = async () => {
     try {
@@ -81,11 +86,27 @@ const CollegeDetail = () => {
   const coverImageUrl = getImageFieldUrl(college, 'collegeCover', 'colleges');
   const logoImageUrl = getImageFieldUrl(college, 'collegeLogo', 'colleges');
   const chairmanImageUrl = getImageFieldUrl(college, 'chairmanImage', 'colleges');
+  const hasChairmanSection = Boolean(college.chairmanName || college.chairmanMessage || chairmanImageUrl);
+  const navSections = [
+    college.admissionNotice && { id: 'admission', icon: 'fa-graduation-cap', label: 'Admission' },
+    college.overview && { id: 'about', icon: 'fa-circle-info', label: 'About' },
+    courses && courses.length > 0 && {
+      id: 'programs',
+      icon: 'fa-book',
+      label: 'Programs',
+      badge: courses.length,
+    },
+    { id: 'features', icon: 'fa-star', label: 'Features' },
+    college.admissionGuidelines && { id: 'guidelines', icon: 'fa-file-alt', label: 'Guidelines' },
+    college.scholarshipInfo && { id: 'scholarship', icon: 'fa-money-bill', label: 'Scholarship' },
+    galleryImages.length > 0 && { id: 'gallery', icon: 'fa-images', label: 'Gallery' },
+    hasChairmanSection && { id: 'chairman', icon: 'fa-user-tie', label: 'Chairman' },
+  ].filter(Boolean);
 
   return (
-    <div className="college-profile">
-      <div className="container-fluid pt-3 ps-4 position-absolute" style={{ zIndex: 10, top: '120px' }}>
-        <Link to="/colleges" className="cd-breadcrumb-link" style={{ background: 'rgba(0,0,0,0.5)', padding: '8px 15px', borderRadius: '20px', backdropFilter: 'blur(5px)' }}>
+    <div className="college-profile college-detail-page">
+      <div className="college-detail-breadcrumb">
+        <Link to="/colleges" className="cd-breadcrumb-link college-detail-breadcrumb-link">
           <i className="fa-solid fa-arrow-left me-2"></i>All Colleges
         </Link>
       </div>
@@ -137,99 +158,59 @@ const CollegeDetail = () => {
         </div>
       </div>
 
+      {navSections.length > 0 && (
+        <div className="college-mobile-nav d-lg-none">
+          <div className="container-fluid">
+            <div className="college-mobile-nav-scroll">
+              {navSections.map((section) => (
+                <a
+                  key={section.id}
+                  href={`#${section.id}`}
+                  className={`college-mobile-nav-link ${activeSection === section.id ? 'active' : ''}`}
+                  onClick={(e) => scrollToSection(e, section.id)}
+                >
+                  <i className={`fa-solid ${section.icon}`}></i>
+                  <span>{section.label}</span>
+                  {section.badge ? <span className="nav-badge">{section.badge}</span> : null}
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 3-Column Layout Section */}
       <div className="college-details-wrapper">
         <div className="container-fluid">
           <div className="row g-4">
             {/* Left Sidebar Navigation */}
-            <div className="col-md-2 d-none d-md-block">
+            <div className="col-lg-2 d-none d-lg-block">
               <nav className="college-sidebar-nav sticky-top">
                 <ul className="college-nav-list">
-                  <li className="college-nav-item">
-                    <a 
-                      href="#admission" 
-                      className={`college-nav-link ${activeSection === 'admission' ? 'active' : ''}`}
-                      onClick={(e) => scrollToSection(e, 'admission')}
-                    >
-                      <i className="fa-solid fa-graduation-cap"></i> Admission
-                    </a>
-                  </li>
-                  <li className="college-nav-item">
-                    <a 
-                      href="#about" 
-                      className={`college-nav-link ${activeSection === 'about' ? 'active' : ''}`}
-                      onClick={(e) => scrollToSection(e, 'about')}
-                    >
-                      <i className="fa-solid fa-circle-info"></i> About
-                    </a>
-                  </li>
-                  <li className="college-nav-item">
-                    <a 
-                      href="#programs" 
-                      className={`college-nav-link ${activeSection === 'programs' ? 'active' : ''}`}
-                      onClick={(e) => scrollToSection(e, 'programs')}
-                    >
-                      <i className="fa-solid fa-book"></i> Programs 
-                      {courses && courses.length > 0 && (
-                        <span className="nav-badge">{courses.length}</span>
-                      )}
-                    </a>
-                  </li>
-                  <li className="college-nav-item">
-                    <a 
-                      href="#features" 
-                      className={`college-nav-link ${activeSection === 'features' ? 'active' : ''}`}
-                      onClick={(e) => scrollToSection(e, 'features')}
-                    >
-                      <i className="fa-solid fa-star"></i> Features
-                    </a>
-                  </li>
-                  <li className="college-nav-item">
-                    <a 
-                      href="#guidelines" 
-                      className={`college-nav-link ${activeSection === 'guidelines' ? 'active' : ''}`}
-                      onClick={(e) => scrollToSection(e, 'guidelines')}
-                    >
-                      <i className="fa-solid fa-file-alt"></i> Guidelines
-                    </a>
-                  </li>
-                  <li className="college-nav-item">
-                    <a 
-                      href="#scholarship" 
-                      className={`college-nav-link ${activeSection === 'scholarship' ? 'active' : ''}`}
-                      onClick={(e) => scrollToSection(e, 'scholarship')}
-                    >
-                      <i className="fa-solid fa-money-bill"></i> Scholarship
-                    </a>
-                  </li>
-                  <li className="college-nav-item">
-                    <a 
-                      href="#gallery" 
-                      className={`college-nav-link ${activeSection === 'gallery' ? 'active' : ''}`}
-                      onClick={(e) => scrollToSection(e, 'gallery')}
-                    >
-                      <i className="fa-solid fa-images"></i> Gallery
-                    </a>
-                  </li>
-                  <li className="college-nav-item">
-                    <a 
-                      href="#chairman" 
-                      className={`college-nav-link ${activeSection === 'chairman' ? 'active' : ''}`}
-                      onClick={(e) => scrollToSection(e, 'chairman')}
-                    >
-                      <i className="fa-solid fa-user-tie"></i> Chairman
-                    </a>
-                  </li>
+                  {navSections.map((section) => (
+                    <li key={section.id} className="college-nav-item">
+                      <a 
+                        href={`#${section.id}`}
+                        className={`college-nav-link ${activeSection === section.id ? 'active' : ''}`}
+                        onClick={(e) => scrollToSection(e, section.id)}
+                      >
+                        <i className={`fa-solid ${section.icon}`}></i> {section.label}
+                        {section.badge ? (
+                          <span className="nav-badge">{section.badge}</span>
+                        ) : null}
+                      </a>
+                    </li>
+                  ))}
                 </ul>
               </nav>
             </div>
 
             {/* Main Content */}
-            <div className="col-md-7">
+            <div className="col-12 col-lg-7">
               <div className="college-main-content">
                 {/* Admission Notice Bar */}
                 {college.admissionNotice && (
-                  <div className="college-admission-notice" id="admission">
+                  <div className="college-admission-notice" id="admission" data-nav-section>
                     <div className="college-admission-text-section">
                       <span className="college-admission-text">{college.admissionNotice}</span>
                     </div>
@@ -247,7 +228,7 @@ const CollegeDetail = () => {
 
                 {/* About Section */}
                 {college.overview && (
-                  <div className="college-section" id="about">
+                  <div className="college-section" id="about" data-nav-section>
                     <div className="college-section-header">
                       <h2 className="college-section-title">About</h2>
                     </div>
@@ -257,7 +238,7 @@ const CollegeDetail = () => {
 
                 {/* Offered Programs Section */}
                 {courses && courses.length > 0 && (
-                  <div className="college-section" id="programs">
+                  <div className="college-section" id="programs" data-nav-section>
                     <div className="college-section-header">
                       <h2 className="college-section-title">Offered Programs</h2>
                     </div>
@@ -288,7 +269,7 @@ const CollegeDetail = () => {
                 )}
 
                 {/* Salient Features Section */}
-                <div className="college-section" id="features">
+                <div className="college-section" id="features" data-nav-section>
                   <div className="college-section-header">
                     <h2 className="college-section-title">Salient Features</h2>
                   </div>
@@ -310,7 +291,7 @@ const CollegeDetail = () => {
 
                 {/* Admission Guidelines Section */}
                 {college.admissionGuidelines && (
-                  <div className="college-section" id="guidelines">
+                  <div className="college-section" id="guidelines" data-nav-section>
                     <div className="college-section-header">
                       <h2 className="college-section-title">Admission Guidelines</h2>
                     </div>
@@ -320,7 +301,7 @@ const CollegeDetail = () => {
 
                 {/* Scholarship Information Section */}
                 {college.scholarshipInfo && (
-                  <div className="college-section" id="scholarship">
+                  <div className="college-section" id="scholarship" data-nav-section>
                     <div className="college-section-header">
                       <h2 className="college-section-title">Scholarship Information</h2>
                     </div>
@@ -330,7 +311,7 @@ const CollegeDetail = () => {
 
                 {/* Gallery Section */}
                 {galleryImages.length > 0 && (
-                  <div className="college-section" id="gallery">
+                  <div className="college-section" id="gallery" data-nav-section>
                     <div className="college-section-header">
                       <h2 className="college-section-title">Gallery</h2>
                     </div>
@@ -347,7 +328,7 @@ const CollegeDetail = () => {
             </div>
 
             {/* Right Sidebar - Contact Info */}
-            <div className="col-md-3">
+            <div className="col-12 col-lg-3">
               {/* Contact Info Card */}
               <div className="college-contact-sidebar">
                 <h3 className="college-contact-title">Contact Info</h3>
@@ -420,8 +401,8 @@ const CollegeDetail = () => {
               </div>
 
               {/* Chairman Preview Card */}
-              {(college.chairmanName || college.chairmanMessage || chairmanImageUrl) && (
-                <div className="college-chairman-preview" id="chairman">
+              {hasChairmanSection && (
+                <div className="college-chairman-preview" id="chairman" data-nav-section>
                   <div className="college-chairman-preview-title">Chairman</div>
                   {chairmanImageUrl && (
                     <div className="college-chairman-image-container">

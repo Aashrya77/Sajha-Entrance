@@ -380,14 +380,22 @@ const startAdminPanel = async () => {
     return result.currentAdmin;
   };
 
+  const richTextEditComponent = {
+    edit: Components.RichTextEditor,
+  };
+
   const courseResource = {
     resource: Course,
     options: {
       properties: {
         descriptionFormatted: {
+          label: "Formatted Description",
+          components: richTextEditComponent,
           type: "richtext",
         },
         scholarshipDescription: {
+          label: "Scholarship Description",
+          components: richTextEditComponent,
           type: "richtext",
         },
         universityName: {
@@ -409,7 +417,9 @@ const startAdminPanel = async () => {
           },
         },
         aboutTab: {
-          type: "textarea",
+          label: "About Section",
+          components: richTextEditComponent,
+          type: "richtext",
           isVisible: {
             list: false,
             show: true,
@@ -418,7 +428,9 @@ const startAdminPanel = async () => {
           },
         },
         eligibilityTab: {
-          type: "textarea",
+          label: "Eligibility Section",
+          components: richTextEditComponent,
+          type: "richtext",
           isVisible: {
             list: false,
             show: true,
@@ -427,6 +439,8 @@ const startAdminPanel = async () => {
           },
         },
         curricularStructureTab: {
+          label: "Curriculum Section",
+          components: richTextEditComponent,
           type: "richtext",
           isVisible: {
             list: false,
@@ -436,7 +450,9 @@ const startAdminPanel = async () => {
           },
         },
         jobProspectsTab: {
-          type: "textarea",
+          label: "Job Prospects Section",
+          components: richTextEditComponent,
+          type: "richtext",
           isVisible: {
             list: false,
             show: true,

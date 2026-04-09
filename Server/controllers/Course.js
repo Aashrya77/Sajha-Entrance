@@ -106,7 +106,7 @@ const CourseDetail = async (req, res) => {
 const GetCourses = async (req, res) => {
   try {
     const notice = await Notice.findOne().sort({ _id: -1 }).exec();
-    const courses = await Course.find().limit(6).exec();
+    const courses = await Course.find().sort({ title: 1 }).exec();
     const advertisement = await Advertisement.findOne().sort({ _id: -1 }).exec();
     const popup = await Popup.findOne({ isActive: true }).exec();
     const colleges = await College.aggregate([{ $sample: { size: 6 } }]).exec();

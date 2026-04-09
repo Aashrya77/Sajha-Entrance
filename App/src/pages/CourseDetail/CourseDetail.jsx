@@ -208,7 +208,7 @@ const CourseDetail = () => {
                 {/* Enrollment / Payment Card */}
                 <div className="cd-sidebar-card cd-enroll-card">
                   <h4 className="cd-sidebar-title">
-                    <i className="fa-solid fa-user-plus me-2"></i>Enroll in This Course
+                    <i className="fa-solid fa-user-plus me-2"></i>Enroll in Entrance Preparation of this course
                   </h4>
                   <p className="cd-enroll-desc">
                     Secure your seat for the {course.title} entrance preparation class. Pay securely via eSewa.

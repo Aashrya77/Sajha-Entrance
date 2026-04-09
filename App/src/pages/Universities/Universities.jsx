@@ -284,7 +284,6 @@ const Universities = () => {
         </div>
 
         {/* Floating Inquiry Button */}
-        <InquiryButton collegeName="Universities & Programs" position="bottom-right" />
       </div>
     </div>
   );
