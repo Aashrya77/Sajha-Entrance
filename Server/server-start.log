@@ -1,0 +1,13 @@
+
+> sajha-web-server@1.0.0 start
+> node bootstrap.js
+
+[server] MongoDB connected
+[mocktest-indexes] Indexes verified for MockTestCourse
+[mocktest-indexes] Indexes verified for MockTestSubject
+[mocktest-indexes] Indexes verified for MockQuestion
+[mocktest-indexes] Indexes verified for MockTest
+[mocktest-indexes] Indexes verified for MockTestAttempt
+AdminJS: bundling user components...
+AdminJS: bundling user components...
+[server] Server running on http://localhost:5000

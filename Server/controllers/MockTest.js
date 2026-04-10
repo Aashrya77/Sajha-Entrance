@@ -1,89 +1,238 @@
-import MockTestModel, { MockTestAttemptModel } from "../models/MockTest.js";
 import mongoose from "mongoose";
+import MockTestModel, { MockTestAttemptModel } from "../models/MockTest.js";
+import {
+  buildStudentMockTestSummary,
+  resolveMockTestLifecycle,
+  serializeQuestionForReview,
+  serializeQuestionForStudent,
+} from "../services/mockTestService.js";
 
-// Get all active mock tests (list view - no questions sent)
-const GetMockTests = async (req, res) => {
-  try {
-    const search = req.query.search;
-    const course = req.query.course;
+const buildSubjectLookupFromMockTest = (mockTest) =>
+  (mockTest?.subjectRefs || []).reduce((lookup, subjectRef, index) => {
+    const subjectId =
+      subjectRef && typeof subjectRef === "object" && subjectRef.toString
+        ? subjectRef.toString()
+        : String(subjectRef || "");
+    const subjectName = String(mockTest?.subjectNames?.[index] || "").trim();
 
-    let query = { isActive: true };
-
-    if (search) {
-      query.title = { $regex: search, $options: "i" };
+    if (subjectId && subjectName) {
+      lookup[subjectId] = subjectName;
     }
-    if (course) {
-      query.course = { $regex: course, $options: "i" };
-    }
 
-    const mockTests = await MockTestModel.find(query)
-      .select("-questions.correctOption -questions.explanation")
-      .sort({ createdAt: -1 })
+    return lookup;
+  }, {});
+
+const buildQuestionSubjectOverrides = async (mockTest) => {
+  const questions = Array.isArray(mockTest?.questions) ? mockTest.questions : [];
+  const subjectLookup = buildSubjectLookupFromMockTest(mockTest);
+  const unresolvedSourceIds = [
+    ...new Set(
+      questions
+        .filter(
+          (question) =>
+            !question?.subject &&
+            question?.sourceQuestionId &&
+            mongoose.Types.ObjectId.isValid(question.sourceQuestionId)
+        )
+        .map((question) => String(question.sourceQuestionId))
+    ),
+  ];
+
+  if (!unresolvedSourceIds.length) {
+    return {
+      subjectLookup,
+      questionOverrides: {},
+    };
+  }
+
+  const sourceQuestions = await mongoose
+    .model("MockQuestion")
+    .find(
+      { _id: { $in: unresolvedSourceIds } },
+      { _id: 1, subject: 1 }
+    )
+    .lean()
+    .exec();
+
+  const unresolvedSubjectIds = [
+    ...new Set(
+      sourceQuestions
+        .map((question) => String(question?.subject || ""))
+        .filter((subjectId) => mongoose.Types.ObjectId.isValid(subjectId))
+        .filter((subjectId) => !subjectLookup[subjectId])
+    ),
+  ];
+
+  if (unresolvedSubjectIds.length) {
+    const subjects = await mongoose
+      .model("MockTestSubject")
+      .find({ _id: { $in: unresolvedSubjectIds } }, { _id: 1, name: 1 })
+      .lean()
       .exec();
 
-    // Add question count to each test
-    const testsWithCount = mockTests.map((test) => ({
-      _id: test._id,
-      title: test.title,
-      description: test.description,
-      admissionTest: test.admissionTest,
-      course: test.course,
-      totalMarks: test.totalMarks,
-      duration: test.duration,
-      totalQuestions: test.questions ? test.questions.length : 0,
-      isActive: test.isActive,
-      createdAt: test.createdAt,
-    }));
+    subjects.forEach((subject) => {
+      subjectLookup[String(subject._id)] = subject.name;
+    });
+  }
+
+  const questionOverrides = sourceQuestions.reduce((overrides, question) => {
+    const subjectId = String(question?.subject || "").trim();
+    const subjectName = subjectLookup[subjectId] || "";
+
+    if (subjectId && subjectName) {
+      overrides[String(question._id)] = {
+        subject: subjectId,
+        subjectName,
+      };
+    }
+
+    return overrides;
+  }, {});
+
+  return {
+    subjectLookup,
+    questionOverrides,
+  };
+};
+
+const toPlainQuestionSnapshot = (question) =>
+  question?.toObject?.() ? question.toObject() : question;
+
+const matchSearch = (mockTest, search = "") => {
+  const normalizedSearch = String(search || "").trim().toLowerCase();
+  if (!normalizedSearch) {
+    return true;
+  }
+
+  return [
+    mockTest?.title,
+    mockTest?.admissionTest,
+    mockTest?.courseName,
+    mockTest?.course,
+    ...(mockTest?.subjectNames || []),
+  ]
+    .join(" ")
+    .toLowerCase()
+    .includes(normalizedSearch);
+};
+
+const matchCourse = (mockTest, course = "") => {
+  const normalizedCourse = String(course || "").trim().toLowerCase();
+  if (!normalizedCourse) {
+    return true;
+  }
+
+  return [mockTest?.courseName, mockTest?.course]
+    .join(" ")
+    .toLowerCase()
+    .includes(normalizedCourse);
+};
+
+// Get all student-visible mock tests.
+const GetMockTests = async (req, res) => {
+  try {
+    const mockTests = await MockTestModel.find({
+      $or: [
+        { status: { $in: ["scheduled", "live"] } },
+        { status: { $exists: false }, isActive: true },
+      ],
+    })
+      .sort({ startAt: 1, createdAt: -1 })
+      .lean()
+      .exec();
+
+    const visibleTests = mockTests
+      .map((mockTest) => {
+        const lifecycle = resolveMockTestLifecycle(mockTest);
+        return {
+          lifecycle,
+          summary: buildStudentMockTestSummary(mockTest, lifecycle),
+        };
+      })
+      .filter(
+        ({ lifecycle, summary }) =>
+          lifecycle.isStudentVisible &&
+          matchSearch(summary, req.query.search) &&
+          matchCourse(summary, req.query.course)
+      )
+      .map(({ summary }) => summary);
 
     res.json({
       success: true,
-      data: { mockTests: testsWithCount },
+      data: {
+        mockTests: visibleTests,
+      },
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
 };
 
-// Get a single mock test for taking the exam (questions without answers)
+// Get a live/accessible mock test for taking the exam.
 const GetMockTestForExam = async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       return res.status(404).json({ success: false, error: "Invalid test ID" });
     }
 
-    const mockTest = await MockTestModel.findOne({
-      _id: req.params.id,
-      isActive: true,
-    }).exec();
+    const mockTest = await MockTestModel.findById(req.params.id).lean().exec();
 
     if (!mockTest) {
       return res.status(404).json({ success: false, error: "Mock test not found" });
     }
 
-    // Strip correct answers and explanations for exam mode
-    const sanitizedQuestions = mockTest.questions.map((q, index) => ({
-      index,
-      questionText: q.questionText,
-      questionImage: q.questionImage,
-      options: q.options.map((opt) => ({
-        text: opt.text,
-        image: opt.image,
-      })),
-      marks: q.marks,
-      negativeMarks: q.negativeMarks,
-    }));
+    const lifecycle = resolveMockTestLifecycle(mockTest);
+    const summary = buildStudentMockTestSummary(mockTest, lifecycle);
+
+    if (!lifecycle.isStudentVisible) {
+      return res.status(404).json({
+        success: false,
+        error: "This mock test is not available to students right now.",
+      });
+    }
+
+    if (lifecycle.isUpcoming) {
+      return res.status(403).json({
+        success: false,
+        error: "This mock test has not started yet.",
+        data: summary,
+      });
+    }
+
+    if (!lifecycle.isAccessible) {
+      return res.status(403).json({
+        success: false,
+        error: "This mock test is no longer accessible.",
+        data: summary,
+      });
+    }
+
+    const { subjectLookup, questionOverrides } = await buildQuestionSubjectOverrides(mockTest);
+
+    const sanitizedQuestions = (mockTest.questions || []).map((question, index) => {
+      const plainQuestion = toPlainQuestionSnapshot(question);
+
+      return serializeQuestionForStudent(
+        {
+          ...plainQuestion,
+          subject:
+            plainQuestion?.subject ||
+            questionOverrides[String(plainQuestion?.sourceQuestionId)]?.subject ||
+            null,
+          subjectName:
+            plainQuestion?.subjectName ||
+            questionOverrides[String(plainQuestion?.sourceQuestionId)]?.subjectName ||
+            "",
+        },
+        index,
+        subjectLookup
+      );
+    });
 
     res.json({
       success: true,
       data: {
-        _id: mockTest._id,
-        title: mockTest.title,
-        description: mockTest.description,
-        admissionTest: mockTest.admissionTest,
-        course: mockTest.course,
-        totalMarks: mockTest.totalMarks,
-        duration: mockTest.duration,
-        totalQuestions: sanitizedQuestions.length,
+        ...summary,
         questions: sanitizedQuestions,
       },
     });
@@ -92,7 +241,7 @@ const GetMockTestForExam = async (req, res) => {
   }
 };
 
-// Submit mock test answers and get instant result
+// Submit mock test answers and get instant result.
 const SubmitMockTest = async (req, res) => {
   try {
     const { id } = req.params;
@@ -108,81 +257,101 @@ const SubmitMockTest = async (req, res) => {
       return res.status(404).json({ success: false, error: "Mock test not found" });
     }
 
-    // Grade the test
+    const lifecycle = resolveMockTestLifecycle(mockTest);
+    if (!lifecycle.isAccessible) {
+      return res.status(403).json({
+        success: false,
+        error: lifecycle.isUpcoming
+          ? "This mock test has not started yet."
+          : "This mock test is no longer accessible.",
+      });
+    }
+
     let totalScore = 0;
     let totalCorrect = 0;
     let totalWrong = 0;
     let totalUnanswered = 0;
 
-    const gradedAnswers = mockTest.questions.map((question, index) => {
-      const studentAnswer = answers ? answers.find((a) => a.questionIndex === index) : null;
+    const gradedAnswers = (mockTest.questions || []).map((question, index) => {
+      const studentAnswer = Array.isArray(answers)
+        ? answers.find((entry) => entry.questionIndex === index)
+        : null;
 
-      if (!studentAnswer || studentAnswer.selectedOption === null || studentAnswer.selectedOption === undefined || studentAnswer.selectedOption === -1) {
-        totalUnanswered++;
+      if (
+        !studentAnswer ||
+        studentAnswer.selectedOption === null ||
+        studentAnswer.selectedOption === undefined ||
+        studentAnswer.selectedOption === -1
+      ) {
+        totalUnanswered += 1;
         return {
           questionIndex: index,
+          questionId: question?.sourceQuestionId || null,
           selectedOption: -1,
           isCorrect: false,
           marksObtained: 0,
         };
       }
 
-      const isCorrect = studentAnswer.selectedOption === question.correctOption;
-
+      const isCorrect = Number(studentAnswer.selectedOption) === Number(question.correctOption);
       if (isCorrect) {
-        totalCorrect++;
-        totalScore += question.marks || 1;
-        return {
-          questionIndex: index,
-          selectedOption: studentAnswer.selectedOption,
-          isCorrect: true,
-          marksObtained: question.marks || 1,
-        };
+        totalCorrect += 1;
+        totalScore += Number(question.marks || 0) || 0;
       } else {
-        totalWrong++;
-        totalScore -= question.negativeMarks || 0;
-        return {
-          questionIndex: index,
-          selectedOption: studentAnswer.selectedOption,
-          isCorrect: false,
-          marksObtained: -(question.negativeMarks || 0),
-        };
+        totalWrong += 1;
+        totalScore -= Number(question.negativeMarks || 0) || 0;
       }
+
+      return {
+        questionIndex: index,
+        questionId: question?.sourceQuestionId || null,
+        selectedOption: Number(studentAnswer.selectedOption),
+        isCorrect,
+        marksObtained: isCorrect
+          ? Number(question.marks || 0) || 0
+          : -(Number(question.negativeMarks || 0) || 0),
+      };
     });
 
+    const safeScore = Math.max(0, totalScore);
     const percentage =
       mockTest.totalMarks > 0
-        ? Math.round((Math.max(0, totalScore) / mockTest.totalMarks) * 100 * 100) / 100
+        ? Math.round((safeScore / mockTest.totalMarks) * 100 * 100) / 100
         : 0;
 
-    // Save the attempt
     const attempt = await MockTestAttemptModel.create({
       student: studentId,
       mockTest: id,
       answers: gradedAnswers,
-      totalScore: Math.max(0, totalScore),
+      totalScore: safeScore,
       totalCorrect,
       totalWrong,
       totalUnanswered,
       percentage,
-      timeTaken: timeTaken || 0,
+      timeTaken: Number(timeTaken || 0) || 0,
     });
 
-    // Build result with correct answers and explanations
-    const resultQuestions = mockTest.questions.map((q, index) => {
-      const graded = gradedAnswers[index];
-      return {
+    const { subjectLookup, questionOverrides } = await buildQuestionSubjectOverrides(mockTest);
+
+    const resultQuestions = (mockTest.questions || []).map((question, index) => {
+      const plainQuestion = toPlainQuestionSnapshot(question);
+
+      return serializeQuestionForReview(
+        {
+          ...plainQuestion,
+          subject:
+            plainQuestion?.subject ||
+            questionOverrides[String(plainQuestion?.sourceQuestionId)]?.subject ||
+            null,
+          subjectName:
+            plainQuestion?.subjectName ||
+            questionOverrides[String(plainQuestion?.sourceQuestionId)]?.subjectName ||
+            "",
+        },
+        gradedAnswers[index],
         index,
-        questionText: q.questionText,
-        questionImage: q.questionImage,
-        options: q.options,
-        correctOption: q.correctOption,
-        explanation: q.explanation,
-        marks: q.marks,
-        selectedOption: graded.selectedOption,
-        isCorrect: graded.isCorrect,
-        marksObtained: graded.marksObtained,
-      };
+        subjectLookup
+      );
     });
 
     res.json({
@@ -191,13 +360,14 @@ const SubmitMockTest = async (req, res) => {
         attemptId: attempt._id,
         testTitle: mockTest.title,
         totalMarks: mockTest.totalMarks,
-        totalScore: Math.max(0, totalScore),
+        passMarks: mockTest.passMarks || 0,
+        totalScore: safeScore,
         totalCorrect,
         totalWrong,
         totalUnanswered,
         totalQuestions: mockTest.questions.length,
         percentage,
-        timeTaken: timeTaken || 0,
+        timeTaken: Number(timeTaken || 0) || 0,
         duration: mockTest.duration,
         questions: resultQuestions,
       },
@@ -207,14 +377,15 @@ const SubmitMockTest = async (req, res) => {
   }
 };
 
-// Get student's past attempts
+// Get student's past attempts.
 const GetMyAttempts = async (req, res) => {
   try {
     const studentId = req.student.id;
 
     const attempts = await MockTestAttemptModel.find({ student: studentId })
-      .populate("mockTest", "title admissionTest course totalMarks duration")
+      .populate("mockTest", "title courseName course totalMarks duration status startAt endAt")
       .sort({ completedAt: -1 })
+      .lean()
       .exec();
 
     res.json({
@@ -226,7 +397,7 @@ const GetMyAttempts = async (req, res) => {
   }
 };
 
-// Get a specific attempt result
+// Get a specific attempt result.
 const GetAttemptResult = async (req, res) => {
   try {
     const { attemptId } = req.params;
@@ -241,28 +412,36 @@ const GetAttemptResult = async (req, res) => {
       student: studentId,
     })
       .populate("mockTest")
+      .lean()
       .exec();
 
-    if (!attempt) {
+    if (!attempt || !attempt.mockTest) {
       return res.status(404).json({ success: false, error: "Attempt not found" });
     }
 
     const mockTest = attempt.mockTest;
+    const { subjectLookup, questionOverrides } = await buildQuestionSubjectOverrides(mockTest);
 
-    const resultQuestions = mockTest.questions.map((q, index) => {
-      const answer = attempt.answers.find((a) => a.questionIndex === index);
-      return {
+    const resultQuestions = (mockTest.questions || []).map((question, index) => {
+      const answer = (attempt.answers || []).find((entry) => entry.questionIndex === index);
+      const plainQuestion = toPlainQuestionSnapshot(question);
+
+      return serializeQuestionForReview(
+        {
+          ...plainQuestion,
+          subject:
+            plainQuestion?.subject ||
+            questionOverrides[String(plainQuestion?.sourceQuestionId)]?.subject ||
+            null,
+          subjectName:
+            plainQuestion?.subjectName ||
+            questionOverrides[String(plainQuestion?.sourceQuestionId)]?.subjectName ||
+            "",
+        },
+        answer,
         index,
-        questionText: q.questionText,
-        questionImage: q.questionImage,
-        options: q.options,
-        correctOption: q.correctOption,
-        explanation: q.explanation,
-        marks: q.marks,
-        selectedOption: answer ? answer.selectedOption : -1,
-        isCorrect: answer ? answer.isCorrect : false,
-        marksObtained: answer ? answer.marksObtained : 0,
-      };
+        subjectLookup
+      );
     });
 
     res.json({
@@ -271,6 +450,7 @@ const GetAttemptResult = async (req, res) => {
         attemptId: attempt._id,
         testTitle: mockTest.title,
         totalMarks: mockTest.totalMarks,
+        passMarks: mockTest.passMarks || 0,
         totalScore: attempt.totalScore,
         totalCorrect: attempt.totalCorrect,
         totalWrong: attempt.totalWrong,
@@ -288,4 +468,10 @@ const GetAttemptResult = async (req, res) => {
   }
 };
 
-export { GetMockTests, GetMockTestForExam, SubmitMockTest, GetMyAttempts, GetAttemptResult };
+export {
+  GetAttemptResult,
+  GetMockTestForExam,
+  GetMockTests,
+  GetMyAttempts,
+  SubmitMockTest,
+};

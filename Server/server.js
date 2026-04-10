@@ -29,6 +29,7 @@ import {
   publicDirectory,
 } from "./utils/media.js";
 import { backfillLegacyResultExams } from "./services/resultService.js";
+import { syncMockTestIndexes } from "./services/mockTestIndexService.js";
 
 dotenv.config();
 
@@ -133,6 +134,12 @@ const startServer = async () => {
   try {
     await connectDB();
     logger.info("MongoDB connected");
+
+    try {
+      await syncMockTestIndexes();
+    } catch (err) {
+      logger.error("Mock test index sync error:", err.message);
+    }
 
     try {
       const legacyMigration = await backfillLegacyResultExams();

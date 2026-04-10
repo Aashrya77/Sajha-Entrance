@@ -3,6 +3,12 @@ import Dashboard from '../admin/components/Dashboard'
 AdminJS.UserComponents.Dashboard = Dashboard
 import BulkUploadResults from '../admin/components/BulkUploadResults'
 AdminJS.UserComponents.BulkUploadResults = BulkUploadResults
+import MockQuestionStudio from '../admin/components/MockQuestionStudio'
+AdminJS.UserComponents.MockQuestionStudio = MockQuestionStudio
+import MockTestWorkspace from '../admin/components/MockTestWorkspace'
+AdminJS.UserComponents.MockTestWorkspace = MockTestWorkspace
+import MockTestScheduler from '../admin/components/MockTestScheduler'
+AdminJS.UserComponents.MockTestScheduler = MockTestScheduler
 import RichTextEditor from '../admin/components/RichTextEditor'
 AdminJS.UserComponents.RichTextEditor = RichTextEditor
 import RecordedClassEdit from '../admin/components/RecordedClassEdit'

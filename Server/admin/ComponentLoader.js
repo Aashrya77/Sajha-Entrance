@@ -15,6 +15,18 @@ const Components = {
     "BulkUploadResults",
     path.join(__dirname, "./components/BulkUploadResults")
   ),
+  MockQuestionStudio: componentLoader.add(
+    "MockQuestionStudio",
+    path.join(__dirname, "./components/MockQuestionStudio")
+  ),
+  MockTestWorkspace: componentLoader.add(
+    "MockTestWorkspace",
+    path.join(__dirname, "./components/MockTestWorkspace")
+  ),
+  MockTestScheduler: componentLoader.add(
+    "MockTestScheduler",
+    path.join(__dirname, "./components/MockTestScheduler")
+  ),
   RichTextEditor: componentLoader.add(
     "RichTextEditor",
     path.join(__dirname, "./components/RichTextEditor")

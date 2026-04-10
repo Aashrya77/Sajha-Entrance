@@ -1,156 +1,450 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { mockTestAPI } from '../../api/services';
-import Loader from '../../components/Loader/Loader';
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { mockTestAPI } from "../../api/services";
+import { resolveBackendPath } from "../../api/config";
+import Loader from "../../components/Loader/Loader";
+import FormattedContent from "../../components/MockTest/FormattedContent";
+import "./MockTestExam.css";
+
+const ALL_SUBJECTS = "All";
+const REVIEW_FILTERS = [
+  { value: "all", label: "All Questions" },
+  { value: "flagged", label: "Flagged" },
+  { value: "answered", label: "Answered" },
+  { value: "unanswered", label: "Unanswered" },
+];
+
+const formatDateTime = (value) =>
+  value
+    ? new Date(value).toLocaleString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      })
+    : "Not scheduled";
+
+const formatTime = (seconds) => {
+  const safeSeconds = Math.max(0, Number(seconds || 0));
+  const hours = Math.floor(safeSeconds / 3600);
+  const minutes = Math.floor((safeSeconds % 3600) / 60);
+  const remainingSeconds = safeSeconds % 60;
+
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(
+      2,
+      "0"
+    )}`;
+  }
+
+  return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
+};
+
+const normalizeSubjectLabel = (question, subjectNames = []) => {
+  const explicitSubject = String(
+    question?.subject || question?.subjectName || question?.subjectLabel || ""
+  ).trim();
+
+  if (explicitSubject) {
+    return explicitSubject;
+  }
+
+  if (Array.isArray(subjectNames) && subjectNames.length === 1) {
+    return String(subjectNames[0] || "").trim() || "General";
+  }
+
+  return "General";
+};
+
+const getStatusMeta = (status = "live") => {
+  const normalizedStatus = String(status || "").trim().toLowerCase();
+
+  if (normalizedStatus === "upcoming" || normalizedStatus === "scheduled") {
+    return {
+      label: "Scheduled",
+      className: "mock-test-exam__status mock-test-exam__status--scheduled",
+    };
+  }
+
+  if (normalizedStatus === "completed") {
+    return {
+      label: "Completed",
+      className: "mock-test-exam__status mock-test-exam__status--completed",
+    };
+  }
+
+  return {
+    label: "Live",
+    className: "mock-test-exam__status mock-test-exam__status--live",
+  };
+};
+
+const getTimerToneClass = (timeLeft) => {
+  if (timeLeft <= 300) {
+    return "mock-test-exam__metric-value--danger";
+  }
+
+  if (timeLeft <= 600) {
+    return "mock-test-exam__metric-value--warning";
+  }
+
+  return "";
+};
 
 const MockTestExam = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [testData, setTestData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [pageError, setPageError] = useState("");
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState([]);
   const [timeLeft, setTimeLeft] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [started, setStarted] = useState(false);
+  const [selectedSubject, setSelectedSubject] = useState(ALL_SUBJECTS);
+  const [flaggedQuestions, setFlaggedQuestions] = useState([]);
+  const [reviewFilter, setReviewFilter] = useState("all");
 
   useEffect(() => {
+    const fetchTest = async () => {
+      setLoading(true);
+
+      try {
+        const response = await mockTestAPI.getMockTestForExam(id);
+
+        if (response.data.success) {
+          const data = response.data.data;
+          setTestData(data);
+          setTimeLeft((Number(data.duration || 0) || 0) * 60);
+          setAnswers(
+            (data.questions || []).map((_, index) => ({
+              questionIndex: index,
+              selectedOption: -1,
+            }))
+          );
+          setCurrentQuestion(0);
+          setSelectedSubject(ALL_SUBJECTS);
+          setFlaggedQuestions([]);
+          setReviewFilter("all");
+          setPageError("");
+        }
+      } catch (error) {
+        console.error("Error fetching test:", error);
+        setPageError(
+          error.response?.data?.error || "Unable to open this mock test right now."
+        );
+        setTestData(error.response?.data?.data || null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchTest();
   }, [id]);
 
-  const fetchTest = async () => {
-    try {
-      const response = await mockTestAPI.getMockTestForExam(id);
-      if (response.data.success) {
-        const data = response.data.data;
-        setTestData(data);
-        setTimeLeft(data.duration * 60);
-        setAnswers(data.questions.map((_, i) => ({ questionIndex: i, selectedOption: -1 })));
-      }
-      setLoading(false);
-    } catch (error) {
-      console.error('Error fetching test:', error);
-      setLoading(false);
-    }
-  };
-
   const handleSubmit = useCallback(async () => {
-    if (submitting) return;
+    if (submitting || !testData) {
+      return;
+    }
+
     setSubmitting(true);
+
     try {
       const elapsed = testData.duration * 60 - timeLeft;
       const response = await mockTestAPI.submitMockTest(id, {
         answers,
         timeTaken: elapsed,
       });
+
       if (response.data.success) {
         navigate(`/mocktest-result/${response.data.data.attemptId}`, {
           state: { result: response.data.data },
         });
       }
     } catch (error) {
-      console.error('Error submitting test:', error);
-      alert('Error submitting test. Please try again.');
+      console.error("Error submitting test:", error);
+      alert(error.response?.data?.error || "Error submitting test. Please try again.");
       setSubmitting(false);
     }
-  }, [submitting, testData, timeLeft, id, answers, navigate]);
+  }, [answers, id, navigate, submitting, testData, timeLeft]);
 
-  // Timer
   useEffect(() => {
-    if (!started || !testData || timeLeft <= 0) return;
+    if (!started || !testData || timeLeft <= 0) {
+      return undefined;
+    }
+
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
+      setTimeLeft((previous) => {
+        if (previous <= 1) {
           clearInterval(timer);
           handleSubmit();
           return 0;
         }
-        return prev - 1;
+
+        return previous - 1;
       });
     }, 1000);
-    return () => clearInterval(timer);
-  }, [started, testData, timeLeft, handleSubmit]);
 
-  const formatTime = (seconds) => {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-  };
+    return () => clearInterval(timer);
+  }, [handleSubmit, started, testData, timeLeft]);
+
+  const questions = useMemo(
+    () =>
+      (testData?.questions || []).map((question, index) => ({
+        ...question,
+        index,
+        questionNumber: index + 1,
+        subject: normalizeSubjectLabel(question, testData?.subjectNames || []),
+      })),
+    [testData]
+  );
+
+  const subjectTabs = useMemo(() => {
+    const orderedSubjects = [];
+    const seenSubjects = new Set();
+
+    (testData?.subjectNames || []).forEach((subject) => {
+      const normalizedSubject = String(subject || "").trim();
+
+      if (!normalizedSubject || seenSubjects.has(normalizedSubject)) {
+        return;
+      }
+
+      seenSubjects.add(normalizedSubject);
+      orderedSubjects.push(normalizedSubject);
+    });
+
+    questions.forEach((question) => {
+      if (!question.subject || seenSubjects.has(question.subject)) {
+        return;
+      }
+
+      seenSubjects.add(question.subject);
+      orderedSubjects.push(question.subject);
+    });
+
+    return [ALL_SUBJECTS, ...orderedSubjects];
+  }, [questions, testData?.subjectNames]);
+
+  const filteredQuestions = useMemo(
+    () =>
+      questions.filter(
+        (question) =>
+          (selectedSubject === ALL_SUBJECTS || question.subject === selectedSubject) &&
+          (reviewFilter === "all" ||
+            (reviewFilter === "flagged" && flaggedQuestions.includes(question.index)) ||
+            (reviewFilter === "answered" &&
+              answers.find((answer) => answer.questionIndex === question.index)?.selectedOption !==
+                -1) ||
+            (reviewFilter === "unanswered" &&
+              (answers.find((answer) => answer.questionIndex === question.index)
+                ?.selectedOption ?? -1) === -1))
+      ),
+    [answers, flaggedQuestions, questions, reviewFilter, selectedSubject]
+  );
+
+  useEffect(() => {
+    if (!filteredQuestions.length) {
+      return;
+    }
+
+    const isCurrentQuestionVisible = filteredQuestions.some(
+      (question) => question.index === currentQuestion
+    );
+
+    if (!isCurrentQuestionVisible) {
+      setCurrentQuestion(filteredQuestions[0].index);
+    }
+  }, [currentQuestion, filteredQuestions]);
+
+  const currentQuestionData = useMemo(
+    () => questions.find((question) => question.index === currentQuestion) || null,
+    [currentQuestion, questions]
+  );
+  const isCurrentQuestionVisibleInFilter = filteredQuestions.some(
+    (question) => question.index === currentQuestion
+  );
+  const visibleCurrentQuestionData = isCurrentQuestionVisibleInFilter
+    ? currentQuestionData
+    : null;
+
+  const currentAnswer = useMemo(
+    () =>
+      answers.find((answer) => answer.questionIndex === currentQuestion) || {
+        questionIndex: currentQuestion,
+        selectedOption: -1,
+      },
+    [answers, currentQuestion]
+  );
+
+  const answeredCount = answers.filter((answer) => answer.selectedOption !== -1).length;
+  const unansweredCount = answers.length - answeredCount;
+  const flaggedCount = flaggedQuestions.length;
+  const attemptedMarks = answers.reduce((sum, answer) => {
+    if (answer.selectedOption === -1) {
+      return sum;
+    }
+
+    return sum + (Number(questions[answer.questionIndex]?.marks) || 0);
+  }, 0);
+
+  const activeFilteredIndex = filteredQuestions.findIndex(
+    (question) => question.index === currentQuestion
+  );
+
+  const statusMeta = getStatusMeta(testData?.availabilityStatus || "live");
+  const isCurrentQuestionFlagged = flaggedQuestions.includes(currentQuestion);
 
   const selectOption = (optionIndex) => {
-    setAnswers((prev) =>
-      prev.map((a) =>
-        a.questionIndex === currentQuestion
-          ? { ...a, selectedOption: a.selectedOption === optionIndex ? -1 : optionIndex }
-          : a
+    setAnswers((previous) =>
+      previous.map((answer) =>
+        answer.questionIndex === currentQuestion
+          ? {
+              ...answer,
+              selectedOption:
+                answer.selectedOption === optionIndex ? -1 : optionIndex,
+            }
+          : answer
       )
     );
   };
 
-  const answeredCount = answers.filter((a) => a.selectedOption !== -1).length;
-  const unansweredCount = answers.length - answeredCount;
+  const jumpToQuestion = (questionIndex) => {
+    setCurrentQuestion(questionIndex);
+  };
+
+  const toggleQuestionFlag = () => {
+    setFlaggedQuestions((previous) =>
+      previous.includes(currentQuestion)
+        ? previous.filter((questionIndex) => questionIndex !== currentQuestion)
+        : [...previous, currentQuestion]
+    );
+  };
+
+  const goToPreviousQuestion = () => {
+    if (activeFilteredIndex <= 0) {
+      return;
+    }
+
+    setCurrentQuestion(filteredQuestions[activeFilteredIndex - 1].index);
+  };
+
+  const goToNextQuestion = () => {
+    if (
+      activeFilteredIndex < 0 ||
+      activeFilteredIndex >= filteredQuestions.length - 1
+    ) {
+      return;
+    }
+
+    setCurrentQuestion(filteredQuestions[activeFilteredIndex + 1].index);
+  };
 
   if (loading) {
-    return <div className="container mt-5 pt-5 d-flex justify-content-center"><Loader /></div>;
+    return (
+      <div className="container mt-5 pt-5 d-flex justify-content-center">
+        <Loader />
+      </div>
+    );
   }
 
-  if (!testData) {
-    return <div className="container mt-5 pt-5 text-center"><h3>Test not found</h3></div>;
+  if (pageError && !testData?.canStart) {
+    return (
+      <div className="mock-test-exam-page mock-test-exam-page--shell">
+        <div className="mock-test-exam-page__container">
+          <div className="mock-test-exam__state-card">
+            <span className={statusMeta.className}>{statusMeta.label}</span>
+            <h2>{testData?.title || "Mock Test"}</h2>
+            <p>{pageError}</p>
+            {testData?.startAt ? (
+              <p className="mock-test-exam__state-meta">
+                Scheduled start: {formatDateTime(testData.startAt)}
+              </p>
+            ) : null}
+            {testData?.endAt ? (
+              <p className="mock-test-exam__state-meta">
+                Scheduled end: {formatDateTime(testData.endAt)}
+              </p>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  // Start screen
+  if (!testData || !questions.length) {
+    return (
+      <div className="container mt-5 pt-5 text-center">
+        <h3>Test not found</h3>
+      </div>
+    );
+  }
+
   if (!started) {
     return (
-      <div style={{ paddingTop: '125px', minHeight: '100vh', backgroundColor: '#f8f9fa' }}>
-        <div className="container" style={{ maxWidth: '700px' }}>
-          <div style={{ background: '#fff', borderRadius: '16px', padding: '40px', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
-            <h2 style={{ fontWeight: 700, color: '#1a365d', marginBottom: '20px' }}>{testData.title}</h2>
-            {testData.description && <p style={{ color: '#555', marginBottom: '20px' }}>{testData.description}</p>}
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '28px' }}>
-              <div style={{ background: '#f0f4ff', borderRadius: '10px', padding: '16px', textAlign: 'center' }}>
-                <div style={{ fontSize: '24px', fontWeight: 700, color: '#1a365d' }}>{testData.totalQuestions}</div>
-                <div style={{ fontSize: '13px', color: '#888' }}>Questions</div>
-              </div>
-              <div style={{ background: '#fff5f0', borderRadius: '10px', padding: '16px', textAlign: 'center' }}>
-                <div style={{ fontSize: '24px', fontWeight: 700, color: '#ff6b35' }}>{testData.totalMarks}</div>
-                <div style={{ fontSize: '13px', color: '#888' }}>Total Marks</div>
-              </div>
-              <div style={{ background: '#f0fdf4', borderRadius: '10px', padding: '16px', textAlign: 'center' }}>
-                <div style={{ fontSize: '24px', fontWeight: 700, color: '#16a34a' }}>{testData.duration} min</div>
-                <div style={{ fontSize: '13px', color: '#888' }}>Duration</div>
-              </div>
-              <div style={{ background: '#fef9ef', borderRadius: '10px', padding: '16px', textAlign: 'center' }}>
-                <div style={{ fontSize: '24px', fontWeight: 700, color: '#d97706' }}>MCQ</div>
-                <div style={{ fontSize: '13px', color: '#888' }}>Type</div>
+      <div className="mock-test-exam-page mock-test-exam-page--shell">
+        <div className="mock-test-exam-page__container">
+          <div className="mock-test-exam__intro-card">
+            <div className="mock-test-exam__intro-head">
+              <div>
+                <span className={statusMeta.className}>{statusMeta.label}</span>
+                <h2>{testData.title}</h2>
               </div>
             </div>
 
-            <div style={{ background: '#fffbf0', border: '1px solid #fde68a', borderRadius: '10px', padding: '16px', marginBottom: '28px', fontSize: '14px', color: '#92400e' }}>
-              <strong><i className="fa-solid fa-triangle-exclamation me-2"></i>Instructions:</strong>
-              <ul style={{ margin: '8px 0 0 16px', lineHeight: 2 }}>
-                <li>Each question has 4 options. Select one answer per question.</li>
-                <li>You can navigate between questions using the question panel.</li>
-                <li>Click on a selected option again to deselect it.</li>
-                <li>The test will auto-submit when time runs out.</li>
-                <li>You will get instant results after submission.</li>
-              </ul>
+            {testData.description ? (
+              <FormattedContent
+                html={testData.description}
+                className="mock-test-exam__intro-copy"
+              />
+            ) : null}
+
+            <div className="mock-test-exam__intro-metrics">
+              <div className="mock-test-exam__intro-metric">
+                <span>Questions</span>
+                <strong>{testData.totalQuestions}</strong>
+              </div>
+              <div className="mock-test-exam__intro-metric">
+                <span>Full Marks</span>
+                <strong>{testData.totalMarks}</strong>
+              </div>
+              <div className="mock-test-exam__intro-metric">
+                <span>Duration</span>
+                <strong>{testData.duration} min</strong>
+              </div>
+              <div className="mock-test-exam__intro-metric">
+                <span>Pass Marks</span>
+                <strong>{testData.passMarks || 0}</strong>
+              </div>
+            </div>
+
+            <div className="mock-test-exam__intro-notice">
+              <strong>Instructions</strong>
+              {testData.instructions ? (
+                <FormattedContent
+                  html={testData.instructions}
+                  className="mock-test-exam__intro-copy"
+                />
+              ) : (
+                <ul>
+                  <li>Each question has four options. Select one answer per question.</li>
+                  <li>Use the subject tabs and question panel to move quickly.</li>
+                  <li>Click a selected option again if you want to deselect it.</li>
+                  <li>The exam auto-submits when the timer reaches zero.</li>
+                </ul>
+              )}
             </div>
 
             <button
+              type="button"
+              className="mock-test-exam__primary-action"
               onClick={() => setStarted(true)}
-              style={{
-                width: '100%', padding: '14px', borderRadius: '10px', fontSize: '16px',
-                fontWeight: 700, backgroundColor: '#ff6b35', color: '#fff', border: 'none',
-                cursor: 'pointer', transition: 'all 0.2s ease'
-              }}
-              onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#e55a2b'}
-              onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#ff6b35'}
             >
-              <i className="fa-solid fa-play me-2"></i>Start Test
+              <i className="fa-solid fa-play"></i>
+              Start Test
             </button>
           </div>
         </div>
@@ -158,195 +452,411 @@ const MockTestExam = () => {
     );
   }
 
-  const question = testData.questions[currentQuestion];
-  const currentAnswer = answers[currentQuestion];
-
   return (
-    <div style={{ paddingTop: '105px', minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
-      {/* Top Bar */}
-      <div style={{
-        position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1040,
-        background: '#1a365d', color: '#fff', padding: '25px 20px',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
-      }}>
-        <div style={{ fontWeight: 600, fontSize: '15px' }}>{testData.title}</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          <span style={{ fontSize: '13px', opacity: 0.8 }}>
-            <i className="fa-solid fa-check-circle me-1" style={{ color: '#4ade80' }}></i>
-            {answeredCount}/{testData.totalQuestions}
-          </span>
-          <span style={{
-            padding: '6px 16px', borderRadius: '20px', fontWeight: 700, fontSize: '15px',
-            background: timeLeft < 300 ? '#ef4444' : timeLeft < 600 ? '#f59e0b' : 'rgba(255,255,255,0.15)',
-            animation: timeLeft < 60 ? 'pulse 1s infinite' : 'none'
-          }}>
-            <i className="fa-solid fa-clock me-1"></i>{formatTime(timeLeft)}
-          </span>
-          <button
-            onClick={() => setShowConfirm(true)}
-            style={{
-              padding: '6px 20px', borderRadius: '6px', fontSize: '13px',
-              fontWeight: 600, backgroundColor: '#ff6b35', color: '#fff',
-              border: 'none', cursor: 'pointer'
-            }}
-          >
-            Submit
-          </button>
-        </div>
-      </div>
-
-      <div className="container-fluid" style={{ maxWidth: '1200px', padding: '20px' }}>
-        <div className="row g-3">
-          {/* Question Area */}
-          <div className="col-lg-9">
-            <div style={{ background: '#fff', borderRadius: '12px', padding: '28px', minHeight: '400px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-              {/* Question Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <span style={{ fontSize: '14px', fontWeight: 600, color: '#ff6b35', background: '#fff5f0', padding: '4px 12px', borderRadius: '6px' }}>
-                  Question {currentQuestion + 1} of {testData.totalQuestions}
-                </span>
-                <span style={{ fontSize: '13px', color: '#888' }}>
-                  Marks: {question.marks}{question.negativeMarks > 0 ? ` | -${question.negativeMarks}` : ''}
+    <div className="mock-test-exam-page">
+      <div className="mock-test-exam-page__container">
+        <section className="mock-test-exam__header">
+          <div className="mock-test-exam__header-main">
+            <div className="mock-test-exam__header-copy">
+              <div className="mock-test-exam__header-row">
+                <span className={statusMeta.className}>{statusMeta.label}</span>
+                <span className="mock-test-exam__header-course">
+                  {testData.courseName || testData.course}
                 </span>
               </div>
-
-              {/* Question Text */}
-              <h4 style={{ fontSize: '17px', fontWeight: 600, color: '#333', lineHeight: 1.7, marginBottom: '24px' }}>
-                {question.questionText}
-              </h4>
-
-              {question.questionImage && (
-                <img src={question.questionImage} alt="Question" style={{ maxWidth: '100%', maxHeight: '300px', borderRadius: '8px', marginBottom: '20px' }} />
-              )}
-
-              {/* Options */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {question.options.map((option, idx) => {
-                  const isSelected = currentAnswer.selectedOption === idx;
-                  const labels = ['A', 'B', 'C', 'D'];
-                  return (
-                    <button
-                      key={idx}
-                      onClick={() => selectOption(idx)}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: '14px',
-                        padding: '14px 18px', borderRadius: '10px', cursor: 'pointer',
-                        border: isSelected ? '2px solid #ff6b35' : '1.5px solid #e0e0e0',
-                        background: isSelected ? '#fff8f5' : '#fff',
-                        transition: 'all 0.15s ease', textAlign: 'left',
-                        fontSize: '15px', color: '#333'
-                      }}
-                    >
-                      <span style={{
-                        width: '32px', height: '32px', borderRadius: '50%', flexShrink: 0,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontWeight: 700, fontSize: '13px',
-                        background: isSelected ? '#ff6b35' : '#f0f0f0',
-                        color: isSelected ? '#fff' : '#555'
-                      }}>
-                        {labels[idx]}
-                      </span>
-                      <span>{option.text}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Navigation */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '28px' }}>
-                <button
-                  onClick={() => setCurrentQuestion((p) => Math.max(0, p - 1))}
-                  disabled={currentQuestion === 0}
-                  style={{
-                    padding: '10px 24px', borderRadius: '8px', fontSize: '14px', fontWeight: 600,
-                    background: currentQuestion === 0 ? '#e0e0e0' : '#f0f0f0', color: currentQuestion === 0 ? '#aaa' : '#333',
-                    border: 'none', cursor: currentQuestion === 0 ? 'default' : 'pointer'
-                  }}
-                >
-                  <i className="fa-solid fa-arrow-left me-2"></i>Previous
-                </button>
-                <button
-                  onClick={() => setCurrentQuestion((p) => Math.min(testData.totalQuestions - 1, p + 1))}
-                  disabled={currentQuestion === testData.totalQuestions - 1}
-                  style={{
-                    padding: '10px 24px', borderRadius: '8px', fontSize: '14px', fontWeight: 600,
-                    background: currentQuestion === testData.totalQuestions - 1 ? '#e0e0e0' : '#1a365d',
-                    color: currentQuestion === testData.totalQuestions - 1 ? '#aaa' : '#fff',
-                    border: 'none', cursor: currentQuestion === testData.totalQuestions - 1 ? 'default' : 'pointer'
-                  }}
-                >
-                  Next<i className="fa-solid fa-arrow-right ms-2"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Question Panel Sidebar */}
-          <div className="col-lg-3">
-            <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', position: 'sticky', top: '80px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-              <h6 style={{ fontWeight: 700, color: '#1a365d', marginBottom: '14px', fontSize: '14px' }}>Question Panel</h6>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px' }}>
-                {answers.map((a, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setCurrentQuestion(idx)}
-                    style={{
-                      width: '36px', height: '36px', borderRadius: '8px', fontSize: '13px',
-                      fontWeight: 600, border: idx === currentQuestion ? '2px solid #1a365d' : '1px solid #e0e0e0',
-                      background: a.selectedOption !== -1 ? '#4ade80' : idx === currentQuestion ? '#e8f0fe' : '#fff',
-                      color: a.selectedOption !== -1 ? '#fff' : '#333',
-                      cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}
-                  >
-                    {idx + 1}
-                  </button>
-                ))}
-              </div>
-              <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px', color: '#888' }}>
-                <div><span style={{ display: 'inline-block', width: '14px', height: '14px', borderRadius: '4px', background: '#4ade80', marginRight: '6px', verticalAlign: 'middle' }}></span>Answered ({answeredCount})</div>
-                <div><span style={{ display: 'inline-block', width: '14px', height: '14px', borderRadius: '4px', background: '#fff', border: '1px solid #e0e0e0', marginRight: '6px', verticalAlign: 'middle' }}></span>Unanswered ({unansweredCount})</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Confirm Modal */}
-      {showConfirm && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.5)', zIndex: 1050,
-          display: 'flex', alignItems: 'center', justifyContent: 'center'
-        }} onClick={() => setShowConfirm(false)}>
-          <div style={{
-            background: '#fff', borderRadius: '16px', padding: '32px', maxWidth: '420px', width: '90%'
-          }} onClick={(e) => e.stopPropagation()}>
-            <h4 style={{ fontWeight: 700, color: '#1a365d', marginBottom: '12px' }}>Submit Test?</h4>
-            <p style={{ color: '#555', fontSize: '14px', marginBottom: '8px' }}>
-              You have answered <strong>{answeredCount}</strong> out of <strong>{testData.totalQuestions}</strong> questions.
-            </p>
-            {unansweredCount > 0 && (
-              <p style={{ color: '#ef4444', fontSize: '14px', marginBottom: '16px' }}>
-                <i className="fa-solid fa-triangle-exclamation me-1"></i>
-                {unansweredCount} question{unansweredCount > 1 ? 's are' : ' is'} unanswered.
+              <h1>{testData.title}</h1>
+              <p>
+                Navigate subject-wise, track your question state from the panel, and
+                submit when you are satisfied with your responses.
               </p>
+            </div>
+
+            <button
+              type="button"
+              className="mock-test-exam__submit-trigger"
+              onClick={() => setShowConfirm(true)}
+            >
+              Submit Test
+            </button>
+          </div>
+
+          <div className="mock-test-exam__metrics">
+            <div className="mock-test-exam__metric">
+              <span className="mock-test-exam__metric-label">Full Marks</span>
+              <strong className="mock-test-exam__metric-value">{testData.totalMarks}</strong>
+            </div>
+            <div className="mock-test-exam__metric">
+              <span className="mock-test-exam__metric-label">Marks Obtained</span>
+              <strong className="mock-test-exam__metric-value">{attemptedMarks}</strong>
+            </div>
+            <div className="mock-test-exam__metric">
+              <span className="mock-test-exam__metric-label">Timer</span>
+              <strong
+                className={`mock-test-exam__metric-value ${getTimerToneClass(timeLeft)}`.trim()}
+              >
+                {formatTime(timeLeft)}
+              </strong>
+            </div>
+            <div className="mock-test-exam__metric">
+              <span className="mock-test-exam__metric-label">Progress</span>
+              <strong className="mock-test-exam__metric-value">
+                {answeredCount}/{testData.totalQuestions}
+              </strong>
+            </div>
+            <div className="mock-test-exam__metric">
+              <span className="mock-test-exam__metric-label">Flagged</span>
+              <strong className="mock-test-exam__metric-value">{flaggedCount}</strong>
+            </div>
+          </div>
+        </section>
+
+        <section className="mock-test-exam__subjects">
+          <div className="mock-test-exam__subjects-heading">
+            <h2>Subjects</h2>
+            <p>Switch subjects instantly to focus on one section at a time.</p>
+          </div>
+
+          <div className="mock-test-exam__subjects-tabs">
+            {subjectTabs.map((subject) => {
+              const questionCount =
+                subject === ALL_SUBJECTS
+                  ? questions.length
+                  : questions.filter((question) => question.subject === subject).length;
+
+              return (
+                <button
+                  key={subject}
+                  type="button"
+                  className={`mock-test-exam__subject-tab ${
+                    selectedSubject === subject
+                      ? "mock-test-exam__subject-tab--active"
+                      : ""
+                  }`.trim()}
+                  onClick={() => setSelectedSubject(subject)}
+                >
+                  <span>{subject === ALL_SUBJECTS ? "All Questions" : subject}</span>
+                  <small>{questionCount}</small>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mock-test-exam__review-filters">
+            <div className="mock-test-exam__review-copy">
+              <h3>Review Filter</h3>
+              <p>Use this to focus on flagged, answered, or unanswered questions.</p>
+            </div>
+
+            <div className="mock-test-exam__review-chips">
+              {REVIEW_FILTERS.map((filter) => {
+                const count =
+                  filter.value === "all"
+                    ? questions.length
+                    : filter.value === "flagged"
+                      ? flaggedCount
+                      : filter.value === "answered"
+                        ? answeredCount
+                        : unansweredCount;
+
+                return (
+                  <button
+                    key={filter.value}
+                    type="button"
+                    className={`mock-test-exam__review-chip ${
+                      reviewFilter === filter.value
+                        ? "mock-test-exam__review-chip--active"
+                        : ""
+                    }`.trim()}
+                    onClick={() => setReviewFilter(filter.value)}
+                  >
+                    <span>{filter.label}</span>
+                    <small>{count}</small>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        <section className="mock-test-exam__workspace">
+          <div className="mock-test-exam__question-stage">
+            {visibleCurrentQuestionData ? (
+              <article
+                className={`mock-test-exam__question-card ${
+                  isCurrentQuestionFlagged ? "mock-test-exam__question-card--flagged" : ""
+                }`.trim()}
+              >
+                <header className="mock-test-exam__question-head">
+                  <div className="mock-test-exam__question-tags">
+                    <span className="mock-test-exam__question-badge">
+                      Question {visibleCurrentQuestionData.questionNumber}
+                    </span>
+                    <span className="mock-test-exam__question-pill">
+                      {visibleCurrentQuestionData.subject}
+                    </span>
+                    {isCurrentQuestionFlagged ? (
+                      <span className="mock-test-exam__question-flag-badge">
+                        <i className="fa-regular fa-flag"></i>
+                        Marked for Review
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <div className="mock-test-exam__question-meta-wrap">
+                    <div className="mock-test-exam__question-meta">
+                      <span>{filteredQuestions.length} in this view</span>
+                      <span>{visibleCurrentQuestionData.marks || 0} marks</span>
+                    </div>
+                    <button
+                      type="button"
+                      className={`mock-test-exam__flag-toggle ${
+                        isCurrentQuestionFlagged
+                          ? "mock-test-exam__flag-toggle--active"
+                          : ""
+                      }`.trim()}
+                      onClick={toggleQuestionFlag}
+                    >
+                      <i
+                        className={`${
+                          isCurrentQuestionFlagged ? "fa-solid" : "fa-regular"
+                        } fa-flag`}
+                      ></i>
+                      {isCurrentQuestionFlagged ? "Remove Flag" : "Mark for Review"}
+                    </button>
+                  </div>
+                </header>
+
+                <div className="mock-test-exam__question-body">
+                  <FormattedContent
+                    html={visibleCurrentQuestionData.questionText}
+                    className="mock-test-exam__question-text"
+                  />
+
+                  {visibleCurrentQuestionData.questionImage ? (
+                    <img
+                      src={resolveBackendPath(visibleCurrentQuestionData.questionImage)}
+                      alt={`Question ${visibleCurrentQuestionData.questionNumber}`}
+                      className="mock-test-exam__question-image"
+                    />
+                  ) : null}
+                </div>
+
+                <div className="mock-test-exam__options">
+                  {(visibleCurrentQuestionData.options || []).map((option, optionIndex) => {
+                    const isSelected = currentAnswer.selectedOption === optionIndex;
+
+                    return (
+                      <button
+                        key={optionIndex}
+                        type="button"
+                        className={`mock-test-exam__option ${
+                          isSelected ? "mock-test-exam__option--selected" : ""
+                        }`.trim()}
+                        onClick={() => selectOption(optionIndex)}
+                      >
+                        <div className="mock-test-exam__option-top">
+                          <span className="mock-test-exam__option-label">
+                            {String.fromCharCode(65 + optionIndex)}
+                          </span>
+                          <FormattedContent
+                            html={option.text}
+                            className="mock-test-exam__option-text"
+                          />
+                        </div>
+
+                        {option.image ? (
+                          <img
+                            src={resolveBackendPath(option.image)}
+                            alt={`Option ${String.fromCharCode(65 + optionIndex)}`}
+                            className="mock-test-exam__option-image"
+                          />
+                        ) : null}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <footer className="mock-test-exam__actions">
+                  <div className="mock-test-exam__actions-hint">
+                    {activeFilteredIndex >= 0 ? (
+                      <span>
+                        Viewing {activeFilteredIndex + 1} of {filteredQuestions.length}{" "}
+                        {selectedSubject === ALL_SUBJECTS ? "questions" : selectedSubject}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <div className="mock-test-exam__actions-group">
+                    <button
+                      type="button"
+                      className="mock-test-exam__ghost-button"
+                      onClick={goToPreviousQuestion}
+                      disabled={activeFilteredIndex <= 0}
+                    >
+                      <i className="fa-solid fa-arrow-left"></i>
+                      Previous
+                    </button>
+                    <button
+                      type="button"
+                      className="mock-test-exam__solid-button"
+                      onClick={goToNextQuestion}
+                      disabled={
+                        activeFilteredIndex < 0 ||
+                        activeFilteredIndex >= filteredQuestions.length - 1
+                      }
+                    >
+                      Next
+                      <i className="fa-solid fa-arrow-right"></i>
+                    </button>
+                  </div>
+                </footer>
+              </article>
+            ) : (
+              <div className="mock-test-exam__empty-state">
+                No questions are available for this filter. Try switching the subject or
+                review filter.
+              </div>
             )}
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-              <button onClick={() => setShowConfirm(false)} style={{
-                padding: '10px 24px', borderRadius: '8px', border: '1px solid #e0e0e0',
-                background: '#fff', color: '#555', cursor: 'pointer', fontWeight: 600
-              }}>Cancel</button>
-              <button onClick={() => { setShowConfirm(false); handleSubmit(); }} disabled={submitting} style={{
-                padding: '10px 24px', borderRadius: '8px', border: 'none',
-                background: '#ff6b35', color: '#fff', cursor: 'pointer', fontWeight: 600
-              }}>
-                {submitting ? 'Submitting...' : 'Submit Now'}
+          </div>
+
+          <aside className="mock-test-exam__panel">
+            <div className="mock-test-exam__panel-head">
+              <div>
+                <h3>Question Panel</h3>
+                <p>
+                  Click any question number to jump directly. Answered and unanswered
+                  states stay visible.
+                </p>
+              </div>
+            </div>
+
+            <div className="mock-test-exam__panel-grid">
+              {filteredQuestions.map((question) => {
+                const answer = answers.find(
+                  (entry) => entry.questionIndex === question.index
+                );
+                const isAnswered = answer?.selectedOption !== -1;
+                const isCurrent = question.index === currentQuestion;
+                const isFlagged = flaggedQuestions.includes(question.index);
+
+                return (
+                  <button
+                    key={question.index}
+                    type="button"
+                    className={`mock-test-exam__panel-button ${
+                      isCurrent ? "mock-test-exam__panel-button--current" : ""
+                    } ${isAnswered ? "mock-test-exam__panel-button--answered" : ""} ${
+                      isFlagged ? "mock-test-exam__panel-button--flagged" : ""
+                    }`.trim()}
+                    onClick={() => jumpToQuestion(question.index)}
+                    title={
+                      isFlagged
+                        ? `Question ${question.questionNumber} is marked for review`
+                        : `Question ${question.questionNumber}`
+                    }
+                  >
+                    {question.questionNumber}
+                    {isFlagged ? (
+                      <span className="mock-test-exam__panel-flag">
+                        <i className="fa-solid fa-flag"></i>
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mock-test-exam__panel-legend">
+              <span>
+                <i className="mock-test-exam__legend-dot mock-test-exam__legend-dot--current"></i>
+                Current
+              </span>
+              <span>
+                <i className="mock-test-exam__legend-dot mock-test-exam__legend-dot--answered"></i>
+                Answered
+              </span>
+              <span>
+                <i className="mock-test-exam__legend-dot mock-test-exam__legend-dot--flagged"></i>
+                Flagged
+              </span>
+              <span>
+                <i className="mock-test-exam__legend-dot mock-test-exam__legend-dot--idle"></i>
+                Unanswered
+              </span>
+            </div>
+
+            <div className="mock-test-exam__panel-summary">
+              <div className="mock-test-exam__panel-summary-row">
+                <span>Answered</span>
+                <strong>{answeredCount}</strong>
+              </div>
+              <div className="mock-test-exam__panel-summary-row">
+                <span>Unanswered</span>
+                <strong>{unansweredCount}</strong>
+              </div>
+              <div className="mock-test-exam__panel-summary-row">
+                <span>Current Subject</span>
+                <strong>{selectedSubject === ALL_SUBJECTS ? "All" : selectedSubject}</strong>
+              </div>
+              <div className="mock-test-exam__panel-summary-row">
+                <span>Flagged</span>
+                <strong>{flaggedCount}</strong>
+              </div>
+            </div>
+          </aside>
+        </section>
+      </div>
+
+      {showConfirm ? (
+        <div
+          className="mock-test-exam__modal"
+          onClick={() => setShowConfirm(false)}
+        >
+          <div
+            className="mock-test-exam__modal-card"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <span className={statusMeta.className}>{statusMeta.label}</span>
+            <h4>Submit Test?</h4>
+            <p>
+              You have answered <strong>{answeredCount}</strong> out of{" "}
+              <strong>{testData.totalQuestions}</strong> questions.
+            </p>
+            {unansweredCount > 0 ? (
+              <p className="mock-test-exam__modal-warning">
+                {unansweredCount} question{unansweredCount > 1 ? "s are" : " is"} still
+                unanswered.
+              </p>
+            ) : null}
+            {flaggedCount > 0 ? (
+              <p className="mock-test-exam__modal-warning mock-test-exam__modal-warning--flagged">
+                {flaggedCount} question{flaggedCount > 1 ? "s are" : " is"} marked for
+                review.
+              </p>
+            ) : null}
+            <div className="mock-test-exam__modal-actions">
+              <button
+                type="button"
+                className="mock-test-exam__ghost-button"
+                onClick={() => setShowConfirm(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="mock-test-exam__solid-button"
+                onClick={() => {
+                  setShowConfirm(false);
+                  handleSubmit();
+                }}
+                disabled={submitting}
+              >
+                {submitting ? "Submitting..." : "Submit Now"}
               </button>
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 };

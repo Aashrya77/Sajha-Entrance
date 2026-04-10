@@ -1,41 +1,96 @@
 import mongoose from "mongoose";
 import { Schema } from "mongoose";
+import { MockQuestionOptionSchema } from "./MockQuestion.js";
 
-const QuestionSchema = new mongoose.Schema({
-  questionText: {
-    type: String,
-    required: true,
-  },
-  questionImage: String,
-  options: [
-    {
-      text: { type: String, required: true },
-      image: String,
+const MOCK_TEST_STATUSES = ["draft", "scheduled", "live", "completed", "archived"];
+
+const QuestionSchema = new mongoose.Schema(
+  {
+    sourceQuestionId: {
+      type: Schema.Types.ObjectId,
+      ref: "MockQuestion",
+      default: null,
     },
-  ],
-  correctOption: {
-    type: Number,
-    required: true,
-    min: 0,
-    max: 3,
+    subject: {
+      type: Schema.Types.ObjectId,
+      ref: "MockTestSubject",
+      default: null,
+    },
+    subjectName: {
+      type: String,
+      default: "",
+    },
+    course: {
+      type: Schema.Types.ObjectId,
+      ref: "MockTestCourse",
+      default: null,
+    },
+    questionText: {
+      type: String,
+      default: "",
+    },
+    questionImage: {
+      type: String,
+      default: "",
+    },
+    options: {
+      type: [MockQuestionOptionSchema],
+      default: () =>
+        Array.from({ length: 4 }, () => ({
+          text: "",
+          image: "",
+        })),
+    },
+    correctOption: {
+      type: Number,
+      required: true,
+      min: 0,
+      max: 3,
+    },
+    explanation: {
+      type: String,
+      default: "",
+    },
+    marks: {
+      type: Number,
+      default: 1,
+      min: 0,
+    },
+    negativeMarks: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    difficulty: {
+      type: String,
+      default: "",
+    },
+    displayOrder: {
+      type: Number,
+      default: 0,
+    },
   },
-  explanation: String,
-  marks: {
-    type: Number,
-    default: 1,
-  },
-  negativeMarks: {
-    type: Number,
-    default: 0,
-  },
-});
+  {
+    _id: false,
+  }
+);
 
 const MockTestSchema = new mongoose.Schema({
   title: {
     type: String,
     required: true,
   },
+  slug: {
+    type: String,
+    default: "",
+    trim: true,
+    lowercase: true,
+  },
   description: String,
+  instructions: {
+    type: String,
+    default: "",
+  },
   admissionTest: {
     type: String,
     default: "",
@@ -44,7 +99,37 @@ const MockTestSchema = new mongoose.Schema({
     type: String,
     default: "",
   },
+  courseRef: {
+    type: Schema.Types.ObjectId,
+    ref: "MockTestCourse",
+    default: null,
+    index: true,
+  },
+  courseName: {
+    type: String,
+    default: "",
+  },
+  subjectRefs: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "MockTestSubject",
+    },
+  ],
+  subjectNames: {
+    type: [String],
+    default: [],
+  },
+  questionRefs: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "MockQuestion",
+    },
+  ],
   totalMarks: {
+    type: Number,
+    default: 0,
+  },
+  passMarks: {
     type: Number,
     default: 0,
   },
@@ -53,9 +138,53 @@ const MockTestSchema = new mongoose.Schema({
     default: 60,
   },
   questions: [QuestionSchema],
+  questionCount: {
+    type: Number,
+    default: 0,
+  },
+  examDate: {
+    type: Date,
+    default: null,
+  },
+  startAt: {
+    type: Date,
+    default: null,
+  },
+  endAt: {
+    type: Date,
+    default: null,
+  },
+  publishedAt: {
+    type: Date,
+    default: null,
+  },
+  status: {
+    type: String,
+    enum: MOCK_TEST_STATUSES,
+    default: "draft",
+    index: true,
+  },
   isActive: {
     type: Boolean,
     default: true,
+  },
+  isLive: {
+    type: Boolean,
+    default: false,
+  },
+  manualStatusOverride: {
+    type: Boolean,
+    default: false,
+  },
+  createdBy: {
+    type: Schema.Types.ObjectId,
+    ref: "AdminUser",
+    default: null,
+  },
+  updatedBy: {
+    type: Schema.Types.ObjectId,
+    ref: "AdminUser",
+    default: null,
   },
   createdAt: {
     type: Date,
@@ -72,51 +201,49 @@ MockTestSchema.pre("save", function (next) {
   if (this.questions && this.questions.length > 0) {
     this.totalMarks = this.questions.reduce((sum, q) => sum + (q.marks || 1), 0);
   }
+
+  this.questionCount = Array.isArray(this.questions) ? this.questions.length : 0;
+
+  if (!this.courseName && this.course) {
+    this.courseName = this.course;
+  }
+
+  if (!this.course && this.courseName) {
+    this.course = this.courseName;
+  }
+
+  if (!this.examDate && this.startAt) {
+    this.examDate = this.startAt;
+  }
+
+  if (this.status === "draft") {
+    this.isActive = false;
+    this.isLive = false;
+  } else if (this.status === "scheduled") {
+    this.isActive = true;
+    this.isLive = false;
+    if (!this.publishedAt) {
+      this.publishedAt = new Date();
+    }
+  } else if (this.status === "live") {
+    this.isActive = true;
+    this.isLive = true;
+    if (!this.publishedAt) {
+      this.publishedAt = new Date();
+    }
+  } else {
+    this.isActive = false;
+    this.isLive = false;
+  }
+
   next();
 });
 
-const MockTestModel = mongoose.model("MockTest", MockTestSchema);
+MockTestSchema.index({ status: 1, startAt: 1, endAt: 1 });
+MockTestSchema.index({ courseRef: 1, status: 1, startAt: 1 });
+MockTestSchema.index({ slug: 1 }, { sparse: true });
 
-export const MockTestFileModel = {
-  resource: MockTestModel,
-  options: {
-    id: "MockTest",
-    properties: {
-      title: {
-        type: "string",
-        isVisible: { list: true, show: true, edit: true, filter: true },
-      },
-      admissionTest: {
-        type: "string",
-        isVisible: { list: true, show: true, edit: true, filter: true },
-      },
-      course: {
-        type: "string",
-        isVisible: { list: true, show: true, edit: true, filter: true },
-      },
-      description: {
-        type: "textarea",
-        isVisible: { list: false, show: true, edit: true, filter: false },
-      },
-      totalMarks: {
-        type: "number",
-        isVisible: { list: true, show: true, edit: false, filter: false },
-      },
-      duration: {
-        type: "number",
-        isVisible: { list: true, show: true, edit: true, filter: false },
-      },
-      isActive: {
-        type: "boolean",
-        isVisible: { list: true, show: true, edit: true, filter: true },
-      },
-      questions: {
-        type: "mixed",
-        isVisible: { list: false, show: true, edit: true, filter: false },
-      },
-    },
-  },
-};
+const MockTestModel = mongoose.model("MockTest", MockTestSchema);
 
 export default MockTestModel;
 
@@ -135,6 +262,11 @@ const MockTestAttemptSchema = new mongoose.Schema({
   answers: [
     {
       questionIndex: Number,
+      questionId: {
+        type: Schema.Types.ObjectId,
+        ref: "MockQuestion",
+        default: null,
+      },
       selectedOption: Number,
       isCorrect: Boolean,
       marksObtained: Number,

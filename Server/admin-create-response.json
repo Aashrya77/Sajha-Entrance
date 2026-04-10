@@ -1,0 +1,1 @@
+{"success":false,"error":"Mock test validation failed.","errors":{"title":"Mock test title is required.","courseRef":"Select a course for this mock test.","subjectRefs":"Select at least one subject.","questionRefs":"At least one published question must be selected.","duration":"Duration must be greater than zero."}}

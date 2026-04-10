@@ -4,11 +4,13 @@ import generateAdminComponentEntry from "../node_modules/adminjs/lib/backend/bun
 import { ADMIN_JS_TMP_DIR } from "../node_modules/adminjs/lib/backend/bundler/utils/constants.js";
 import populator from "../node_modules/adminjs/lib/backend/utils/populator/populator.js";
 import express from "express";
+import path from "path";
 import AdminJSExpress from "@adminjs/express";
 import * as AdminJSMongoose from "@adminjs/mongoose";
 import session from "express-session";
 import { default as MongoDBSession } from "connect-mongodb-session";
 import dotenv from "dotenv";
+import { fileURLToPath } from "url";
 import componentLoader, { Components } from "./ComponentLoader.js";
 import { adminAssets, adminBranding } from "./config/branding.js";
 import { adminLocale } from "./config/locale.js";
@@ -25,6 +27,10 @@ import { logAdminLogin, logAdminSystemError } from "./utils/admin-audit.js";
 import { createLogger } from "../utils/logger.js";
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const katexAssetsDirectory = path.join(__dirname, "../node_modules/katex/dist");
 
 const MongoStore = MongoDBSession(session);
 const logger = createLogger("admin");
@@ -44,7 +50,6 @@ import ResultExam from "../models/ResultExam.js";
 import StudentResult from "../models/StudentResult.js";
 import Payment from "../models/Payment.js";
 import UniversityModel, { UniversityFileModel } from "../models/University.js";
-import MockTestModel, { MockTestFileModel } from "../models/MockTest.js";
 import { MockTestAttemptModel } from "../models/MockTest.js";
 import BookOrderModel from "../models/BookOrder.js";
 import InquiryModel from "../models/Inquiry.js";
@@ -55,6 +60,10 @@ import LandingAdAdminResource from "./resources/landing-ad.resource.js";
 import CollegeAdminResource from "./resources/college.resource.js";
 import AdminUserAdminResource from "./resources/admin-user.resource.js";
 import AdminNotificationAdminResource from "./resources/admin-notification.resource.js";
+import MockTestCourseAdminResource from "./resources/mock-test-course.resource.js";
+import MockTestSubjectAdminResource from "./resources/mock-test-subject.resource.js";
+import MockQuestionAdminResource from "./resources/mock-question.resource.js";
+import MockTestAdminResource from "./resources/mock-test.resource.js";
 import {
   CreateAdminResultExam,
   DeleteResultExamSet,
@@ -77,6 +86,22 @@ import {
   getResultCourse,
   normalizeCourseCode,
 } from "../constants/resultCourses.js";
+import {
+  CreateAdminMockTest,
+  CreateMockQuestion,
+  DeleteAdminMockTest,
+  DeleteMockQuestion,
+  GetMockQuestionStudioWorkspace,
+  GetMockTestDetail,
+  GetMockTestSchedulerWorkspace,
+  GetPublishedQuestions,
+  HandleQuestionImageUpload,
+  PublishSubjectQuestionSet,
+  ReorderSubjectQuestions,
+  UpdateAdminMockTest,
+  UpdateAdminMockTestStatus,
+  UpdateMockQuestion,
+} from "../controllers/AdminMockTest.js";
 
 
 // Helper function to extract YouTube video ID from URL
@@ -1158,7 +1183,10 @@ const startAdminPanel = async () => {
     CollegeAdminResource,
     UniversityFileModel,
     LandingAdAdminResource,
-    MockTestFileModel,
+    MockTestCourseAdminResource,
+    MockTestSubjectAdminResource,
+    MockQuestionAdminResource,
+    MockTestAdminResource,
     { resource: MockTestAttemptModel, options: { id: "MockTestAttempt", properties: { student: { type: "reference" }, mockTest: { type: "reference" } } } },
     courseResource,
     NewsletterModel,
@@ -1446,7 +1474,126 @@ const startAdminPanel = async () => {
     ImportBulkUploadResults
   );
 
+  adminRouter.get(
+    "/api/mock-test-subjects/:subjectId/workspace",
+    requireAdminPermission("mock_test_subjects", "view"),
+    GetMockQuestionStudioWorkspace
+  );
+
+  adminRouter.post(
+    "/api/mock-test-subjects/:subjectId/questions",
+    requireAdminPermission("mock_test_subjects", "add"),
+    HandleQuestionImageUpload,
+    CreateMockQuestion
+  );
+
+  adminRouter.patch(
+    "/api/mock-test-subjects/:subjectId/questions/:questionId",
+    requireAdminPermission("mock_test_subjects", "edit"),
+    HandleQuestionImageUpload,
+    UpdateMockQuestion
+  );
+
+  adminRouter.delete(
+    "/api/mock-test-subjects/:subjectId/questions/:questionId",
+    requireAdminPermission("mock_test_subjects", "delete"),
+    DeleteMockQuestion
+  );
+
+  adminRouter.post(
+    "/api/mock-test-subjects/:subjectId/questions/publish",
+    requireAdminPermission("mock_test_subjects", "edit"),
+    PublishSubjectQuestionSet
+  );
+
+  adminRouter.post(
+    "/api/mock-test-subjects/:subjectId/questions/reorder",
+    requireAdminPermission("mock_test_subjects", "edit"),
+    ReorderSubjectQuestions
+  );
+
+  adminRouter.get(
+    "/api/mock-tests/workspace",
+    requireAdminPermission("mock_tests", "view"),
+    GetMockTestSchedulerWorkspace
+  );
+
+  adminRouter.get(
+    "/api/mock-tests/questions",
+    requireAdminPermission("mock_tests", "view"),
+    GetPublishedQuestions
+  );
+
+  adminRouter.get(
+    "/api/mock-tests/subjects/:subjectId/workspace",
+    requireAdminPermission("mock_tests", "view"),
+    GetMockQuestionStudioWorkspace
+  );
+
+  adminRouter.post(
+    "/api/mock-tests/subjects/:subjectId/questions",
+    requireAdminPermission("mock_tests", "edit"),
+    HandleQuestionImageUpload,
+    CreateMockQuestion
+  );
+
+  adminRouter.patch(
+    "/api/mock-tests/subjects/:subjectId/questions/:questionId",
+    requireAdminPermission("mock_tests", "edit"),
+    HandleQuestionImageUpload,
+    UpdateMockQuestion
+  );
+
+  adminRouter.delete(
+    "/api/mock-tests/subjects/:subjectId/questions/:questionId",
+    requireAdminPermission("mock_tests", "edit"),
+    DeleteMockQuestion
+  );
+
+  adminRouter.post(
+    "/api/mock-tests/subjects/:subjectId/questions/publish",
+    requireAdminPermission("mock_tests", "edit"),
+    PublishSubjectQuestionSet
+  );
+
+  adminRouter.post(
+    "/api/mock-tests/subjects/:subjectId/questions/reorder",
+    requireAdminPermission("mock_tests", "edit"),
+    ReorderSubjectQuestions
+  );
+
+  adminRouter.get(
+    "/api/mock-tests/:testId",
+    requireAdminPermission("mock_tests", "view"),
+    GetMockTestDetail
+  );
+
+  adminRouter.post(
+    "/api/mock-tests",
+    requireAdminPermission("mock_tests", "add"),
+    CreateAdminMockTest
+  );
+
+  adminRouter.patch(
+    "/api/mock-tests/:testId",
+    requireAdminPermission("mock_tests", "edit"),
+    UpdateAdminMockTest
+  );
+
+  adminRouter.delete(
+    "/api/mock-tests/:testId",
+    requireAdminPermission("mock_tests", "delete"),
+    DeleteAdminMockTest
+  );
+
+  adminRouter.post(
+    "/api/mock-tests/:testId/status",
+    requireAdminPermission("mock_tests", "edit"),
+    UpdateAdminMockTestStatus
+  );
+
   const Router = express.Router();
+  Router.use("/admin/vendor/katex", express.static(katexAssetsDirectory));
   Router.use(admin.options.rootPath, (req, res, next) => {
     res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     res.setHeader("Pragma", "no-cache");

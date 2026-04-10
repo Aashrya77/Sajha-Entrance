@@ -9,6 +9,8 @@ import { MailHandler } from "./MailHandler.js";
 import NewsletterModel from "../models/Newsletter.js";
 import ContactModel from "../models/Contact.js";
 import {
+  MEDIA_TYPES,
+  hasMediaAsset,
   mediaFieldMaps,
   normalizeCollectionMedia,
   normalizeMediaFields,
@@ -21,13 +23,34 @@ const HomeDetails = async (req, res) => {
     const notice = await Notice.findOne().sort({ _id: -1 }).exec();
     const courses = await Course.find().limit(4).exec();
     const colleges = await College.find().limit(4).exec();
-    const popup = await Popup.findOne({ isActive: true }).exec();
+    const popupRecord = await Popup.findOne({ isActive: true }).exec();
     const landingAds = await LandingAd.find({
       isActive: true,
       adImage: { $nin: ["", null] },
     })
       .sort({ position: 1, createdAt: 1 })
       .exec();
+
+    const popupImageExists =
+      popupRecord?.popupType === "image" && popupRecord?.popupImage
+        ? await hasMediaAsset(MEDIA_TYPES.popup, popupRecord.popupImage)
+        : true;
+
+    const popup =
+      popupRecord && (popupRecord.popupType !== "image" || popupImageExists)
+        ? popupRecord
+        : null;
+
+    const landingAdsWithAvailability = await Promise.all(
+      landingAds.map(async (landingAd) => ({
+        landingAd,
+        isAvailable: await hasMediaAsset(MEDIA_TYPES.landing, landingAd.adImage),
+      }))
+    );
+
+    const safeLandingAds = landingAdsWithAvailability
+      .filter(({ isAvailable }) => isAvailable)
+      .map(({ landingAd }) => landingAd);
 
     res.json({
       success: true,
@@ -36,7 +59,7 @@ const HomeDetails = async (req, res) => {
         courses,
         colleges: normalizeCollectionMedia(colleges, mediaFieldMaps.college),
         popup: normalizeMediaFields(popup, mediaFieldMaps.popup),
-        landingAds: normalizeCollectionMedia(landingAds, mediaFieldMaps.landingAd),
+        landingAds: normalizeCollectionMedia(safeLandingAds, mediaFieldMaps.landingAd),
       }
     });
   } catch (error) {

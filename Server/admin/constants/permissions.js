@@ -124,6 +124,8 @@ export const ADMIN_PERMISSION_RESOURCES = [
   createPermissionResource("colleges", "Colleges"),
   createPermissionResource("universities", "Universities"),
   createPermissionResource("landing_ads", "Landing Ads"),
+  createPermissionResource("mock_test_courses", "Mock Test Courses"),
+  createPermissionResource("mock_test_subjects", "Mock Test Subjects"),
   createPermissionResource("mock_tests", "Mock Tests"),
   createPermissionResource("mock_test_attempts", "Mock Test Attempts"),
   createPermissionResource("courses", "Courses"),
@@ -193,8 +195,20 @@ export const ADMIN_RESOURCE_ACCESS = {
   LandingAd: {
     permissionResource: "landing_ads",
   },
+  MockTestCourse: {
+    permissionResource: "mock_test_courses",
+  },
+  MockTestSubject: {
+    permissionResource: "mock_test_subjects",
+    customActionPermissions: {
+      questionStudio: "edit",
+    },
+  },
   MockTest: {
     permissionResource: "mock_tests",
+    customActionPermissions: {
+      scheduler: "edit",
+    },
   },
   MockTestAttempt: {
     permissionResource: "mock_test_attempts",

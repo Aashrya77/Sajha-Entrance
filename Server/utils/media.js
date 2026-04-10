@@ -15,6 +15,7 @@ export const MEDIA_TYPES = Object.freeze({
   landing: "landing",
   college: "college",
   university: "university",
+  mocktest: "mocktest",
 });
 
 export const legacyMediaDirectories = Object.freeze({
@@ -42,6 +43,10 @@ export const legacyMediaDirectories = Object.freeze({
   [MEDIA_TYPES.university]: [
     path.join(publicDirectory, "universities"),
     path.join(publicDirectory, "uploads", "university"),
+  ],
+  [MEDIA_TYPES.mocktest]: [
+    path.join(publicDirectory, "mocktest"),
+    path.join(publicDirectory, "uploads", "mocktest"),
   ],
 });
 
@@ -87,6 +92,29 @@ export const getMediaPublicPath = (type, value = "") => {
 
   const filename = path.basename(value.replace(/\\/g, "/"));
   return `/media/${type}/${filename}`;
+};
+
+export const hasMediaAsset = async (type, value = "") => {
+  if (!value || typeof value !== "string") {
+    return false;
+  }
+
+  if (/^(?:https?:)?\/\//i.test(value) || value.startsWith("data:")) {
+    return true;
+  }
+
+  const filename = path.basename(value.replace(/\\/g, "/"));
+  if (!filename) {
+    return false;
+  }
+
+  const targetPath = path.join(mediaRootDirectory, type, filename);
+  if (fs.existsSync(targetPath)) {
+    return true;
+  }
+
+  const legacyFilePath = await findLegacyMediaFile(type, filename);
+  return Boolean(legacyFilePath);
 };
 
 const toPlainObject = (record) => {
