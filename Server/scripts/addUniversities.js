@@ -191,7 +191,7 @@ const universities = [
 
 const addUniversities = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
+    await mongoose.connect(process.env.MONGODB_URI);
     console.log("✅ Connected to MongoDB");
 
     // Clear existing universities (optional - remove this line if you want to keep existing data)
