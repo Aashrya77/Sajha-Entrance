@@ -1,4 +1,8 @@
 import mongoose from "mongoose";
+import {
+  normalizeStudentCourse,
+} from "../constants/studentCourses.js";
+import { resolveOnlineClassCourses } from "../utils/onlineClassCourses.js";
 
 const OnlineClassSchema = new mongoose.Schema({
   classTitle: {
@@ -11,10 +15,22 @@ const OnlineClassSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
+  courses: {
+    type: [String],
+    default: [],
+    validate: [
+      {
+        validator(value) {
+          return Array.isArray(value) && value.length > 0;
+        },
+        message: "Select at least one valid course.",
+      },
+    ],
+  },
   course: {
     type: String,
-    required: true,
     trim: true,
+    set: (value) => normalizeStudentCourse(value) || String(value || "").trim(),
   },
   classDateTime: {
     type: Date,
@@ -33,6 +49,11 @@ const OnlineClassSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+});
+
+OnlineClassSchema.pre("validate", function preValidate(next) {
+  this.courses = resolveOnlineClassCourses(this);
+  next();
 });
 
 const OnlineClass = mongoose.model("OnlineClass", OnlineClassSchema);

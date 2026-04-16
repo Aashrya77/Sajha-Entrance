@@ -3,6 +3,7 @@ import Student from "../models/Student.js";
 import jwt from "jsonwebtoken";
 import Notice from "../models/Notice.js";
 import Popup from "../models/Popup.js";
+import { hasOnlineClassCourseAccess } from "../utils/onlineClassCourses.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
@@ -84,7 +85,7 @@ export const joinClass = async (req, res) => {
     }
 
     // Verify student's course matches class course
-    if (onlineClass.course !== student.course) {
+    if (!hasOnlineClassCourseAccess(student.course, onlineClass)) {
       return res.status(403).send("You don't have access to this class");
     }
 

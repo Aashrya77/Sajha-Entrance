@@ -13,6 +13,14 @@ import RichTextEditor from '../admin/components/RichTextEditor'
 AdminJS.UserComponents.RichTextEditor = RichTextEditor
 import RecordedClassEdit from '../admin/components/RecordedClassEdit'
 AdminJS.UserComponents.RecordedClassEdit = RecordedClassEdit
+import OnlineClassCoursesEdit from '../admin/components/OnlineClassCoursesEdit'
+AdminJS.UserComponents.OnlineClassCoursesEdit = OnlineClassCoursesEdit
+import OnlineClassCoursesDisplay from '../admin/components/OnlineClassCoursesDisplay'
+AdminJS.UserComponents.OnlineClassCoursesDisplay = OnlineClassCoursesDisplay
+import StudentsExport from '../admin/components/StudentsExport'
+AdminJS.UserComponents.StudentsExport = StudentsExport
+import AdminResourceSearch from '../admin/components/AdminResourceSearch'
+AdminJS.UserComponents.AdminResourceSearch = AdminResourceSearch
 import ImageUpload from '../admin/components/ImageUpload'
 AdminJS.UserComponents.ImageUpload = ImageUpload
 import Login from '../admin/components/Login'

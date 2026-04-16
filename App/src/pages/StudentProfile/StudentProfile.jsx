@@ -2,6 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authAPI } from '../../api/services';
 import Loader from '../../components/Loader/Loader';
+import {
+  canSwitchStudentCourse,
+  NEB_PREPARATION_COURSE,
+  STUDENT_COURSE_OPTIONS,
+} from '../../constants/studentCourses';
 import './StudentProfile.css';
 
 const buildEditForm = (profile = {}) => ({
@@ -9,6 +14,7 @@ const buildEditForm = (profile = {}) => ({
   phone: profile.phone || '',
   collegeName: profile.collegeName || '',
   address: profile.address || '',
+  course: profile.course || '',
 });
 
 const getInitials = (name = '') => {
@@ -412,6 +418,7 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
         videoId: recordedViewer.selectedVideoId || recordedViewer.classItem.videoId,
       })
     : '';
+  const isCourseEditable = canSwitchStudentCourse(profile.course);
 
   return (
     <div className="student-dashboard">
@@ -808,10 +815,33 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
                   />
                 </label>
 
-                <label className="profile-field profile-field--readonly">
-                  <span>Course</span>
-                  <input type="text" value={profile.course || ''} readOnly />
-                </label>
+                {isCourseEditable ? (
+                  <label className="profile-field">
+                    <span>Course</span>
+                    <select
+                      name="course"
+                      value={editForm.course}
+                      onChange={handleEditChange}
+                    >
+                      {STUDENT_COURSE_OPTIONS.map((courseOption) => (
+                        <option key={courseOption.value} value={courseOption.value}>
+                          {courseOption.label}
+                        </option>
+                      ))}
+                    </select>
+                    <small className="profile-field__hint">
+                      Students currently in {NEB_PREPARATION_COURSE} can switch to another course once.
+                    </small>
+                  </label>
+                ) : (
+                  <label className="profile-field profile-field--readonly">
+                    <span>Course</span>
+                    <input type="text" value={profile.course || ''} readOnly />
+                    <small className="profile-field__hint">
+                      Course changes are only available for students currently enrolled in {NEB_PREPARATION_COURSE}.
+                    </small>
+                  </label>
+                )}
               </div>
 
               <label className="profile-field">

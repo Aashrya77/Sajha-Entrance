@@ -1,5 +1,9 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
+import {
+  isValidStudentCourse,
+  normalizeStudentCourse,
+} from "../constants/studentCourses.js";
 
 const StudentSchema = new mongoose.Schema({
   studentId: {
@@ -39,6 +43,15 @@ const StudentSchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true,
+    set: (value) => normalizeStudentCourse(value) || String(value || "").trim(),
+    validate: {
+      validator(value) {
+        const courseWasModified =
+          typeof this?.isModified === "function" ? this.isModified("course") : true;
+        return !courseWasModified || isValidStudentCourse(value);
+      },
+      message: "Please select a valid course.",
+    },
   },
   accountStatus: {
     type: String,

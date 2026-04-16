@@ -2,6 +2,7 @@ import {
   ADMINJS_ACTION_PERMISSION_MAP,
   getAdminResourceAccessConfig,
 } from "../constants/permissions.js";
+import { Components } from "../ComponentLoader.js";
 import { hasPermission } from "./admin-auth.js";
 import { createAuditAfterHook } from "./admin-audit.js";
 
@@ -70,6 +71,17 @@ const resolvePermissionAction = (actionName, resourceAccessConfig) =>
 const isMutatingPermissionAction = (permissionAction) =>
   ["add", "edit", "delete"].includes(permissionAction);
 
+const buildDefaultSearchAction = () => ({
+  icon: "Search",
+  label: "Search",
+  component: Components.AdminResourceSearch,
+  showInDrawer: true,
+  containerWidth: "720px",
+});
+
+const isBackendOnlyAction = (actionName, actionConfig = {}) =>
+  actionName === "search" && !actionConfig.component;
+
 const buildActionGuard = (actionName, resourceAccessConfig) => ({ currentAdmin }) => {
   if (!currentAdmin) {
     return false;
@@ -103,6 +115,11 @@ const decorateAdminResource = (resource, config = {}) => {
     ...config,
   };
   const actions = { ...(normalizedResource.options.actions || {}) };
+
+  if (!actions.search?.component) {
+    actions.search = mergeAction(actions.search, buildDefaultSearchAction());
+  }
+
   const auditEnabled = resourceAccessConfig.audit !== false;
   const actionNames = new Set([
     "list",
@@ -117,18 +134,19 @@ const decorateAdminResource = (resource, config = {}) => {
   ]);
 
   actionNames.forEach((actionName) => {
+    const existingAction = actions[actionName];
     const permissionAction = resolvePermissionAction(actionName, resourceAccessConfig);
     const guard = buildActionGuard(actionName, resourceAccessConfig);
     const additions = {
       isAccessible: guard,
-      isVisible: guard,
+      isVisible: isBackendOnlyAction(actionName, existingAction) ? false : guard,
     };
 
     if (auditEnabled && isMutatingPermissionAction(permissionAction) && ["new", "edit", "delete"].includes(actionName)) {
       additions.after = [createAuditAfterHook(actionName, resourceId)];
     }
 
-    actions[actionName] = mergeAction(actions[actionName], additions);
+    actions[actionName] = mergeAction(existingAction, additions);
   });
 
   normalizedResource.options.actions = actions;

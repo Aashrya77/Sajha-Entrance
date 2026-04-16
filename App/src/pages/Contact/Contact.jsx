@@ -1,6 +1,12 @@
 import React, { useState } from 'react';
 import { homeAPI } from '../../api/services';
+import { STUDENT_COURSE_OPTIONS } from '../../constants/studentCourses';
 import '../../styles/contact.css';
+
+const contactCourseOptions = [
+  { value: 'IOE', label: 'IOE' },
+  ...STUDENT_COURSE_OPTIONS,
+];
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -110,11 +116,11 @@ const Contact = () => {
                   <label className="form-label">Course Interest</label>
                   <select className="form-select" name="course" value={formData.course} onChange={handleChange} required>
                     <option value="">Select Course</option>
-                    <option value="IOE">IOE</option>
-                    <option value="BSc.CSIT">BSc.CSIT</option>
-                    <option value="BIT">BIT</option>
-                    <option value="BCA">BCA</option>
-                    <option value="CMAT">CMAT</option>
+                    {contactCourseOptions.map((courseOption) => (
+                      <option key={courseOption.value} value={courseOption.value}>
+                        {courseOption.label}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className="mb-4">

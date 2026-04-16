@@ -906,6 +906,7 @@
 }
 
 .profile-field input,
+.profile-field select,
 .profile-field textarea {
   width: 100%;
   border: 1px solid rgba(148, 163, 184, 0.28);
@@ -919,6 +920,7 @@
 }
 
 .profile-field input:focus,
+.profile-field select:focus,
 .profile-field textarea:focus {
   border-color: rgba(255, 116, 34, 0.55);
   box-shadow: 0 0 0 4px rgba(255, 116, 34, 0.12);
@@ -927,6 +929,12 @@
 .profile-field--readonly input {
   background: #f8fafc;
   color: var(--dashboard-muted);
+}
+
+.profile-field__hint {
+  color: var(--dashboard-muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
 }
 
 .profile-readonly-strip {
@@ -1468,6 +1476,7 @@
   }
 
   .profile-field input,
+  .profile-field select,
   .profile-field textarea {
     padding: 0.88rem 0.92rem;
     font-size: 0.94rem;

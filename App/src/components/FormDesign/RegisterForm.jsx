@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import './Form.css';
 import adsImage from './ads.jpg';
 import logoImage from './sajha-entrance.png';
+import { STUDENT_COURSE_OPTIONS } from '../../constants/studentCourses';
 
 const RegisterForm = () => {
   const images = [adsImage, adsImage];
@@ -174,11 +175,11 @@ const RegisterForm = () => {
                   onChange={handleInputChange}
                 >
                   <option value="" disabled>Select Course</option>
-                  <option value="bsc-csit">BSc.CSIT</option>
-                  <option value="bit">BIT</option>
-                  <option value="bca">BCA</option>
-                  <option value="cmat">CMAT</option>
-                  <option value="iot">IOT</option>
+                  {STUDENT_COURSE_OPTIONS.map((courseOption) => (
+                    <option key={courseOption.value} value={courseOption.value}>
+                      {courseOption.label}
+                    </option>
+                  ))}
                 </select>
                 <span></span>
                 {errors.course && <span className="error-text">{errors.course}</span>}

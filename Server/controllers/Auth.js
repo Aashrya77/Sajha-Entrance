@@ -7,6 +7,15 @@ import { getClassStatus } from "./Class.js";
 import { MailHandler } from "./MailHandler.js";
 import { resolveRecordedClassMedia } from "../utils/youtube.js";
 import { getCourseRegexMatchers } from "../utils/courseAccess.js";
+import {
+  buildOnlineClassCourseQuery,
+  formatOnlineClassCourseLabel,
+  resolveOnlineClassCourses,
+} from "../utils/onlineClassCourses.js";
+import {
+  canSwitchStudentCourse,
+  normalizeStudentCourse,
+} from "../constants/studentCourses.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 const JWT_EXPIRY = process.env.JWT_EXPIRY || "7d";
@@ -34,13 +43,21 @@ const buildFrontendUrl = (req) => {
 const hashResetToken = (token) =>
   crypto.createHash("sha256").update(token).digest("hex");
 
+const resolveStudentCourseForResponse = (value = "") =>
+  normalizeStudentCourse(value) || String(value || "").trim();
+
 // Student Register
 export const register = async (req, res) => {
   try {
     const { name, email, password, phone, address, collegeName, course } = req.body || {};
+    const normalizedCourse = normalizeStudentCourse(course);
 
     if (!name || !email || !password || !course) {
       return res.status(400).json({ success: false, error: "Name, email, password and course are required." });
+    }
+
+    if (!normalizedCourse) {
+      return res.status(400).json({ success: false, error: "Please select a valid course." });
     }
 
     // Check if email already exists
@@ -56,7 +73,7 @@ export const register = async (req, res) => {
       phone: phone?.trim(),
       address: address?.trim(),
       collegeName: collegeName?.trim(),
-      course: course.trim(),
+      course: normalizedCourse,
     });
 
     await student.save();
@@ -112,7 +129,7 @@ export const login = async (req, res) => {
         studentId: student.studentId,
         name: student.name,
         email: student.email,
-        course: student.course,
+        course: resolveStudentCourseForResponse(student.course),
         accountStatus: student.accountStatus,
       },
     });
@@ -258,7 +275,7 @@ export const getProfile = async (req, res) => {
         phone: student.phone,
         address: student.address,
         collegeName: student.collegeName,
-        course: student.course,
+        course: resolveStudentCourseForResponse(student.course),
         accountStatus: student.accountStatus,
         createdAt: student.createdAt,
       },
@@ -287,6 +304,32 @@ export const updateProfile = async (req, res) => {
     student.address = String(req.body.address || "").trim();
     student.collegeName = String(req.body.collegeName || "").trim();
 
+    const hasCourseInPayload = Object.prototype.hasOwnProperty.call(req.body || {}, "course");
+
+    if (hasCourseInPayload) {
+      const normalizedRequestedCourse = normalizeStudentCourse(req.body.course);
+      if (!normalizedRequestedCourse) {
+        return res.status(400).json({
+          success: false,
+          error: "Please select a valid course.",
+        });
+      }
+
+      const currentCourse = resolveStudentCourseForResponse(student.course);
+      if (normalizedRequestedCourse !== currentCourse) {
+        if (!canSwitchStudentCourse(currentCourse)) {
+          return res.status(403).json({
+            success: false,
+            error: "Course can only be changed if your current course is NEB Preparation.",
+          });
+        }
+
+        student.course = normalizedRequestedCourse;
+      } else if (student.course !== normalizedRequestedCourse) {
+        student.course = normalizedRequestedCourse;
+      }
+    }
+
     await student.save();
 
     res.json({
@@ -300,7 +343,7 @@ export const updateProfile = async (req, res) => {
         phone: student.phone,
         address: student.address,
         collegeName: student.collegeName,
-        course: student.course,
+        course: resolveStudentCourseForResponse(student.course),
         accountStatus: student.accountStatus,
         createdAt: student.createdAt,
       },
@@ -320,20 +363,22 @@ export const getClasses = async (req, res) => {
     }
 
     const isPaid = student.accountStatus === "Paid";
-    const courseMatchers = getCourseRegexMatchers(student.course);
 
     // Get live/upcoming classes for student's course
-    const classes = await OnlineClass.find({ course: { $in: courseMatchers } })
+    const classes = await OnlineClass.find(buildOnlineClassCourseQuery(student.course))
       .sort({ classDateTime: 1 })
       .exec();
 
     const formattedClasses = classes.map((cls) => {
       const status = getClassStatus(cls.classDateTime, cls.duration || 60);
+      const classCourses = resolveOnlineClassCourses(cls);
+
       return {
         id: cls._id.toString(),
         classTitle: cls.classTitle,
         subject: cls.subject,
-        course: cls.course,
+        course: formatOnlineClassCourseLabel(classCourses),
+        courses: classCourses,
         classDateTime: cls.classDateTime,
         duration: cls.duration,
         status,
@@ -343,6 +388,7 @@ export const getClasses = async (req, res) => {
     });
 
     // Get recorded classes
+    const courseMatchers = getCourseRegexMatchers(student.course);
     const recordedClasses = await RecordedClass.find({
       courseIds: { $in: courseMatchers },
     })

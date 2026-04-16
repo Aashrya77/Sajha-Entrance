@@ -24,7 +24,13 @@ import {
 } from "./utils/admin-auth.js";
 import { decorateAdminResource } from "./utils/admin-resource.js";
 import { logAdminLogin, logAdminSystemError } from "./utils/admin-audit.js";
+import { exportStudentsWorkbook } from "./utils/student-export.js";
 import { createLogger } from "../utils/logger.js";
+import {
+  STUDENT_COURSE_AVAILABLE_VALUES,
+  STUDENT_COURSE_VALUES,
+} from "../constants/studentCourses.js";
+import { formatOnlineClassCourseLabel } from "../utils/onlineClassCourses.js";
 
 dotenv.config();
 
@@ -534,7 +540,7 @@ const startAdminPanel = async () => {
         courseIds: {
           label: "Course IDs (comma-separated)",
           type: "textarea",
-          description: "Enter course IDs separated by commas. Example: BIT, BCA, BE",
+          description: `Enter course IDs separated by commas. Example: ${STUDENT_COURSE_VALUES.join(", ")}`,
         },
         contentType: {
           label: "Media Type",
@@ -929,6 +935,15 @@ const startAdminPanel = async () => {
       listProperties: ["studentId", "name", "email", "course", "accountStatus", "createdAt"],
       showProperties: ["studentId", "name", "email", "phone", "address", "collegeName", "course", "accountStatus", "createdAt"],
       editProperties: ["name", "email", "password", "phone", "address", "collegeName", "course", "accountStatus"],
+      actions: {
+        downloadExcel: {
+          actionType: "resource",
+          icon: "Download",
+          variant: "primary",
+          component: Components.StudentsExport,
+          showInDrawer: true,
+        },
+      },
       properties: {
         studentId: {
           label: "Student ID",
@@ -941,13 +956,7 @@ const startAdminPanel = async () => {
         collegeName: { label: "College Name" },
         course: {
           label: "Course",
-          availableValues: [
-            { value: "BSc.CSIT", label: "BSc.CSIT" },
-            { value: "BIT", label: "BIT" },
-            { value: "BCA", label: "BCA" },
-            { value: "CMAT", label: "CMAT" },
-            { value: "IOT", label: "IOT" },
-          ],
+          availableValues: STUDENT_COURSE_AVAILABLE_VALUES,
         },
         accountStatus: {
           label: "Payment Status",
@@ -969,20 +978,33 @@ const startAdminPanel = async () => {
     resource: OnlineClass,
     options: {
       navigation: { name: "Classes", icon: "Video" },
-      listProperties: ["classTitle", "subject", "course", "classDateTime", "duration"],
-      editProperties: ["classTitle", "subject", "course", "classDateTime", "zoomMeetingLink", "duration"],
+      listProperties: ["classTitle", "subject", "courses", "classDateTime", "duration"],
+      showProperties: [
+        "classTitle",
+        "subject",
+        "courses",
+        "classDateTime",
+        "zoomMeetingLink",
+        "duration",
+        "createdAt",
+      ],
+      editProperties: ["classTitle", "subject", "courses", "classDateTime", "zoomMeetingLink", "duration"],
       properties: {
         classTitle: { label: "Class Title" },
         subject: { label: "Subject" },
+        courses: {
+          label: "Courses",
+          availableValues: STUDENT_COURSE_AVAILABLE_VALUES,
+          description:
+            "Select one or more courses. Students from any selected course will be able to see this live class.",
+          components: {
+            edit: Components.OnlineClassCoursesEdit,
+            list: Components.OnlineClassCoursesDisplay,
+            show: Components.OnlineClassCoursesDisplay,
+          },
+        },
         course: {
-          label: "Course",
-          availableValues: [
-            { value: "BSc.CSIT", label: "BSc.CSIT" },
-            { value: "BIT", label: "BIT" },
-            { value: "BCA", label: "BCA" },
-            { value: "CMAT", label: "CMAT" },
-            { value: "IOT", label: "IOT" },
-          ],
+          isVisible: false,
         },
         classDateTime: { label: "Class Date & Time", type: "datetime" },
         zoomMeetingLink: { label: "Zoom Meeting Link" },
@@ -1164,7 +1186,10 @@ const startAdminPanel = async () => {
         resultStats,
         revenueTotal: revenueAgg.length > 0 ? revenueAgg[0].total : 0,
         recentPayments,
-        upcomingClasses,
+        upcomingClasses: upcomingClasses.map((onlineClass) => ({
+          ...onlineClass,
+          course: formatOnlineClassCourseLabel(onlineClass),
+        })),
         notifications,
         unreadNotifications,
       };
@@ -1422,6 +1447,12 @@ const startAdminPanel = async () => {
       },
       name: "adminjs",
     }
+  );
+
+  adminRouter.get(
+    "/api/students/export",
+    requireAdminPermission("students", "view"),
+    exportStudentsWorkbook
   );
 
   adminRouter.get(

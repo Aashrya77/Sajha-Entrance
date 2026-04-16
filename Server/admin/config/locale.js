@@ -71,6 +71,11 @@ const enAdminTranslations = {
         markAsRead: "Mark as read",
       },
     },
+    Student: {
+      actions: {
+        downloadExcel: "Download Excel",
+      },
+    },
   },
 };
 

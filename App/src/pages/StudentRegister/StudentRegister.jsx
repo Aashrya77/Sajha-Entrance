@@ -4,6 +4,7 @@ import { authAPI } from '../../api/services';
 import '../../components/FormDesign/Form.css';
 import adsImage from '../../components/FormDesign/ads.jpg';
 import logoImage from '../../components/FormDesign/sajha-entrance.png';
+import { STUDENT_COURSE_OPTIONS } from '../../constants/studentCourses';
 
 const StudentRegister = () => {
   const navigate = useNavigate();
@@ -149,11 +150,11 @@ const StudentRegister = () => {
               <label>
                 <select required className="input" name="course" value={formData.course} onChange={handleInputChange}>
                   <option value="" disabled>Select Course</option>
-                  <option value="BSc.CSIT">BSc.CSIT</option>
-                  <option value="BIT">BIT</option>
-                  <option value="BCA">BCA</option>
-                  <option value="CMAT">CMAT</option>
-                  <option value="IOT">IOT</option>
+                  {STUDENT_COURSE_OPTIONS.map((courseOption) => (
+                    <option key={courseOption.value} value={courseOption.value}>
+                      {courseOption.label}
+                    </option>
+                  ))}
                 </select>
                 <span></span>
                 {errors.course && <span className="error-text">{errors.course}</span>}

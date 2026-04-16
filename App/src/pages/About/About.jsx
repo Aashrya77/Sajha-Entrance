@@ -1,7 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { homeAPI } from '../../api/services';
+import { STUDENT_COURSE_OPTIONS } from '../../constants/studentCourses';
 import Loader from '../../components/Loader/Loader';
 import './Aboutpage.css'; 
+
+const contactCourseOptions = [
+  { value: 'IOE', label: 'IOE' },
+  ...STUDENT_COURSE_OPTIONS,
+];
 
 const About = () => {
   const [loading, setLoading] = useState(true);
@@ -257,11 +263,11 @@ const About = () => {
                       <label className="form-label">Course Interested In</label>
                     <select className="form-select custom-input" name="course" value={contactForm.course} onChange={handleContactChange} required>
                       <option value="">Select Course</option>
-                      <option value="IOE">IOE</option>
-                      <option value="BSc.CSIT">BSc. CSIT</option>
-                      <option value="BIT">BIT</option>
-                      <option value="BCA">BCA</option>
-                      <option value="CMAT">CMAT</option>
+                      {contactCourseOptions.map((courseOption) => (
+                        <option key={courseOption.value} value={courseOption.value}>
+                          {courseOption.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
                   <div className="col-12">

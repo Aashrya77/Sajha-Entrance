@@ -35,6 +35,22 @@ const Components = {
     "RecordedClassEdit",
     path.join(__dirname, "./components/RecordedClassEdit")
   ),
+  OnlineClassCoursesEdit: componentLoader.add(
+    "OnlineClassCoursesEdit",
+    path.join(__dirname, "./components/OnlineClassCoursesEdit")
+  ),
+  OnlineClassCoursesDisplay: componentLoader.add(
+    "OnlineClassCoursesDisplay",
+    path.join(__dirname, "./components/OnlineClassCoursesDisplay")
+  ),
+  StudentsExport: componentLoader.add(
+    "StudentsExport",
+    path.join(__dirname, "./components/StudentsExport")
+  ),
+  AdminResourceSearch: componentLoader.add(
+    "AdminResourceSearch",
+    path.join(__dirname, "./components/AdminResourceSearch")
+  ),
   ImageUpload: componentLoader.add("ImageUpload", path.join(__dirname, "./components/ImageUpload")),
   Login: componentLoader.override("Login", path.join(__dirname, "./components/Login")),
   LoggedIn: componentLoader.override("LoggedIn", path.join(__dirname, "./components/LoggedIn")),
