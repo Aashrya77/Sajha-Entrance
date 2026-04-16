@@ -7,8 +7,8 @@ import express from "express";
 import path from "path";
 import AdminJSExpress from "@adminjs/express";
 import * as AdminJSMongoose from "@adminjs/mongoose";
-import session from "express-session";
-import { default as MongoDBSession } from "connect-mongodb-session";
+import mongoose from "mongoose";
+import MongoStore from "connect-mongo";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import componentLoader, { Components } from "./ComponentLoader.js";
@@ -32,8 +32,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const katexAssetsDirectory = path.join(__dirname, "../node_modules/katex/dist");
 
-const MongoStore = MongoDBSession(session);
 const logger = createLogger("admin");
+const isProduction = process.env.NODE_ENV === "production";
+const adminSessionMaxAgeMs = 7 * 24 * 60 * 60 * 1000;
 
 import Notice from "../models/Notice.js";
 import AdminUserModel from "../models/AdminUser.js";
@@ -1376,10 +1377,23 @@ const startAdminPanel = async () => {
     }
   }
 
-  const sessionStore = new MongoStore({
-    uri: process.env.MONGO_URI,
-    collection: "session",
+  const mongoDbUri = process.env.MONGODB_URI;
+  const sessionSecret = process.env.SESSION_SECRET;
 
+  if (!mongoDbUri) {
+    throw new Error("MONGODB_URI is required for the admin session store.");
+  }
+
+  if (!sessionSecret) {
+    throw new Error("SESSION_SECRET is required for the admin session store.");
+  }
+
+  // Reuse the existing Mongoose client so admin sessions stay in MongoDB
+  // without opening a second application-level connection.
+  const sessionStore = MongoStore.create({
+    client: mongoose.connection.getClient(),
+    collectionName: "adminSessions",
+    touchAfter: 24 * 3600,
   });
 
   sessionStore.on("error", (error) => {
@@ -1391,18 +1405,20 @@ const startAdminPanel = async () => {
     {
       authenticate,
       cookieName: "adminjs",
-      cookiePassword: "sessionsecret",
+      cookiePassword: sessionSecret,
     },
     null,
     {
-      // Temporarily disable session store to avoid SSL issues
-      // store: sessionStore,
-      resave: true,
-      saveUninitialized: true,
-      secret: "sessionsecret",
+      store: sessionStore,
+      resave: false,
+      saveUninitialized: false,
+      secret: sessionSecret,
+      proxy: isProduction,
       cookie: {
-        httpOnly: process.env.STATE === "production",
-        secure: process.env.STATE === "production",
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: "lax",
+        maxAge: adminSessionMaxAgeMs,
       },
       name: "adminjs",
     }

@@ -36,11 +36,16 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 const logger = createLogger("server");
+const isProduction = process.env.NODE_ENV === "production";
 
 const staticFileOptions = {
   fallthrough: true,
   maxAge: "7d",
 };
+
+if (isProduction) {
+  app.set("trust proxy", 1);
+}
 
 // ================= MIDDLEWARE =================
 app.use(
