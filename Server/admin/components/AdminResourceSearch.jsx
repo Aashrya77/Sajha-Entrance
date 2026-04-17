@@ -9,6 +9,7 @@ import {
   Select,
   Text,
 } from "@adminjs/design-system";
+import { useTranslation } from "adminjs";
 import { useNavigate } from "react-router";
 
 const panelStyle = {
@@ -34,7 +35,21 @@ const SEARCHABLE_TYPES = new Set([
 const getPropertyPath = (property = {}) =>
   property.propertyPath || property.path || property.name || "";
 
-const getSearchableProperties = (resource = {}) => {
+const isReferenceSearchEnabled = (property = {}) =>
+  Boolean(property?.custom?.searchableReference);
+
+const getRecordFieldValue = (record = {}, propertyPath = "") => {
+  const populatedRecord = record?.populated?.[propertyPath];
+
+  if (populatedRecord?.title) {
+    return populatedRecord.title;
+  }
+
+  const rawValue = record?.params?.[propertyPath];
+  return String(rawValue ?? "").trim();
+};
+
+const getSearchableProperties = (resource = {}, translateProperty) => {
   const propertiesByPath = resource.properties || {};
   const candidates = [
     ...(Array.isArray(resource.filterProperties) ? resource.filterProperties : []),
@@ -58,6 +73,10 @@ const getSearchableProperties = (resource = {}) => {
     const type = resolvedProperty?.type || property?.type || "string";
     const isReference = Boolean(resolvedProperty?.reference || property?.reference);
 
+    if (isReference && !isReferenceSearchEnabled(resolvedProperty) && !isReferenceSearchEnabled(property)) {
+      return;
+    }
+
     if (!isReference && !SEARCHABLE_TYPES.has(type)) {
       return;
     }
@@ -68,7 +87,9 @@ const getSearchableProperties = (resource = {}) => {
 
     options.set(path, {
       value: path,
-      label: resolvedProperty?.label || property?.label || path,
+      label: translateProperty(path, resource?.id, {
+        defaultValue: resolvedProperty?.label || property?.label || path,
+      }),
     });
   });
 
@@ -89,10 +110,14 @@ const buildRecordActionPath = (rootPath, resourceId, record) => {
 
 const AdminResourceSearch = (props) => {
   const navigate = useNavigate();
+  const { translateAction, translateLabel, translateProperty } = useTranslation();
   const resource = props?.resource || {};
   const resourceId = resource?.id;
   const rootPath = window.REDUX_STATE?.paths?.rootPath || "/admin";
-  const searchableProperties = useMemo(() => getSearchableProperties(resource), [resource]);
+  const searchableProperties = useMemo(
+    () => getSearchableProperties(resource, translateProperty),
+    [resource, translateProperty]
+  );
   const [searchProperty, setSearchProperty] = useState(searchableProperties[0] || null);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
@@ -100,6 +125,12 @@ const AdminResourceSearch = (props) => {
   const [errorMessage, setErrorMessage] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
   const listUrl = resource?.href || `${rootPath}/resources/${resourceId}`;
+  const resourceLabel = translateLabel(resource?.name || resourceId || "Records", resourceId, {
+    defaultValue: resource?.name || resourceId || "Records",
+  });
+  const searchActionLabel = translateAction("search", resourceId, {
+    defaultValue: "Search",
+  });
 
   const handleSearch = async (event) => {
     event.preventDefault();
@@ -151,6 +182,7 @@ const AdminResourceSearch = (props) => {
 
       const data = await response.json();
       setResults(Array.isArray(data?.records) ? data.records : []);
+      setErrorMessage(data?.error || "");
     } catch (error) {
       setResults([]);
       setErrorMessage(error.message || "Search failed.");
@@ -173,7 +205,7 @@ const AdminResourceSearch = (props) => {
   return (
     <Box flex flexDirection="column" px="xxl" py="xl" style={{ gap: 16 }}>
       <Box style={panelStyle}>
-        <H4 mb="default">Search {resource?.name || "Records"}</H4>
+        <H4 mb="default">{`${searchActionLabel} ${resourceLabel}`}</H4>
         <Text mb="xl" color="grey60">
           Search this resource without leaving the admin panel. Results open directly to the matching record.
         </Text>
@@ -260,9 +292,11 @@ const AdminResourceSearch = (props) => {
                 }}
               >
                 <Box flex flexDirection="column">
-                  <Text fontWeight="bold">{record.title || record.params?.[searchProperty?.value] || record.id}</Text>
+                  <Text fontWeight="bold">
+                    {getRecordFieldValue(record, searchProperty?.value) || record.title || record.id}
+                  </Text>
                   <Text color="grey60">
-                    {searchProperty?.label}: {String(record.params?.[searchProperty?.value] ?? "").trim() || "N/A"}
+                    {searchProperty?.label}: {getRecordFieldValue(record, searchProperty?.value) || "N/A"}
                   </Text>
                 </Box>
 

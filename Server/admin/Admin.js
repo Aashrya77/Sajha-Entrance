@@ -13,7 +13,7 @@ import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import componentLoader, { Components } from "./ComponentLoader.js";
 import { adminAssets, adminBranding } from "./config/branding.js";
-import { adminLocale } from "./config/locale.js";
+import { buildAdminLocale } from "./config/locale.js";
 import { adminBrandMeta } from "./config/theme.js";
 import {
   authenticateAdminUser,
@@ -57,7 +57,7 @@ import ResultExam from "../models/ResultExam.js";
 import StudentResult from "../models/StudentResult.js";
 import Payment from "../models/Payment.js";
 import UniversityModel, { UniversityFileModel } from "../models/University.js";
-import { MockTestAttemptModel } from "../models/MockTest.js";
+import MockTestModel, { MockTestAttemptModel } from "../models/MockTest.js";
 import BookOrderModel from "../models/BookOrder.js";
 import InquiryModel from "../models/Inquiry.js";
 import BlogAdminResource from "./resources/blog.resource.js";
@@ -162,6 +162,253 @@ const toIsoDateTimeString = (value) => {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? "" : date.toISOString();
 };
+
+const mergeResourceOptions = (resourceConfig, optionAdditions = {}) => {
+  const normalizedResource =
+    resourceConfig?.resource
+      ? {
+          ...resourceConfig,
+          options: {
+            ...(resourceConfig.options || {}),
+          },
+        }
+      : {
+          resource: resourceConfig,
+          options: {},
+        };
+
+  return {
+    ...normalizedResource,
+    options: {
+      ...(normalizedResource.options || {}),
+      ...optionAdditions,
+      actions: {
+        ...((normalizedResource.options || {}).actions || {}),
+        ...(optionAdditions.actions || {}),
+      },
+      properties: {
+        ...((normalizedResource.options || {}).properties || {}),
+        ...(optionAdditions.properties || {}),
+      },
+    },
+  };
+};
+
+const contentNavigation = { name: "Content", icon: "Document" };
+const classesNavigation = { name: "Classes", icon: "Video" };
+const inquiriesNavigation = { name: "Inquiries", icon: "Message" };
+const mockTestNavigation = { name: "Mock Test Management", icon: "Bookmark" };
+const EMPTY_ADMIN_SEARCH_FILTER = Object.freeze({ _id: { $in: [] } });
+const MAX_ADMIN_SEARCH_PAGE_SIZE = 100;
+
+const escapeAdminSearchRegex = (value = "") =>
+  String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const buildAdminSearchRegex = (value = "") =>
+  new RegExp(escapeAdminSearchRegex(String(value).trim()), "i");
+
+const parseAdminSearchInteger = (value, fallback, maximum = Number.MAX_SAFE_INTEGER) => {
+  const parsedValue = Number.parseInt(value, 10);
+
+  if (!Number.isFinite(parsedValue) || parsedValue < 1) {
+    return fallback;
+  }
+
+  return Math.min(parsedValue, maximum);
+};
+
+const buildMockTestAttemptDateFilter = (searchProperty, queryString) => {
+  const parsedDate = new Date(queryString);
+
+  if (Number.isNaN(parsedDate.getTime())) {
+    return EMPTY_ADMIN_SEARCH_FILTER;
+  }
+
+  const rangeStart = new Date(parsedDate);
+  rangeStart.setHours(0, 0, 0, 0);
+
+  const rangeEnd = new Date(rangeStart);
+  rangeEnd.setDate(rangeEnd.getDate() + 1);
+
+  return {
+    [searchProperty]: {
+      $gte: rangeStart,
+      $lt: rangeEnd,
+    },
+  };
+};
+
+const buildMockTestAttemptReferenceFilter = async (searchProperty, queryString) => {
+  const normalizedQuery = String(queryString || "").trim();
+
+  if (!normalizedQuery) {
+    return EMPTY_ADMIN_SEARCH_FILTER;
+  }
+
+  if (searchProperty === "student") {
+    const queryRegex = buildAdminSearchRegex(normalizedQuery);
+    const studentFilters = [
+      { name: queryRegex },
+      { email: queryRegex },
+      { studentId: queryRegex },
+      { phone: queryRegex },
+    ];
+
+    if (mongoose.Types.ObjectId.isValid(normalizedQuery)) {
+      studentFilters.unshift({ _id: normalizedQuery });
+    }
+
+    const matchingStudents = await Student.find(
+      { $or: studentFilters },
+      { _id: 1 }
+    )
+      .limit(200)
+      .lean();
+
+    return matchingStudents.length
+      ? { student: { $in: matchingStudents.map((student) => student._id) } }
+      : EMPTY_ADMIN_SEARCH_FILTER;
+  }
+
+  if (searchProperty === "mockTest") {
+    const queryRegex = buildAdminSearchRegex(normalizedQuery);
+    const mockTestFilters = [
+      { title: queryRegex },
+      { courseName: queryRegex },
+      { course: queryRegex },
+      { slug: queryRegex },
+    ];
+
+    if (mongoose.Types.ObjectId.isValid(normalizedQuery)) {
+      mockTestFilters.unshift({ _id: normalizedQuery });
+    }
+
+    const matchingMockTests = await MockTestModel.find(
+      { $or: mockTestFilters },
+      { _id: 1 }
+    )
+      .limit(200)
+      .lean();
+
+    return matchingMockTests.length
+      ? { mockTest: { $in: matchingMockTests.map((mockTest) => mockTest._id) } }
+      : EMPTY_ADMIN_SEARCH_FILTER;
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(normalizedQuery)) {
+    return EMPTY_ADMIN_SEARCH_FILTER;
+  }
+
+  return {
+    [searchProperty]: normalizedQuery,
+  };
+};
+
+const buildMockTestAttemptSearchFilter = async ({
+  searchProperty,
+  queryString,
+  property,
+}) => {
+  const propertyType = property?.type?.() || "";
+  const normalizedQuery = String(queryString || "").trim();
+
+  if (!normalizedQuery || !searchProperty) {
+    return EMPTY_ADMIN_SEARCH_FILTER;
+  }
+
+  switch (propertyType) {
+    case "reference":
+      return buildMockTestAttemptReferenceFilter(searchProperty, normalizedQuery);
+    case "number":
+    case "float": {
+      const numericValue = Number(normalizedQuery);
+      return Number.isFinite(numericValue)
+        ? { [searchProperty]: numericValue }
+        : EMPTY_ADMIN_SEARCH_FILTER;
+    }
+    case "datetime":
+    case "date":
+      return buildMockTestAttemptDateFilter(searchProperty, normalizedQuery);
+    case "id":
+      return mongoose.Types.ObjectId.isValid(normalizedQuery)
+        ? { [searchProperty]: normalizedQuery }
+        : EMPTY_ADMIN_SEARCH_FILTER;
+    case "string":
+    default:
+      return {
+        [searchProperty]: {
+          $regex: escapeAdminSearchRegex(normalizedQuery),
+          $options: "i",
+        },
+      };
+  }
+};
+
+const buildMockTestAttemptSearchAction = () => ({
+  handler: async (request, _response, context) => {
+    const searchProperty = String(request?.query?.searchProperty || "student").trim();
+    const queryString = String(request?.params?.query || "").trim();
+    const perPage = parseAdminSearchInteger(
+      request?.query?.perPage,
+      25,
+      MAX_ADMIN_SEARCH_PAGE_SIZE
+    );
+    const page = parseAdminSearchInteger(request?.query?.page, 1);
+
+    if (!queryString || !searchProperty) {
+      return { records: [] };
+    }
+
+    try {
+      const property = context.resource?.property?.(searchProperty);
+
+      if (!property) {
+        return {
+          records: [],
+          error: "This search field is not available for Mock Test Attempts.",
+        };
+      }
+
+      const filter = await buildMockTestAttemptSearchFilter({
+        searchProperty,
+        queryString,
+        property,
+      });
+
+      const matchingAttempts = await MockTestAttemptModel.find(filter)
+        .sort({ completedAt: -1, _id: -1 })
+        .skip((page - 1) * perPage)
+        .limit(perPage)
+        .lean();
+
+      if (!matchingAttempts.length) {
+        return { records: [] };
+      }
+
+      const records = matchingAttempts.map((attempt) =>
+        context.resource.build(attempt)
+      );
+      const populatedRecords = await populator(records, context);
+
+      return {
+        records: populatedRecords.map((record) =>
+          record.toJSON(context.currentAdmin)
+        ),
+      };
+    } catch (error) {
+      logger.error("MockTestAttempt admin search failed:", {
+        searchProperty,
+        queryString,
+        message: error?.message || String(error),
+      });
+
+      return {
+        records: [],
+        error: "Search could not be completed. Try a different field or keyword.",
+      };
+    }
+  },
+});
 
 const STUDENT_RESULT_SUBJECT_FIELD_PATTERN =
   /^subjects\.(\d+)\.(subjectName|fullMarks|passMarks|obtainedMarks)$/;
@@ -419,6 +666,7 @@ const startAdminPanel = async () => {
   const courseResource = {
     resource: Course,
     options: {
+      navigation: contentNavigation,
       properties: {
         descriptionFormatted: {
           label: "Formatted Description",
@@ -499,6 +747,7 @@ const startAdminPanel = async () => {
   const recordedClassResource = {
     resource: RecordedClass,
     options: {
+      navigation: classesNavigation,
       listProperties: [
         "subject",
         "topicName",
@@ -1204,19 +1453,52 @@ const startAdminPanel = async () => {
     AdminUserAdminResource,
     AdminNotificationAdminResource,
     BlogAdminResource,
-    Notice,
+    mergeResourceOptions(Notice, {
+      navigation: contentNavigation,
+    }),
     AdvertisementAdminResource,
-    CollegeAdminResource,
-    UniversityFileModel,
+    mergeResourceOptions(CollegeAdminResource, {
+      navigation: contentNavigation,
+    }),
+    mergeResourceOptions(UniversityFileModel, {
+      navigation: contentNavigation,
+    }),
     LandingAdAdminResource,
     MockTestCourseAdminResource,
     MockTestSubjectAdminResource,
     MockQuestionAdminResource,
     MockTestAdminResource,
-    { resource: MockTestAttemptModel, options: { id: "MockTestAttempt", properties: { student: { type: "reference" }, mockTest: { type: "reference" } } } },
+    {
+      resource: MockTestAttemptModel,
+      options: {
+        id: "MockTestAttempt",
+        navigation: mockTestNavigation,
+        actions: {
+          search: buildMockTestAttemptSearchAction(),
+        },
+        properties: {
+          student: {
+            type: "reference",
+            custom: {
+              searchableReference: true,
+            },
+          },
+          mockTest: {
+            type: "reference",
+            custom: {
+              searchableReference: true,
+            },
+          },
+        },
+      },
+    },
     courseResource,
-    NewsletterModel,
-    ContactModel,
+    mergeResourceOptions(NewsletterModel, {
+      navigation: contentNavigation,
+    }),
+    mergeResourceOptions(ContactModel, {
+      navigation: inquiriesNavigation,
+    }),
     PopupAdminResource,
     studentResource,
     onlineClassResource,
@@ -1366,6 +1648,8 @@ const startAdminPanel = async () => {
 
     return decorateAdminResource(resource);
   });
+
+  const adminLocale = buildAdminLocale({ resources: adminResources });
 
   const adminOptions = {
     resources: adminResources,

@@ -43,6 +43,14 @@ const staticFileOptions = {
   maxAge: "7d",
 };
 
+const normalizeRequestedMediaPath = (value = "") =>
+  String(value || "")
+    .replace(/\\/g, "/")
+    .split("/")
+    .map((segment) => path.basename(segment))
+    .filter((segment) => segment && segment !== "." && segment !== "..")
+    .join("/");
+
 if (isProduction) {
   app.set("trust proxy", 1);
 }
@@ -67,20 +75,27 @@ app.use(cookieParser());
 app.use(express.static(publicDirectory, staticFileOptions));
 
 // 2. Backfill missing media files from legacy folders on demand
-app.get("/media/:type/:filename", async (req, res, next) => {
-  const { type, filename } = req.params;
+app.get(/^\/media\/([^/]+)\/(.+)$/, async (req, res, next) => {
+  const type = req.params?.[0];
+  const requestedAssetPath = normalizeRequestedMediaPath(req.params?.[1] || "");
   const mediaType = MEDIA_TYPES[type];
 
-  if (!mediaType) {
+  if (!mediaType || !requestedAssetPath) {
     return next();
   }
 
-  const safeFilename = path.basename(filename);
+  const requestedSegments = requestedAssetPath.split("/").filter(Boolean);
+  const safeFilename = path.basename(requestedAssetPath);
   const targetDirectory = path.join(mediaRootDirectory, mediaType);
-  const targetPath = path.join(targetDirectory, safeFilename);
+  const directTargetPath = path.join(targetDirectory, ...requestedSegments);
+  const canonicalTargetPath = path.join(targetDirectory, safeFilename);
 
-  if (fs.existsSync(targetPath)) {
-    return next();
+  if (fs.existsSync(directTargetPath)) {
+    return res.sendFile(directTargetPath);
+  }
+
+  if (fs.existsSync(canonicalTargetPath)) {
+    return res.sendFile(canonicalTargetPath);
   }
 
   try {
@@ -90,8 +105,8 @@ app.get("/media/:type/:filename", async (req, res, next) => {
     }
 
     await fs.promises.mkdir(targetDirectory, { recursive: true });
-    await fs.promises.copyFile(legacyFilePath, targetPath);
-    return res.sendFile(targetPath);
+    await fs.promises.copyFile(legacyFilePath, canonicalTargetPath);
+    return res.sendFile(canonicalTargetPath);
   } catch (error) {
     logger.error(`Media fallback failed for ${mediaType}/${safeFilename}:`, error.message);
     return next();
