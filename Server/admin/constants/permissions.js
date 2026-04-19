@@ -135,6 +135,7 @@ export const ADMIN_PERMISSION_RESOURCES = [
   createPermissionResource("students", "Students"),
   createPermissionResource("online_classes", "Online Classes"),
   createPermissionResource("recorded_classes", "Recorded Classes"),
+  createPermissionResource("youtube_library", "YouTube Library"),
   createPermissionResource("results", "Results"),
   createPermissionResource("payments", "Payments"),
   createPermissionResource("book_orders", "Book Orders"),
@@ -233,6 +234,15 @@ export const ADMIN_RESOURCE_ACCESS = {
   },
   RecordedClass: {
     permissionResource: "recorded_classes",
+  },
+  YouTubeChannelConfig: {
+    permissionResource: "youtube_library",
+  },
+  YouTubePlaylist: {
+    permissionResource: "youtube_library",
+  },
+  YouTubeVideo: {
+    permissionResource: "youtube_library",
   },
   ResultExam: {
     permissionResource: "results",

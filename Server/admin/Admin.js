@@ -8,7 +8,6 @@ import path from "path";
 import AdminJSExpress from "@adminjs/express";
 import * as AdminJSMongoose from "@adminjs/mongoose";
 import mongoose from "mongoose";
-import MongoStore from "connect-mongo";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import componentLoader, { Components } from "./ComponentLoader.js";
@@ -30,7 +29,17 @@ import {
   STUDENT_COURSE_AVAILABLE_VALUES,
   STUDENT_COURSE_VALUES,
 } from "../constants/studentCourses.js";
+import {
+  YOUTUBE_LIBRARY_ALL_COURSES,
+  YOUTUBE_LIBRARY_COURSE_OPTIONS,
+} from "../constants/youtubeLibrary.js";
 import { formatOnlineClassCourseLabel } from "../utils/onlineClassCourses.js";
+import { buildAdminSessionConfig } from "./utils/admin-session.js";
+import { refreshYouTubeLibrarySchedule } from "../services/youtubeLibraryScheduler.js";
+import {
+  syncYouTubeLibrary,
+  validateYouTubeLibraryConfig,
+} from "../services/youtubeLibraryService.js";
 
 dotenv.config();
 
@@ -40,7 +49,6 @@ const katexAssetsDirectory = path.join(__dirname, "../node_modules/katex/dist");
 
 const logger = createLogger("admin");
 const isProduction = process.env.NODE_ENV === "production";
-const adminSessionMaxAgeMs = 7 * 24 * 60 * 60 * 1000;
 
 import Notice from "../models/Notice.js";
 import AdminUserModel from "../models/AdminUser.js";
@@ -53,6 +61,9 @@ import ContactModel from "../models/Contact.js";
 import Student from "../models/Student.js";
 import OnlineClass from "../models/OnlineClass.js";
 import RecordedClass from "../models/RecordedClass.js";
+import YouTubeChannelConfig from "../models/YouTubeChannelConfig.js";
+import YouTubePlaylist from "../models/YouTubePlaylist.js";
+import YouTubeVideo from "../models/YouTubeVideo.js";
 import ResultExam from "../models/ResultExam.js";
 import StudentResult from "../models/StudentResult.js";
 import Payment from "../models/Payment.js";
@@ -194,8 +205,11 @@ const mergeResourceOptions = (resourceConfig, optionAdditions = {}) => {
   };
 };
 
+const normalizeAdminInputString = (value = "") => String(value || "").trim();
+
 const contentNavigation = { name: "Content", icon: "Document" };
 const classesNavigation = { name: "Classes", icon: "Video" };
+const youtubeLibraryNavigation = { name: "YouTube Library", icon: "Play" };
 const inquiriesNavigation = { name: "Inquiries", icon: "Message" };
 const mockTestNavigation = { name: "Mock Test Management", icon: "Bookmark" };
 const EMPTY_ADMIN_SEARCH_FILTER = Object.freeze({ _id: { $in: [] } });
@@ -647,6 +661,11 @@ const ensureManualExamForPayload = async (payload) => {
 const startAdminPanel = async () => {
   await ensureAdminUserSeed();
   await syncAllAdminUserPermissions();
+  await YouTubeChannelConfig.findOneAndUpdate(
+    { configKey: "default" },
+    { $setOnInsert: { configKey: "default" } },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
 
   const authenticate = async (email, password) => {
     const result = await authenticateAdminUser(email, password);
@@ -661,6 +680,61 @@ const startAdminPanel = async () => {
 
   const richTextEditComponent = {
     edit: Components.RichTextEditor,
+  };
+
+  const refreshLibraryScheduleAfterMutation = async (response, request) => {
+    if (String(request?.method || "").toLowerCase() === "post" && response?.notice?.type !== "error") {
+      await refreshYouTubeLibrarySchedule();
+    }
+
+    return response;
+  };
+
+  const validateYouTubeLibraryConfigBeforeEdit = async (request, context) => {
+    if (String(request?.method || "").toLowerCase() !== "post") {
+      return request;
+    }
+
+    const payload =
+      request?.payload && typeof request.payload === "object" ? { ...request.payload } : {};
+    const currentRecordParams = context?.record?.params || {};
+    const nextChannelUrl = normalizeAdminInputString(
+      payload.channelUrl ?? currentRecordParams.channelUrl
+    );
+    const nextChannelId = normalizeAdminInputString(
+      payload.channelId ?? currentRecordParams.channelId
+    );
+    const previousChannelUrl = normalizeAdminInputString(currentRecordParams.channelUrl);
+    const previousChannelId = normalizeAdminInputString(currentRecordParams.channelId);
+    const shouldValidateChannel =
+      !context?.record ||
+      nextChannelUrl !== previousChannelUrl ||
+      nextChannelId !== previousChannelId;
+
+    if (!shouldValidateChannel) {
+      request.payload = {
+        ...payload,
+        channelUrl: nextChannelUrl,
+        channelId: nextChannelId,
+      };
+      return request;
+    }
+
+    const validatedChannel = await validateYouTubeLibraryConfig({
+      channelUrl: nextChannelUrl,
+      channelId: nextChannelId,
+    });
+
+    request.payload = {
+      ...payload,
+      channelUrl: nextChannelUrl || validatedChannel.channelUrl,
+      channelId: validatedChannel.channelId,
+      channelTitle: validatedChannel.channelTitle,
+      channelThumbnail: validatedChannel.channelThumbnail,
+      channelHandle: validatedChannel.channelHandle,
+    };
+
+    return request;
   };
 
   const courseResource = {
@@ -824,6 +898,407 @@ const startAdminPanel = async () => {
         description: {
           label: "Description",
           type: "textarea",
+        },
+      },
+    },
+  };
+
+  const youtubeChannelConfigResource = {
+    resource: YouTubeChannelConfig,
+    options: {
+      navigation: youtubeLibraryNavigation,
+      listProperties: [
+        "channelTitle",
+        "channelId",
+        "isActive",
+        "enableLiveDetection",
+        "lastLiveStatus",
+        "lastLiveCheckedAt",
+        "syncMode",
+        "maxVideos",
+        "lastSyncedAt",
+        "lastSyncStatus",
+      ],
+      showProperties: [
+        "channelTitle",
+        "channelUrl",
+        "channelId",
+        "channelHandle",
+        "channelThumbnail",
+        "isActive",
+        "allowedCourses",
+        "subjectTags",
+        "showPlaylists",
+        "showVideos",
+        "maxVideos",
+        "syncMode",
+        "syncIntervalMinutes",
+        "showPlaylistsFirst",
+        "enableLiveDetection",
+        "liveStatusRefreshMinutes",
+        "showEmbeddedLivePlayer",
+        "liveSectionLabel",
+        "lastLiveStatus",
+        "lastLiveCheckedAt",
+        "lastSyncedAt",
+        "lastSyncStatus",
+        "lastSyncError",
+        "lastSyncSummary",
+        "createdAt",
+        "updatedAt",
+      ],
+      editProperties: [
+        "channelUrl",
+        "channelId",
+        "isActive",
+        "allowedCourses",
+        "subjectTags",
+        "showPlaylists",
+        "showVideos",
+        "maxVideos",
+        "syncMode",
+        "syncIntervalMinutes",
+        "showPlaylistsFirst",
+        "enableLiveDetection",
+        "liveStatusRefreshMinutes",
+        "showEmbeddedLivePlayer",
+        "liveSectionLabel",
+      ],
+      actions: {
+        new: {
+          isAccessible: false,
+          isVisible: false,
+        },
+        delete: {
+          isAccessible: false,
+          isVisible: false,
+        },
+        bulkDelete: {
+          isAccessible: false,
+          isVisible: false,
+        },
+        edit: {
+          before: [validateYouTubeLibraryConfigBeforeEdit],
+          after: [refreshLibraryScheduleAfterMutation],
+        },
+        syncNow: {
+          actionType: "record",
+          icon: "RefreshCcw",
+          label: "Sync Now",
+          guard: "Fetch playlists and latest videos from this YouTube channel now?",
+          handler: async (_request, _response, context) => {
+            const recordId = context.record?.param("_id");
+
+            if (!recordId) {
+              return {
+                notice: {
+                  message: "YouTube settings record could not be resolved.",
+                  type: "error",
+                },
+              };
+            }
+
+            try {
+              const result = await syncYouTubeLibrary({
+                configId: recordId,
+                currentAdmin: context.currentAdmin,
+                trigger: "manual",
+                force: true,
+              });
+
+              await refreshYouTubeLibrarySchedule();
+
+              return {
+                notice: {
+                  message: `Sync completed successfully. ${result?.summary?.playlistsFetched || 0} playlists and ${
+                    result?.summary?.latestVideosFetched || 0
+                  } videos were refreshed.`,
+                  type: "success",
+                },
+                redirectUrl: `/admin/resources/${context.resource.id()}/records/${recordId}/show`,
+              };
+            } catch (error) {
+              return {
+                notice: {
+                  message: error?.message || "YouTube sync failed.",
+                  type: "error",
+                },
+              };
+            }
+          },
+        },
+      },
+      properties: {
+        configKey: {
+          isVisible: false,
+        },
+        channelTitle: {
+          label: "Channel Title",
+          isVisible: { edit: false, list: true, show: true, filter: false },
+        },
+        channelUrl: {
+          label: "Channel URL",
+          description: "Paste a YouTube channel URL or @handle URL.",
+        },
+        channelId: {
+          label: "Channel ID",
+          description: "You can save a direct YouTube channel ID instead of a URL.",
+        },
+        channelHandle: {
+          label: "Channel Handle",
+          isVisible: { edit: false, list: false, show: true, filter: false },
+        },
+        channelThumbnail: {
+          label: "Channel Thumbnail",
+          isVisible: { edit: false, list: false, show: true, filter: false },
+        },
+        allowedCourses: {
+          label: "Course Visibility",
+          availableValues: YOUTUBE_LIBRARY_COURSE_OPTIONS,
+          components: {
+            edit: Components.OnlineClassCoursesEdit,
+          },
+          description: `Students from the selected courses will see this library. Choose ${YOUTUBE_LIBRARY_ALL_COURSES} to show it to everyone.`,
+        },
+        subjectTags: {
+          label: "Default Subject Tags",
+          type: "textarea",
+          description: "Optional default subject or category tags separated by commas.",
+        },
+        showPlaylists: {
+          label: "Show Playlists",
+        },
+        showVideos: {
+          label: "Show Videos",
+        },
+        maxVideos: {
+          label: "Latest Videos To Fetch",
+        },
+        syncMode: {
+          label: "Sync Mode",
+          availableValues: [
+            { value: "manual", label: "Manual only" },
+            { value: "interval", label: "Auto sync on interval" },
+          ],
+        },
+        syncIntervalMinutes: {
+          label: "Auto Sync Interval (minutes)",
+          description: "Used only when sync mode is set to Auto sync on interval.",
+        },
+        showPlaylistsFirst: {
+          label: "Show Playlists First",
+        },
+        enableLiveDetection: {
+          label: "Enable Live Detection",
+          description:
+            "Checks the configured YouTube channel /live page and surfaces an active stream in the student dashboard.",
+        },
+        liveStatusRefreshMinutes: {
+          label: "Live Status Refresh (minutes)",
+          description:
+            "Used for backend caching and the student dashboard refresh interval so live status is not checked on every page refresh.",
+        },
+        showEmbeddedLivePlayer: {
+          label: "Show Embedded Live Player",
+          description:
+            "Allow students to open the YouTube live stream in the in-app player modal.",
+        },
+        liveSectionLabel: {
+          label: "Live Section Label",
+          description: "Text shown above the active YouTube stream card, for example Currently Live.",
+        },
+        lastLiveStatus: {
+          label: "Last Live Status",
+          availableValues: [
+            { value: "unknown", label: "Unknown" },
+            { value: "live", label: "Live" },
+            { value: "offline", label: "Offline" },
+            { value: "error", label: "Error" },
+          ],
+          isVisible: { edit: false, list: true, show: true, filter: true },
+        },
+        lastLiveCheckedAt: {
+          label: "Last Live Check",
+          type: "datetime",
+          isVisible: { edit: false, list: true, show: true, filter: false },
+        },
+        lastSyncedAt: {
+          type: "datetime",
+          isVisible: { edit: false, list: true, show: true, filter: false },
+        },
+        lastSyncStatus: {
+          label: "Last Sync Status",
+          isVisible: { edit: false, list: true, show: true, filter: true },
+        },
+        lastSyncError: {
+          label: "Last Sync Error",
+          type: "textarea",
+          isVisible: { edit: false, list: false, show: true, filter: false },
+        },
+        lastSyncSummary: {
+          label: "Last Sync Summary",
+          isVisible: { edit: false, list: false, show: true, filter: false },
+        },
+      },
+    },
+  };
+
+  const youtubePlaylistResource = {
+    resource: YouTubePlaylist,
+    options: {
+      navigation: youtubeLibraryNavigation,
+      listProperties: [
+        "title",
+        "videoCount",
+        "subjectTag",
+        "allowedCourses",
+        "isVisible",
+        "publishedAt",
+      ],
+      filterProperties: ["title", "subjectTag", "allowedCourses", "isVisible", "channelId"],
+      editProperties: ["subjectTag", "isVisible"],
+      showProperties: [
+        "youtubePlaylistId",
+        "title",
+        "description",
+        "thumbnail",
+        "publishedAt",
+        "videoCount",
+        "playlistUrl",
+        "firstVideoId",
+        "channelId",
+        "isVisible",
+        "subjectTag",
+        "allowedCourses",
+        "syncSource",
+        "createdAt",
+        "updatedAt",
+        "rawData",
+      ],
+      actions: {
+        new: {
+          isAccessible: false,
+          isVisible: false,
+        },
+        delete: {
+          isAccessible: false,
+          isVisible: false,
+        },
+        bulkDelete: {
+          isAccessible: false,
+          isVisible: false,
+        },
+      },
+      properties: {
+        youtubePlaylistId: {
+          label: "YouTube Playlist ID",
+          isVisible: { edit: false, list: false, show: true, filter: true },
+        },
+        thumbnail: {
+          label: "Thumbnail URL",
+          isVisible: { edit: false, list: false, show: true, filter: false },
+        },
+        playlistUrl: {
+          label: "Playlist URL",
+          isVisible: { edit: false, list: false, show: true, filter: false },
+        },
+        firstVideoId: {
+          label: "First Video ID",
+          isVisible: { edit: false, list: false, show: true, filter: false },
+        },
+        allowedCourses: {
+          label: "Course Visibility",
+          availableValues: YOUTUBE_LIBRARY_COURSE_OPTIONS,
+          isVisible: { edit: false, list: true, show: true, filter: true },
+        },
+        rawData: {
+          label: "Raw API Data",
+          isVisible: { edit: false, list: false, show: true, filter: false },
+        },
+      },
+    },
+  };
+
+  const youtubeVideoResource = {
+    resource: YouTubeVideo,
+    options: {
+      navigation: youtubeLibraryNavigation,
+      listProperties: [
+        "title",
+        "subjectTag",
+        "allowedCourses",
+        "isLiveStreamRecording",
+        "publishedAt",
+        "isVisible",
+      ],
+      filterProperties: [
+        "title",
+        "subjectTag",
+        "allowedCourses",
+        "isLiveStreamRecording",
+        "isVisible",
+        "channelId",
+      ],
+      editProperties: ["subjectTag", "isVisible"],
+      showProperties: [
+        "youtubeVideoId",
+        "title",
+        "description",
+        "thumbnail",
+        "publishedAt",
+        "videoUrl",
+        "embedUrl",
+        "channelId",
+        "playlistIds",
+        "isLiveStreamRecording",
+        "livestreamArchive",
+        "isVisible",
+        "subjectTag",
+        "allowedCourses",
+        "syncSource",
+        "createdAt",
+        "updatedAt",
+        "rawData",
+      ],
+      actions: {
+        new: {
+          isAccessible: false,
+          isVisible: false,
+        },
+        delete: {
+          isAccessible: false,
+          isVisible: false,
+        },
+        bulkDelete: {
+          isAccessible: false,
+          isVisible: false,
+        },
+      },
+      properties: {
+        youtubeVideoId: {
+          label: "YouTube Video ID",
+          isVisible: { edit: false, list: false, show: true, filter: true },
+        },
+        thumbnail: {
+          label: "Thumbnail URL",
+          isVisible: { edit: false, list: false, show: true, filter: false },
+        },
+        videoUrl: {
+          label: "Video URL",
+          isVisible: { edit: false, list: false, show: true, filter: false },
+        },
+        embedUrl: {
+          label: "Embed URL",
+          isVisible: { edit: false, list: false, show: true, filter: false },
+        },
+        allowedCourses: {
+          label: "Course Visibility",
+          availableValues: YOUTUBE_LIBRARY_COURSE_OPTIONS,
+          isVisible: { edit: false, list: true, show: true, filter: true },
+        },
+        rawData: {
+          label: "Raw API Data",
+          isVisible: { edit: false, list: false, show: true, filter: false },
         },
       },
     },
@@ -1503,6 +1978,9 @@ const startAdminPanel = async () => {
     studentResource,
     onlineClassResource,
     recordedClassResource,
+    youtubeChannelConfigResource,
+    youtubePlaylistResource,
+    youtubeVideoResource,
     resultExamResource,
     studentResultResource,
     paymentResource,
@@ -1686,24 +2164,8 @@ const startAdminPanel = async () => {
     }
   }
 
-  const mongoDbUri = process.env.MONGODB_URI;
-  const sessionSecret = process.env.SESSION_SECRET;
-
-  if (!mongoDbUri) {
-    throw new Error("MONGODB_URI is required for the admin session store.");
-  }
-
-  if (!sessionSecret) {
-    throw new Error("SESSION_SECRET is required for the admin session store.");
-  }
-
-  // Reuse the existing Mongoose client so admin sessions stay in MongoDB
-  // without opening a second application-level connection.
-  const sessionStore = MongoStore.create({
-    client: mongoose.connection.getClient(),
-    collectionName: "adminSessions",
-    touchAfter: 24 * 3600,
-  });
+  const adminSessionOptions = buildAdminSessionConfig();
+  const sessionStore = adminSessionOptions.store;
 
   sessionStore.on("error", (error) => {
     logger.error("Session store error:", error);
@@ -1714,23 +2176,10 @@ const startAdminPanel = async () => {
     {
       authenticate,
       cookieName: "adminjs",
-      cookiePassword: sessionSecret,
+      cookiePassword: process.env.SESSION_SECRET,
     },
     null,
-    {
-      store: sessionStore,
-      resave: false,
-      saveUninitialized: false,
-      secret: sessionSecret,
-      proxy: isProduction,
-      cookie: {
-        httpOnly: true,
-        secure: isProduction,
-        sameSite: "lax",
-        maxAge: adminSessionMaxAgeMs,
-      },
-      name: "adminjs",
-    }
+    adminSessionOptions
   );
 
   adminRouter.get(

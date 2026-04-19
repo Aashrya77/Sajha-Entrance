@@ -18,6 +18,7 @@ import MockTestRoutes from "./routes/MockTest.js";
 import BlogUploadRoutes from "./routes/BlogUpload.js";
 import BookPaymentRoutes from "./routes/BookPayment.js";
 import InquiryRoutes from "./routes/Inquiry.js";
+import YouTubeLibraryRoutes from "./routes/YouTubeLibrary.js";
 
 import { startAdminPanel } from "./admin/Admin.js";
 import { adminBrandAssets } from "./admin/config/branding.js";
@@ -30,6 +31,7 @@ import {
 } from "./utils/media.js";
 import { backfillLegacyResultExams } from "./services/resultService.js";
 import { syncMockTestIndexes } from "./services/mockTestIndexService.js";
+import { refreshYouTubeLibrarySchedule } from "./services/youtubeLibraryScheduler.js";
 
 dotenv.config();
 
@@ -142,6 +144,7 @@ const registerApiRoutes = () => {
   app.use("/api", BlogUploadRoutes);
   app.use("/api", BookPaymentRoutes);
   app.use("/api", InquiryRoutes);
+  app.use("/api/youtube-library", YouTubeLibraryRoutes);
 
   app.use("/api/*", (req, res) => {
     res.status(404).json({ error: "API endpoint not found" });
@@ -170,6 +173,12 @@ const startServer = async () => {
       }
     } catch (err) {
       logger.error("Migration error:", err.message);
+    }
+
+    try {
+      await refreshYouTubeLibrarySchedule();
+    } catch (err) {
+      logger.error("YouTube library scheduler init error:", err.message);
     }
 
     const adminRouter = await startAdminPanel();

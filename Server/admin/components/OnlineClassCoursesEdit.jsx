@@ -18,6 +18,9 @@ const OnlineClassCoursesEdit = ({ property, record, onChange }) => {
   const options = Array.isArray(property?.availableValues) ? property.availableValues : [];
   const propertyError = record?.errors?.[propertyPath];
   const selectedValues = readSelectedCourses(record, property);
+  const helperText =
+    property?.description ||
+    "Students from any selected course will see this live class. Select at least one.";
 
   const optionLookup = useMemo(
     () =>
@@ -60,7 +63,7 @@ const OnlineClassCoursesEdit = ({ property, record, onChange }) => {
         />
 
         <Text color="grey60" fontSize="12px">
-          Students from any selected course will see this live class. Select at least one.
+          {helperText}
         </Text>
       </Box>
 

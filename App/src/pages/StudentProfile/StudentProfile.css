@@ -444,6 +444,10 @@
   margin-bottom: 1.25rem;
 }
 
+.classroom-live-banner {
+  margin-bottom: 1.25rem;
+}
+
 .dash-tab {
   display: inline-flex;
   align-items: center;
@@ -466,6 +470,23 @@
 .class-list {
   display: flex;
   flex-direction: column;
+  gap: 1rem;
+}
+
+.legacy-recorded-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.2rem;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.legacy-recorded-section__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 1rem;
 }
 

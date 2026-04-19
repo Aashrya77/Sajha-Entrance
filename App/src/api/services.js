@@ -64,6 +64,41 @@ export const authAPI = {
   logout: () => API.post('/student/logout'),
 };
 
+export const youtubeLibraryAPI = {
+  getHome: (params = {}) => {
+    const query = new URLSearchParams();
+    if (params.search) query.append('search', params.search);
+    if (params.subject) query.append('subject', params.subject);
+    if (params.course) query.append('course', params.course);
+    if (params.page) query.append('page', params.page);
+    if (params.limit) query.append('limit', params.limit);
+    return API.get(`/youtube-library/home?${query.toString()}`);
+  },
+  getLive: (params = {}) => {
+    const query = new URLSearchParams();
+    if (params.course) query.append('course', params.course);
+    return API.get(`/youtube-library/live?${query.toString()}`);
+  },
+  getPlaylists: (params = {}) => {
+    const query = new URLSearchParams();
+    if (params.search) query.append('search', params.search);
+    if (params.subject) query.append('subject', params.subject);
+    if (params.course) query.append('course', params.course);
+    if (params.page) query.append('page', params.page);
+    if (params.limit) query.append('limit', params.limit);
+    return API.get(`/youtube-library/playlists?${query.toString()}`);
+  },
+  getVideos: (params = {}) => {
+    const query = new URLSearchParams();
+    if (params.search) query.append('search', params.search);
+    if (params.subject) query.append('subject', params.subject);
+    if (params.course) query.append('course', params.course);
+    if (params.page) query.append('page', params.page);
+    if (params.limit) query.append('limit', params.limit);
+    return API.get(`/youtube-library/videos?${query.toString()}`);
+  },
+};
+
 // Notice API
 export const noticeAPI = {
   getNotice: () => API.get('/notice'),
