@@ -60,7 +60,6 @@ export const authAPI = {
   getProfile: () => API.get('/student/profile'),
   updateProfile: (data) => API.put('/student/profile', data),
   getClasses: () => API.get('/student/classes'),
-  getRecordedClassDetails: (classId) => API.get(`/student/classes/recorded/${classId}`),
   logout: () => API.post('/student/logout'),
 };
 

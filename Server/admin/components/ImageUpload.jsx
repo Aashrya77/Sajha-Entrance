@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { Box, Button, FormGroup, Icon, Label, Text } from "@adminjs/design-system";
 import { flat, useTranslation } from "adminjs";
+import { resolveAdminPropertyLabel } from "./adminjs/translation-utils";
 
 const formatFileSize = (sizeInBytes) => {
   if (!sizeInBytes) {
@@ -138,7 +139,7 @@ const getFilenameLabel = (item) => {
 
 export default function ImageUpload(props) {
   const { property, record, onChange } = props;
-  const { translateProperty } = useTranslation();
+  const { i18n, translateProperty } = useTranslation();
   const { custom = {} } = property;
 
   const params = record?.params || {};
@@ -412,7 +413,11 @@ export default function ImageUpload(props) {
   return (
     <FormGroup className="sajha-admin-image-upload">
       <Label required={property.isRequired}>
-        {translateProperty(property.label, property.resourceId)}
+        {resolveAdminPropertyLabel({
+          property,
+          i18n,
+          translateProperty,
+        })}
       </Label>
 
       <Box

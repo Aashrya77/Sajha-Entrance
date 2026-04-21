@@ -3,6 +3,7 @@ import componentsBundler from "../node_modules/adminjs/lib/backend/bundler/compo
 import generateAdminComponentEntry from "../node_modules/adminjs/lib/backend/bundler/generate-user-component-entry.js";
 import { ADMIN_JS_TMP_DIR } from "../node_modules/adminjs/lib/backend/bundler/utils/constants.js";
 import populator from "../node_modules/adminjs/lib/backend/utils/populator/populator.js";
+import ValidationError from "../node_modules/adminjs/lib/backend/utils/errors/validation-error.js";
 import express from "express";
 import path from "path";
 import AdminJSExpress from "@adminjs/express";
@@ -30,7 +31,6 @@ import {
   STUDENT_COURSE_VALUES,
 } from "../constants/studentCourses.js";
 import {
-  YOUTUBE_LIBRARY_ALL_COURSES,
   YOUTUBE_LIBRARY_COURSE_OPTIONS,
 } from "../constants/youtubeLibrary.js";
 import { formatOnlineClassCourseLabel } from "../utils/onlineClassCourses.js";
@@ -46,6 +46,10 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const katexAssetsDirectory = path.join(__dirname, "../node_modules/katex/dist");
+const adminJsDesignSystemProductionBundlePath = path.join(
+  __dirname,
+  "../node_modules/@adminjs/design-system/bundle.production.js"
+);
 
 const logger = createLogger("admin");
 const isProduction = process.env.NODE_ENV === "production";
@@ -206,6 +210,135 @@ const mergeResourceOptions = (resourceConfig, optionAdditions = {}) => {
 };
 
 const normalizeAdminInputString = (value = "") => String(value || "").trim();
+const YOUTUBE_SETTINGS_RESOURCE_ID = "YouTubeChannelConfig";
+
+const hasAdminYouTubeApiKey = () => Boolean(normalizeAdminInputString(process.env.YOUTUBE_API_KEY));
+
+const buildYouTubeSettingsNotice = ({
+  message = "",
+  type = "info",
+  options = {},
+  resourceId = YOUTUBE_SETTINGS_RESOURCE_ID,
+} = {}) => ({
+  message,
+  type,
+  resourceId,
+  ...(options && Object.keys(options).length > 0 ? { options } : {}),
+});
+
+const buildYouTubeSettingsRedirectUrl = (resourceId, recordId) =>
+  `/admin/resources/${resourceId}/records/${recordId}/show?refresh=${Date.now()}`;
+
+const buildYouTubeSettingsRecordDebugSnapshot = (record = null) => ({
+  recordId: normalizeAdminInputString(record?.param?.("_id") || record?.params?._id),
+  recordParams: {
+    channelId: normalizeAdminInputString(record?.params?.channelId),
+    channelUrl: normalizeAdminInputString(record?.params?.channelUrl),
+    channelHandle: normalizeAdminInputString(record?.params?.channelHandle),
+    isActive: Boolean(record?.params?.isActive),
+    syncMode: normalizeAdminInputString(record?.params?.syncMode),
+    lastSyncStatus: normalizeAdminInputString(record?.params?.lastSyncStatus),
+  },
+});
+
+const buildYouTubeSettingsValidationError = (error) => {
+  if (error instanceof ValidationError) {
+    return error;
+  }
+
+  const validationFields = Array.isArray(error?.validationFields)
+    ? error.validationFields.filter(Boolean)
+    : [];
+  const validationMessageKey =
+    normalizeAdminInputString(error?.validationMessageKey || error?.adminMessageKey) ||
+    "youtubeSettings.validation.configInvalid";
+  const propertyErrors = validationFields.reduce((errors, fieldName) => {
+    errors[fieldName] = {
+      message: validationMessageKey,
+      type: normalizeAdminInputString(error?.code) || "invalid",
+    };
+    return errors;
+  }, {});
+
+  return new ValidationError(propertyErrors, {
+    message:
+      validationFields.length > 0
+        ? "youtubeSettings.notice.saveValidationFailed"
+        : normalizeAdminInputString(error?.adminMessageKey) ||
+          "youtubeSettings.notice.saveValidationFailed",
+    type: "error",
+  });
+};
+
+const buildYouTubeSettingsActionNoticeFromError = (error) => {
+  const adminMessageKey = normalizeAdminInputString(error?.adminMessageKey);
+  const adminMessageOptions =
+    error?.adminMessageOptions && typeof error.adminMessageOptions === "object"
+      ? error.adminMessageOptions
+      : {};
+
+  if (adminMessageKey) {
+    return buildYouTubeSettingsNotice({
+      message: adminMessageKey,
+      type: "error",
+      options: adminMessageOptions,
+    });
+  }
+
+  return buildYouTubeSettingsNotice({
+    message: "youtubeSettings.notice.syncFailedReason",
+    type: "error",
+    options: {
+      reason: normalizeAdminInputString(error?.message) || "YouTube sync failed.",
+    },
+  });
+};
+
+const buildYouTubeSettingsActionResponse = async ({ context, recordId, notice }) => {
+  try {
+    const fallbackRecord = context.record || null;
+    const resolvedRecord =
+      (await context.resource.findOne(recordId, context)) || fallbackRecord || null;
+
+    if (!resolvedRecord) {
+      return {
+        notice: buildYouTubeSettingsNotice({
+          message: "youtubeSettings.notice.recordNotResolved",
+          type: "error",
+        }),
+      };
+    }
+
+    const [populatedRecord] = await populator([resolvedRecord], context);
+
+    return {
+      record: populatedRecord.toJSON(context.currentAdmin),
+      notice,
+      redirectUrl: buildYouTubeSettingsRedirectUrl(context.resource.id(), recordId),
+    };
+  } catch (error) {
+    logger.error("Failed to rebuild AdminJS YouTube settings action response", {
+      recordId,
+      message: normalizeAdminInputString(error?.message),
+      stack: error?.stack || "",
+    });
+
+    const fallbackRecordJson = context.record?.toJSON?.(context.currentAdmin);
+
+    return fallbackRecordJson
+      ? {
+          record: fallbackRecordJson,
+          notice,
+          redirectUrl: buildYouTubeSettingsRedirectUrl(context.resource.id(), recordId),
+        }
+      : {
+          notice: buildYouTubeSettingsNotice({
+            message: "youtubeSettings.notice.recordNotResolved",
+            type: "error",
+          }),
+        };
+  }
+};
 
 const contentNavigation = { name: "Content", icon: "Document" };
 const classesNavigation = { name: "Classes", icon: "Video" };
@@ -720,21 +853,25 @@ const startAdminPanel = async () => {
       return request;
     }
 
-    const validatedChannel = await validateYouTubeLibraryConfig({
-      channelUrl: nextChannelUrl,
-      channelId: nextChannelId,
-    });
+    try {
+      const validatedChannel = await validateYouTubeLibraryConfig({
+        channelUrl: nextChannelUrl,
+        channelId: nextChannelId,
+      });
 
-    request.payload = {
-      ...payload,
-      channelUrl: nextChannelUrl || validatedChannel.channelUrl,
-      channelId: validatedChannel.channelId,
-      channelTitle: validatedChannel.channelTitle,
-      channelThumbnail: validatedChannel.channelThumbnail,
-      channelHandle: validatedChannel.channelHandle,
-    };
+      request.payload = {
+        ...payload,
+        channelUrl: nextChannelUrl || validatedChannel.channelUrl,
+        channelId: validatedChannel.channelId,
+        channelTitle: validatedChannel.channelTitle,
+        channelThumbnail: validatedChannel.channelThumbnail,
+        channelHandle: validatedChannel.channelHandle,
+      };
 
-    return request;
+      return request;
+    } catch (error) {
+      throw buildYouTubeSettingsValidationError(error);
+    }
   };
 
   const courseResource = {
@@ -983,18 +1120,26 @@ const startAdminPanel = async () => {
         },
         syncNow: {
           actionType: "record",
+          component: false,
           icon: "RefreshCcw",
           label: "Sync Now",
-          guard: "Fetch playlists and latest videos from this YouTube channel now?",
-          handler: async (_request, _response, context) => {
+          guard: "youtubeSettings.guard.syncNow",
+          handler: async (request, _response, context) => {
             const recordId = context.record?.param("_id");
+            const recordDebugSnapshot = buildYouTubeSettingsRecordDebugSnapshot(context.record);
+
+            logger.info("Admin YouTube syncNow action invoked", {
+              requestMethod: normalizeAdminInputString(request?.method).toLowerCase() || "get",
+              apiKeyPresent: hasAdminYouTubeApiKey(),
+              ...recordDebugSnapshot,
+            });
 
             if (!recordId) {
               return {
-                notice: {
-                  message: "YouTube settings record could not be resolved.",
+                notice: buildYouTubeSettingsNotice({
+                  message: "youtubeSettings.notice.recordNotResolved",
                   type: "error",
-                },
+                }),
               };
             }
 
@@ -1006,24 +1151,54 @@ const startAdminPanel = async () => {
                 force: true,
               });
 
-              await refreshYouTubeLibrarySchedule();
+              logger.info("Admin YouTube syncNow action completed", {
+                recordId,
+                apiKeyPresent: hasAdminYouTubeApiKey(),
+                inputChannelId: recordDebugSnapshot.recordParams.channelId,
+                inputChannelUrl: recordDebugSnapshot.recordParams.channelUrl,
+                playlistsFetched: Number(result?.summary?.playlistsFetched || 0),
+                latestVideosFetched: Number(result?.summary?.latestVideosFetched || 0),
+                success: Boolean(result?.success),
+              });
 
-              return {
-                notice: {
-                  message: `Sync completed successfully. ${result?.summary?.playlistsFetched || 0} playlists and ${
-                    result?.summary?.latestVideosFetched || 0
-                  } videos were refreshed.`,
+              try {
+                await refreshYouTubeLibrarySchedule();
+              } catch (scheduleError) {
+                logger.error("Failed to refresh YouTube library schedule after admin sync", {
+                  recordId,
+                  message: normalizeAdminInputString(scheduleError?.message),
+                  stack: scheduleError?.stack || "",
+                });
+              }
+
+              return buildYouTubeSettingsActionResponse({
+                context,
+                recordId,
+                notice: buildYouTubeSettingsNotice({
+                  message: "youtubeSettings.notice.syncSuccess",
                   type: "success",
-                },
-                redirectUrl: `/admin/resources/${context.resource.id()}/records/${recordId}/show`,
-              };
+                  options: {
+                    playlists: Number(result?.summary?.playlistsFetched || 0),
+                    videos: Number(result?.summary?.latestVideosFetched || 0),
+                  },
+                }),
+              });
             } catch (error) {
-              return {
-                notice: {
-                  message: error?.message || "YouTube sync failed.",
-                  type: "error",
-                },
-              };
+              logger.error("Admin YouTube syncNow action failed", {
+                recordId,
+                apiKeyPresent: hasAdminYouTubeApiKey(),
+                inputChannelId: recordDebugSnapshot.recordParams.channelId,
+                inputChannelUrl: recordDebugSnapshot.recordParams.channelUrl,
+                message: normalizeAdminInputString(error?.message),
+                code: normalizeAdminInputString(error?.code),
+                stack: error?.stack || "",
+              });
+
+              return buildYouTubeSettingsActionResponse({
+                context,
+                recordId,
+                notice: buildYouTubeSettingsActionNoticeFromError(error),
+              });
             }
           },
         },
@@ -1038,11 +1213,11 @@ const startAdminPanel = async () => {
         },
         channelUrl: {
           label: "Channel URL",
-          description: "Paste a YouTube channel URL or @handle URL.",
+          description: "youtubeSettings.help.channelUrl",
         },
         channelId: {
           label: "Channel ID",
-          description: "You can save a direct YouTube channel ID instead of a URL.",
+          description: "youtubeSettings.help.channelId",
         },
         channelHandle: {
           label: "Channel Handle",
@@ -1058,12 +1233,12 @@ const startAdminPanel = async () => {
           components: {
             edit: Components.OnlineClassCoursesEdit,
           },
-          description: `Students from the selected courses will see this library. Choose ${YOUTUBE_LIBRARY_ALL_COURSES} to show it to everyone.`,
+          description: "youtubeSettings.help.allowedCourses",
         },
         subjectTags: {
           label: "Default Subject Tags",
           type: "textarea",
-          description: "Optional default subject or category tags separated by commas.",
+          description: "youtubeSettings.help.subjectTags",
         },
         showPlaylists: {
           label: "Show Playlists",
@@ -1083,29 +1258,26 @@ const startAdminPanel = async () => {
         },
         syncIntervalMinutes: {
           label: "Auto Sync Interval (minutes)",
-          description: "Used only when sync mode is set to Auto sync on interval.",
+          description: "youtubeSettings.help.syncInterval",
         },
         showPlaylistsFirst: {
           label: "Show Playlists First",
         },
         enableLiveDetection: {
           label: "Enable Live Detection",
-          description:
-            "Checks the configured YouTube channel /live page and surfaces an active stream in the student dashboard.",
+          description: "youtubeSettings.help.enableLiveDetection",
         },
         liveStatusRefreshMinutes: {
           label: "Live Status Refresh (minutes)",
-          description:
-            "Used for backend caching and the student dashboard refresh interval so live status is not checked on every page refresh.",
+          description: "youtubeSettings.help.liveRefresh",
         },
         showEmbeddedLivePlayer: {
           label: "Show Embedded Live Player",
-          description:
-            "Allow students to open the YouTube live stream in the in-app player modal.",
+          description: "youtubeSettings.help.showEmbeddedPlayer",
         },
         liveSectionLabel: {
           label: "Live Section Label",
-          description: "Text shown above the active YouTube stream card, for example Currently Live.",
+          description: "youtubeSettings.help.liveSectionLabel",
         },
         lastLiveStatus: {
           label: "Last Live Status",
@@ -1361,6 +1533,9 @@ const startAdminPanel = async () => {
         },
         "subjects.name": {
           label: "Subject Name",
+        },
+        "subjects.code": {
+          label: "Subject Code",
         },
         "subjects.fullMarks": {
           label: "Full Marks",
@@ -2374,6 +2549,12 @@ const startAdminPanel = async () => {
 
   const Router = express.Router();
   Router.use("/admin/vendor/katex", express.static(katexAssetsDirectory));
+  if (!isProduction) {
+    Router.get("/admin/frontend/assets/design-system.bundle.js", (_req, res) => {
+      res.type("application/javascript");
+      res.sendFile(adminJsDesignSystemProductionBundlePath);
+    });
+  }
   Router.use(admin.options.rootPath, (req, res, next) => {
     res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
     res.setHeader("Pragma", "no-cache");

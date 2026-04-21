@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import YouTubeChannelConfig from "../models/YouTubeChannelConfig.js";
 import YouTubePlaylist from "../models/YouTubePlaylist.js";
 import YouTubeVideo from "../models/YouTubeVideo.js";
@@ -35,10 +36,96 @@ const liveStatusState = {
   promises: new Map(),
 };
 
+const YOUTUBE_HANDLE_PATTERN = /^[A-Za-z0-9._-]+$/;
+
 const escapeRegex = (value = "") =>
   String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 const toTrimmedString = (value = "") => String(value || "").trim();
+
+const hasYouTubeApiKey = () => Boolean(toTrimmedString(process.env.YOUTUBE_API_KEY));
+
+const isYouTubeHostname = (hostname = "") => {
+  const normalizedHostname = toTrimmedString(hostname)
+    .replace(/^www\./i, "")
+    .toLowerCase();
+
+  return (
+    normalizedHostname === "youtube.com" ||
+    normalizedHostname.endsWith(".youtube.com") ||
+    normalizedHostname === "youtube-nocookie.com" ||
+    normalizedHostname.endsWith(".youtube-nocookie.com")
+  );
+};
+
+const buildYouTubeLibraryError = ({
+  message = "YouTube library request failed.",
+  status = 400,
+  code = "youtube_library_error",
+  adminMessageKey = "",
+  adminMessageOptions = {},
+  validationFields = [],
+  validationMessageKey = "",
+  cause = null,
+} = {}) => {
+  const error = new Error(message);
+  error.status = status;
+  error.code = code;
+
+  if (adminMessageKey) {
+    error.adminMessageKey = adminMessageKey;
+  }
+
+  if (adminMessageOptions && Object.keys(adminMessageOptions).length > 0) {
+    error.adminMessageOptions = adminMessageOptions;
+  }
+
+  if (validationMessageKey) {
+    error.validationMessageKey = validationMessageKey;
+  }
+
+  if (Array.isArray(validationFields) && validationFields.length > 0) {
+    error.validationFields = validationFields;
+  }
+
+  if (cause) {
+    error.cause = cause;
+  }
+
+  return error;
+};
+
+const buildChannelConfigError = ({
+  message = "Channel configuration is invalid.",
+  validationFields = ["channelUrl", "channelId"],
+  validationMessageKey = "youtubeSettings.validation.configInvalid",
+  cause = null,
+} = {}) =>
+  buildYouTubeLibraryError({
+    message,
+    status: 400,
+    code: "youtube_channel_config_invalid",
+    adminMessageKey: "youtubeSettings.notice.channelConfigInvalid",
+    validationFields,
+    validationMessageKey,
+    cause,
+  });
+
+const buildYouTubeApiRequestError = ({
+  reason = "Unknown error.",
+  status = 502,
+  cause = null,
+} = {}) =>
+  buildYouTubeLibraryError({
+    message: `YouTube API request failed: ${reason}`,
+    status,
+    code: "youtube_api_request_failed",
+    adminMessageKey: "youtubeSettings.notice.youtubeApiFailedReason",
+    adminMessageOptions: { reason },
+    validationFields: ["channelUrl", "channelId"],
+    validationMessageKey: "youtubeSettings.validation.channelLookupFailed",
+    cause,
+  });
 
 const toNonNegativeInteger = (value, fallback, options = {}) => {
   const min = options.min ?? 0;
@@ -258,16 +345,45 @@ const fetchTextWithTimeout = async (url, options = {}) => {
 };
 
 const callYouTubeApi = async (endpoint, params = {}, apiKey = "") => {
-  if (!apiKey) {
-    throw new Error("YOUTUBE_API_KEY is missing in server environment");
-  }
+  const resolvedApiKey = apiKey || readYouTubeApiKey();
 
   const url = buildYouTubeApiUrl(endpoint, {
     ...params,
-    key: apiKey,
+    key: resolvedApiKey,
   });
 
-  return fetchJsonWithTimeout(url);
+  try {
+    return await fetchJsonWithTimeout(url);
+  } catch (error) {
+    const primaryApiReason = toTrimmedString(
+      error?.payload?.error?.errors?.[0]?.reason || error?.payload?.error?.status
+    );
+    const normalizedMessage =
+      toTrimmedString(error?.message) ||
+      (error?.status ? `status ${error.status}` : "Unknown error.");
+
+    if (error?.name === "AbortError") {
+      throw buildYouTubeApiRequestError({
+        reason: "Request timed out. Try again in a moment.",
+        status: 504,
+        cause: error,
+      });
+    }
+
+    if (["quotaExceeded", "dailyLimitExceeded", "rateLimitExceeded"].includes(primaryApiReason)) {
+      throw buildYouTubeApiRequestError({
+        reason: "Quota exceeded. Try again later.",
+        status: 429,
+        cause: error,
+      });
+    }
+
+    throw buildYouTubeApiRequestError({
+      reason: normalizedMessage,
+      status: Number(error?.status) || 502,
+      cause: error,
+    });
+  }
 };
 
 const collectAllYouTubeItems = async (endpoint, params = {}, apiKey = "") => {
@@ -306,7 +422,12 @@ const readYouTubeApiKey = () => {
   const apiKey = toTrimmedString(process.env.YOUTUBE_API_KEY);
 
   if (!apiKey) {
-    throw new Error("YOUTUBE_API_KEY is missing in server environment");
+    throw buildYouTubeLibraryError({
+      message: "YOUTUBE_API_KEY is missing in server environment",
+      status: 500,
+      code: "youtube_api_key_missing",
+      adminMessageKey: "youtubeSettings.notice.apiKeyMissing",
+    });
   }
 
   return apiKey;
@@ -327,19 +448,44 @@ const parseChannelInput = (value = "") => {
       channelId: directChannelId,
       handle: "",
       username: "",
+      customPath: "",
       url: "",
+      isValid: true,
+      isYouTubeUrl: true,
+      isSupportedChannelUrl: true,
+    };
+  }
+
+  if (!rawValue) {
+    return {
+      rawValue,
+      channelId: "",
+      handle: "",
+      username: "",
+      customPath: "",
+      url: "",
+      hostname: "",
+      isValid: true,
+      isYouTubeUrl: true,
+      isSupportedChannelUrl: false,
     };
   }
 
   if (!/^https?:\/\//i.test(rawValue)) {
     const normalizedHandle = rawValue.replace(/^@/, "");
+    const isValidHandle = YOUTUBE_HANDLE_PATTERN.test(normalizedHandle);
 
     return {
       rawValue,
       channelId: "",
-      handle: normalizedHandle,
+      handle: isValidHandle ? normalizedHandle : "",
       username: "",
-      url: normalizedHandle ? `https://www.youtube.com/@${normalizedHandle}` : "",
+      customPath: "",
+      url: isValidHandle ? `https://www.youtube.com/@${normalizedHandle}` : "",
+      hostname: "youtube.com",
+      isValid: isValidHandle,
+      isYouTubeUrl: true,
+      isSupportedChannelUrl: isValidHandle,
     };
   }
 
@@ -352,10 +498,16 @@ const parseChannelInput = (value = "") => {
       channelId: "",
       handle: "",
       username: "",
+      customPath: "",
       url: rawValue,
+      hostname: "",
+      isValid: false,
+      isYouTubeUrl: false,
+      isSupportedChannelUrl: false,
     };
   }
 
+  const hostname = toTrimmedString(parsedUrl.hostname).replace(/^www\./i, "").toLowerCase();
   const pathSegments = parsedUrl.pathname
     .split("/")
     .map((segment) => segment.trim())
@@ -363,13 +515,22 @@ const parseChannelInput = (value = "") => {
 
   const [firstSegment = "", secondSegment = ""] = pathSegments;
   const handle = firstSegment.startsWith("@") ? firstSegment.slice(1) : "";
+  const isYouTubeUrl = isYouTubeHostname(hostname);
+  const isSupportedChannelUrl = Boolean(
+    handle || firstSegment === "channel" || firstSegment === "user" || firstSegment === "c"
+  );
 
   return {
     rawValue,
     channelId: firstSegment === "channel" ? normalizeChannelIdentifier(secondSegment) : "",
     handle,
     username: firstSegment === "user" ? secondSegment : "",
+    customPath: firstSegment === "c" ? secondSegment : "",
     url: rawValue,
+    hostname,
+    isValid: isYouTubeUrl && isSupportedChannelUrl,
+    isYouTubeUrl,
+    isSupportedChannelUrl,
   };
 };
 
@@ -716,19 +877,61 @@ const resolveChannelFromHtml = async (url, apiKey) => {
 };
 
 const resolveChannelRecord = async ({ channelUrl = "", channelId = "" } = {}) => {
+  const normalizedChannelUrl = toTrimmedString(channelUrl);
+  const normalizedChannelId = toTrimmedString(channelId);
+
+  if (!normalizedChannelUrl && !normalizedChannelId) {
+    throw buildYouTubeLibraryError({
+      message: "Channel ID or URL is required before syncing.",
+      status: 400,
+      code: "youtube_channel_input_required",
+      adminMessageKey: "youtubeSettings.notice.channelRequiredBeforeSync",
+      validationFields: ["channelUrl", "channelId"],
+      validationMessageKey: "youtubeSettings.validation.channelRequired",
+    });
+  }
+
+  if (normalizedChannelId && !normalizeChannelIdentifier(normalizedChannelId) && !normalizedChannelUrl) {
+    throw buildChannelConfigError({
+      message: "Enter a valid YouTube channel ID that starts with UC.",
+      validationFields: ["channelId"],
+      validationMessageKey: "youtubeSettings.validation.channelIdInvalid",
+    });
+  }
+
   const apiKey = readYouTubeApiKey();
-  const directChannelId = normalizeChannelIdentifier(channelId);
+  const directChannelId = normalizeChannelIdentifier(normalizedChannelId);
 
   if (directChannelId) {
     const directChannel = await fetchChannelById(directChannelId, apiKey);
     if (!directChannel) {
-      throw new Error("The provided YouTube channel ID could not be found.");
+      throw buildChannelConfigError({
+        message: "The provided YouTube channel ID could not be found.",
+        validationFields: ["channelId"],
+        validationMessageKey: "youtubeSettings.validation.channelLookupFailed",
+      });
     }
 
     return directChannel;
   }
 
-  const parsedInput = parseChannelInput(channelUrl);
+  const parsedInput = parseChannelInput(normalizedChannelUrl);
+
+  if (!parsedInput.isValid) {
+    if (/^https?:\/\//i.test(normalizedChannelUrl) && !parsedInput.isYouTubeUrl) {
+      throw buildChannelConfigError({
+        message: "Enter a valid YouTube channel URL. Use a /channel/ URL or an @handle URL.",
+        validationFields: ["channelUrl"],
+        validationMessageKey: "youtubeSettings.validation.channelUrlInvalid",
+      });
+    }
+
+    throw buildChannelConfigError({
+      message: "Enter a valid YouTube channel URL or @handle.",
+      validationFields: ["channelUrl"],
+      validationMessageKey: "youtubeSettings.validation.channelUrlInvalid",
+    });
+  }
 
   if (parsedInput.channelId) {
     const channel = await fetchChannelById(parsedInput.channelId, apiKey);
@@ -751,14 +954,19 @@ const resolveChannelRecord = async ({ channelUrl = "", channelId = "" } = {}) =>
     }
   }
 
-  if (parsedInput.url) {
+  if (parsedInput.customPath || parsedInput.url) {
     const channel = await resolveChannelFromHtml(parsedInput.url, apiKey);
     if (channel) {
       return channel;
     }
   }
 
-  throw new Error("We could not resolve that YouTube channel. Use a channel URL, @handle URL, or a valid channel ID.");
+  throw buildChannelConfigError({
+    message:
+      "We could not resolve that YouTube channel. Use a /channel/ URL, an @handle URL, or a valid channel ID.",
+    validationFields: normalizedChannelUrl ? ["channelUrl"] : ["channelUrl", "channelId"],
+    validationMessageKey: "youtubeSettings.validation.channelLookupFailed",
+  });
 };
 
 const formatChannelUrl = (channel = {}) => {
@@ -1000,7 +1208,14 @@ const resolveConfigPayload = (payload = {}, existingConfig = null, currentAdmin 
   const nextChannelId = toTrimmedString(payload.channelId);
 
   if (!nextChannelUrl && !nextChannelId) {
-    throw new Error("Provide either a YouTube channel URL or a channel ID.");
+    throw buildYouTubeLibraryError({
+      message: "Channel ID or URL is required before syncing.",
+      status: 400,
+      code: "youtube_channel_input_required",
+      adminMessageKey: "youtubeSettings.notice.channelRequiredBeforeSync",
+      validationFields: ["channelUrl", "channelId"],
+      validationMessageKey: "youtubeSettings.validation.channelRequired",
+    });
   }
 
   return {
@@ -1426,18 +1641,53 @@ export const syncYouTubeLibrary = async ({
   force = false,
 } = {}) => {
   if (activeSyncState.promise) {
+    logger.info("Reusing active YouTube library sync promise", {
+      requestedConfigId: toTrimmedString(configId) || "default",
+      activeConfigId: activeSyncState.configId || "default",
+      trigger,
+      force,
+    });
     return activeSyncState.promise;
   }
 
   activeSyncState.promise = (async () => {
-    const config =
-      (configId
-        ? await YouTubeChannelConfig.findById(configId)
-        : await YouTubeChannelConfig.findOne({ configKey: "default" })) || null;
+    const normalizedConfigId = toTrimmedString(configId);
+    let config = null;
+
+    if (normalizedConfigId) {
+      if (!mongoose.Types.ObjectId.isValid(normalizedConfigId)) {
+        throw buildChannelConfigError({
+          message: "Channel configuration is invalid.",
+          validationFields: [],
+        });
+      }
+
+      config = await YouTubeChannelConfig.findById(normalizedConfigId);
+    } else {
+      config = await YouTubeChannelConfig.findOne({ configKey: "default" });
+    }
 
     if (!config) {
-      throw new Error("YouTube library configuration was not found.");
+      throw buildYouTubeLibraryError({
+        message: "YouTube library configuration was not found.",
+        status: 404,
+        code: "youtube_config_not_found",
+        adminMessageKey: "youtubeSettings.notice.recordNotResolved",
+      });
     }
+
+    logger.info("YouTube library sync requested", {
+      requestedConfigId: normalizedConfigId || "default",
+      resolvedConfigId: config._id.toString(),
+      channelId: toTrimmedString(config.channelId),
+      channelUrl: toTrimmedString(config.channelUrl),
+      channelHandle: toTrimmedString(config.channelHandle),
+      isActive: Boolean(config.isActive),
+      apiKeyPresent: hasYouTubeApiKey(),
+      trigger,
+      force,
+      currentAdminId: toTrimmedString(currentAdmin?.id),
+    });
 
     if (!config.isActive && trigger !== "manual") {
       return {
@@ -1448,16 +1698,18 @@ export const syncYouTubeLibrary = async ({
       };
     }
 
-    const apiKey = readYouTubeApiKey();
-
     config.lastSyncStatus = "running";
     config.lastSyncError = "";
+    config.lastSyncSummary = {
+      trigger,
+    };
     if (currentAdmin?.id) {
       config.updatedBy = currentAdmin.id;
     }
     await config.save();
 
     try {
+      const apiKey = readYouTubeApiKey();
       const channelRecord = await resolveChannelRecord({
         channelUrl: config.channelUrl,
         channelId: config.channelId,
@@ -1465,8 +1717,23 @@ export const syncYouTubeLibrary = async ({
 
       const channelPayload = formatChannelPayload(channelRecord);
       if (!channelPayload.channelId || !channelPayload.uploadsPlaylistId) {
-        throw new Error("The selected YouTube channel does not expose a valid uploads playlist.");
+        throw buildChannelConfigError({
+          message:
+            "Channel configuration is invalid. The selected YouTube channel does not expose a valid uploads playlist.",
+          validationFields: [],
+        });
       }
+
+      logger.info("YouTube library sync channel resolved", {
+        configId: config._id.toString(),
+        inputChannelId: toTrimmedString(config.channelId),
+        inputChannelUrl: toTrimmedString(config.channelUrl),
+        resolvedChannelId: channelPayload.channelId,
+        resolvedChannelUrl: channelPayload.channelUrl,
+        resolvedChannelHandle: channelPayload.channelHandle,
+        uploadsPlaylistIdPresent: Boolean(channelPayload.uploadsPlaylistId),
+        apiKeyPresent: Boolean(apiKey),
+      });
 
       const playlists = await fetchChannelPlaylists({
         channelId: channelPayload.channelId,
@@ -1595,10 +1862,12 @@ export const syncYouTubeLibrary = async ({
 
       await config.save();
 
-      logger.info("YouTube library sync completed", {
+      logger.info("YouTube library sync result", {
+        configId: config._id.toString(),
         channelId: config.channelId,
-        playlists: playlists.length,
-        latestVideos: latestVideoSeeds.length,
+        resolvedChannelUrl: config.channelUrl,
+        playlistsFetched: playlists.length,
+        latestVideosFetched: latestVideoSeeds.length,
         trigger,
       });
 
@@ -1615,7 +1884,18 @@ export const syncYouTubeLibrary = async ({
       };
       await config.save();
 
-      logger.error("YouTube library sync failed:", error.message);
+      logger.error("YouTube library sync failed", {
+        configId: config._id.toString(),
+        channelId: toTrimmedString(config.channelId),
+        channelUrl: toTrimmedString(config.channelUrl),
+        channelHandle: toTrimmedString(config.channelHandle),
+        apiKeyPresent: hasYouTubeApiKey(),
+        trigger,
+        force,
+        message: toTrimmedString(error?.message),
+        code: toTrimmedString(error?.code),
+        stack: error?.stack || "",
+      });
       throw error;
     }
   })()

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { noticeAPI, authAPI } from './api/services';
 
@@ -39,9 +39,18 @@ import PaymentFailure from './pages/PaymentFailure/PaymentFailure';
 // ScrollToTop component to reset scroll position on route change
 const ScrollToTop = () => {
   const { pathname } = useLocation();
+  const previousPathRef = useRef(pathname);
   
   useEffect(() => {
-    window.scrollTo(0, 0);
+    const previousPath = previousPathRef.current;
+    const isStudentProfileSubviewChange =
+      previousPath.startsWith('/student/profile') && pathname.startsWith('/student/profile');
+
+    if (!isStudentProfileSubviewChange) {
+      window.scrollTo(0, 0);
+    }
+
+    previousPathRef.current = pathname;
   }, [pathname]);
   
   return null;
@@ -157,7 +166,7 @@ function App() {
         <Route path="/cart" element={<Cart cartItems={cartItems} removeFromCart={removeFromCart} updateQuantity={updateQuantity} clearCart={clearCart} />} />
         <Route path="/student/login" element={<StudentLogin setStudentData={setStudentData} setIsAuthenticated={setIsAuthenticated} />} />
         <Route path="/student/register" element={<StudentRegister />} />
-        <Route path="/student/profile" element={<StudentProfile studentData={studentData} setStudentData={setStudentData} setIsAuthenticated={setIsAuthenticated} />} />
+        <Route path="/student/profile/*" element={<StudentProfile studentData={studentData} setStudentData={setStudentData} setIsAuthenticated={setIsAuthenticated} />} />
         <Route path="/forgot-password" element={<ForgotPasswordForm />} />
         <Route path="/reset-password/:token" element={<ForgotPasswordForm />} />
         <Route path="/payment/success" element={<PaymentSuccess />} />

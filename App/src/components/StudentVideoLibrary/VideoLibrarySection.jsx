@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import './VideoLibrarySection.css';
 
 const formatSyncDate = (value) => {
@@ -35,6 +35,9 @@ const formatVideoDate = (value) => {
   });
 };
 
+const getSearchPlaceholder = (activeView) =>
+  activeView === 'playlists' ? 'Search playlists' : 'Search videos';
+
 const SkeletonCard = ({ type = 'video' }) => (
   <div className={`video-library-skeleton ${type === 'playlist' ? 'is-playlist' : ''}`}>
     <div className="video-library-skeleton__thumb"></div>
@@ -43,14 +46,162 @@ const SkeletonCard = ({ type = 'video' }) => (
   </div>
 );
 
-const PlaylistsSection = ({ playlists, loading, onOpenPlaylist }) => (
+const LibraryTabs = ({ activeView, availableViews, counts, onViewChange }) => (
+  <div className="video-library-view-tabs" role="tablist" aria-label="Video library views">
+    {availableViews.includes('videos') && (
+      <button
+        type="button"
+        role="tab"
+        aria-selected={activeView === 'videos'}
+        className={`video-library-view-tab ${activeView === 'videos' ? 'active' : ''}`}
+        onClick={() => onViewChange('videos')}
+      >
+        <span>Videos</span>
+        <strong>{counts.videos || 0}</strong>
+      </button>
+    )}
+
+    {availableViews.includes('playlists') && (
+      <button
+        type="button"
+        role="tab"
+        aria-selected={activeView === 'playlists'}
+        className={`video-library-view-tab ${activeView === 'playlists' ? 'active' : ''}`}
+        onClick={() => onViewChange('playlists')}
+      >
+        <span>Playlists</span>
+        <strong>{counts.playlists || 0}</strong>
+      </button>
+    )}
+  </div>
+);
+
+const PlaylistCard = ({ playlist }) => {
+  const canOpen = Boolean(playlist?.playlistUrl);
+
+  return (
+    <article className={`video-library-card playlist-card ${canOpen ? 'is-clickable' : ''}`}>
+      {canOpen ? (
+        <a
+          href={playlist.playlistUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="video-library-card__hit-area"
+          aria-label={`Open playlist ${playlist.title || 'playlist'}`}
+        />
+      ) : (
+        <span className="video-library-card__hit-area is-disabled" aria-hidden="true" />
+      )}
+
+      <div className="video-library-card__media">
+        <img src={playlist.thumbnail} alt={playlist.title} loading="lazy" />
+        <span className="video-library-card__badge">
+          <i className="fa-solid fa-list-ul"></i>
+          {playlist.videoCount || 0} videos
+        </span>
+      </div>
+
+      <div className="video-library-card__body">
+        <div className="video-library-card__meta">
+          {playlist.subjectTag ? (
+            <span className="video-library-pill">{playlist.subjectTag}</span>
+          ) : (
+            <span className="video-library-pill subtle">Playlist</span>
+          )}
+        </div>
+
+        <h4>{playlist.title}</h4>
+
+        <div className="video-library-card__footer">
+          <span className="video-library-card__date">
+            <i className="fa-regular fa-calendar"></i>
+            {formatVideoDate(playlist.publishedAt)}
+          </span>
+
+          <span
+            className={`video-library-btn video-library-btn--static ${!canOpen ? 'is-disabled' : ''}`}
+            aria-hidden="true"
+          >
+            Open Playlist
+          </span>
+        </div>
+      </div>
+    </article>
+  );
+};
+
+const VideoCard = ({ video, onWatchVideo }) => {
+  const canWatch = Boolean(video?.youtubeVideoId);
+
+  return (
+    <article className={`video-library-card ${canWatch ? 'is-clickable' : ''}`}>
+      <button
+        type="button"
+        className="video-library-card__hit-area"
+        onClick={() => onWatchVideo(video)}
+        aria-label={`Watch ${video.title || 'video'}`}
+        disabled={!canWatch}
+      />
+
+      <div className="video-library-card__media">
+        <img src={video.thumbnail} alt={video.title} loading="lazy" />
+        {video.isLiveStreamRecording && (
+          <span className="video-library-card__badge is-live-archive">
+            <i className="fa-solid fa-tower-broadcast"></i>
+            Live Archive
+          </span>
+        )}
+      </div>
+
+      <div className="video-library-card__body">
+        <div className="video-library-card__meta">
+          {video.subjectTag ? (
+            <span className="video-library-pill">{video.subjectTag}</span>
+          ) : (
+            <span className="video-library-pill subtle">Recorded Class</span>
+          )}
+        </div>
+
+        <h4>{video.title}</h4>
+
+        <div className="video-library-card__footer">
+          <span className="video-library-card__date">
+            <i className="fa-regular fa-calendar"></i>
+            {formatVideoDate(video.publishedAt)}
+          </span>
+
+          <div className="video-library-card__actions">
+            <span
+              className={`video-library-btn video-library-btn--static ${!canWatch ? 'is-disabled' : ''}`}
+              aria-hidden="true"
+            >
+              Watch Now
+            </span>
+            {video.videoUrl && (
+              <a
+                href={video.videoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="video-library-link"
+              >
+                Open in YouTube
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+};
+
+const PlaylistsSection = ({ playlists, counts, loading }) => (
   <section className="video-library-section">
     <div className="video-library-section__header">
       <div>
         <p className="video-library-section__eyebrow">Featured Collections</p>
         <h3>Playlists</h3>
       </div>
-      <span>{playlists.length} available</span>
+      <span>{counts.playlists || 0} available</span>
     </div>
 
     {loading && playlists.length === 0 ? (
@@ -62,49 +213,16 @@ const PlaylistsSection = ({ playlists, loading, onOpenPlaylist }) => (
     ) : playlists.length > 0 ? (
       <div className="video-library-grid is-playlists">
         {playlists.map((playlist) => (
-          <article className="video-library-card playlist-card" key={playlist._id || playlist.youtubePlaylistId}>
-            <div className="video-library-card__media">
-              <img
-                src={playlist.thumbnail}
-                alt={playlist.title}
-                loading="lazy"
-              />
-              <span className="video-library-card__badge">
-                <i className="fa-solid fa-list-ul"></i>
-                {playlist.videoCount || 0} videos
-              </span>
-            </div>
-
-            <div className="video-library-card__body">
-              <div className="video-library-card__meta">
-                {playlist.subjectTag ? (
-                  <span className="video-library-pill">{playlist.subjectTag}</span>
-                ) : (
-                  <span className="video-library-pill subtle">Playlist</span>
-                )}
-              </div>
-
-              <h4>{playlist.title}</h4>
-
-              <div className="video-library-card__footer">
-                <span className="video-library-card__date">
-                  <i className="fa-regular fa-calendar"></i>
-                  {formatVideoDate(playlist.publishedAt)}
-                </span>
-
-                <button
-                  type="button"
-                  className="video-library-btn"
-                  onClick={() => onOpenPlaylist(playlist)}
-                >
-                  Open Playlist
-                </button>
-              </div>
-            </div>
-          </article>
+          <PlaylistCard key={playlist._id || playlist.youtubePlaylistId} playlist={playlist} />
         ))}
       </div>
-    ) : null}
+    ) : (
+      <div className="video-library-state">
+        <i className="fa-solid fa-list-ul"></i>
+        <h3>No playlists found</h3>
+        <p>Try a different search or subject filter to find synced playlists.</p>
+      </div>
+    )}
   </section>
 );
 
@@ -136,58 +254,11 @@ const VideosSection = ({
       <>
         <div className="video-library-grid">
           {videos.map((video) => (
-            <article className="video-library-card" key={video._id || video.youtubeVideoId}>
-              <div className="video-library-card__media">
-                <img
-                  src={video.thumbnail}
-                  alt={video.title}
-                  loading="lazy"
-                />
-                {video.isLiveStreamRecording && (
-                  <span className="video-library-card__badge is-live-archive">
-                    <i className="fa-solid fa-tower-broadcast"></i>
-                    Live Archive
-                  </span>
-                )}
-              </div>
-
-              <div className="video-library-card__body">
-                <div className="video-library-card__meta">
-                  {video.subjectTag ? (
-                    <span className="video-library-pill">{video.subjectTag}</span>
-                  ) : (
-                    <span className="video-library-pill subtle">Recorded Class</span>
-                  )}
-                </div>
-
-                <h4>{video.title}</h4>
-
-                <div className="video-library-card__footer">
-                  <span className="video-library-card__date">
-                    <i className="fa-regular fa-calendar"></i>
-                    {formatVideoDate(video.publishedAt)}
-                  </span>
-
-                  <div className="video-library-card__actions">
-                    <button
-                      type="button"
-                      className="video-library-btn"
-                      onClick={() => onWatchVideo(video)}
-                    >
-                      Watch Now
-                    </button>
-                    <a
-                      href={video.videoUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="video-library-link"
-                    >
-                      Open in YouTube
-                    </a>
-                  </div>
-                </div>
-              </div>
-            </article>
+            <VideoCard
+              key={video._id || video.youtubeVideoId}
+              video={video}
+              onWatchVideo={onWatchVideo}
+            />
           ))}
         </div>
 
@@ -204,7 +275,13 @@ const VideosSection = ({
           </div>
         )}
       </>
-    ) : null}
+    ) : (
+      <div className="video-library-state">
+        <i className="fa-solid fa-circle-play"></i>
+        <h3>No videos found</h3>
+        <p>Try a different search or subject filter to find synced recorded videos.</p>
+      </div>
+    )}
   </section>
 );
 
@@ -220,16 +297,34 @@ const VideoLibrarySection = ({
   counts,
   pagination,
   config,
+  activeView = 'videos',
   onSearchChange,
   onSubjectChange,
+  onViewChange,
   onLoadMore,
-  onOpenPlaylist,
   onWatchVideo,
   onRetry,
 }) => {
   const hasContent = playlists.length > 0 || videos.length > 0;
-  const orderedSections =
-    config?.showPlaylistsFirst === false ? ['videos', 'playlists'] : ['playlists', 'videos'];
+  const availableViews = [];
+
+  if (config?.showVideos !== false) {
+    availableViews.push('videos');
+  }
+
+  if (config?.showPlaylists !== false) {
+    availableViews.push('playlists');
+  }
+
+  const fallbackView = availableViews[0] || 'videos';
+  const resolvedView = availableViews.includes(activeView) ? activeView : fallbackView;
+  const viewsSignature = availableViews.join(',');
+
+  useEffect(() => {
+    if (availableViews.length > 0 && activeView !== resolvedView) {
+      onViewChange?.(resolvedView);
+    }
+  }, [activeView, onViewChange, resolvedView, viewsSignature]);
 
   return (
     <section className="video-library-panel">
@@ -266,9 +361,18 @@ const VideoLibrarySection = ({
             type="search"
             value={search}
             onChange={(event) => onSearchChange(event.target.value)}
-            placeholder="Search videos or playlists"
+            placeholder={getSearchPlaceholder(resolvedView)}
           />
         </label>
+
+        {availableViews.length > 1 && (
+          <LibraryTabs
+            activeView={resolvedView}
+            availableViews={availableViews}
+            counts={counts}
+            onViewChange={onViewChange}
+          />
+        )}
 
         <div className="video-library-chip-row">
           <button
@@ -315,38 +419,28 @@ const VideoLibrarySection = ({
       )}
 
       {!error &&
-        orderedSections.map((sectionKey) => {
-          if (sectionKey === 'playlists' && config?.showPlaylists !== false) {
-            return (
-              <PlaylistsSection
-                key="playlists"
-                playlists={playlists}
-                loading={loading}
-                onOpenPlaylist={onOpenPlaylist}
-              />
-            );
-          }
+        (loading || hasContent) &&
+        availableViews.includes(resolvedView) &&
+        resolvedView === 'videos' && (
+        <VideosSection
+          videos={videos}
+          counts={counts}
+          loading={loading}
+          loadingMore={loadingMore}
+          pagination={pagination}
+          onWatchVideo={onWatchVideo}
+          onLoadMore={onLoadMore}
+        />
+      )}
 
-          if (sectionKey === 'videos' && config?.showVideos !== false) {
-            return (
-              <VideosSection
-                key="videos"
-                videos={videos}
-                counts={counts}
-                loading={loading}
-                loadingMore={loadingMore}
-                pagination={pagination}
-                onWatchVideo={onWatchVideo}
-                onLoadMore={onLoadMore}
-              />
-            );
-          }
-
-          return null;
-        })}
+      {!error &&
+        (loading || hasContent) &&
+        availableViews.includes(resolvedView) &&
+        resolvedView === 'playlists' && (
+        <PlaylistsSection playlists={playlists} counts={counts} loading={loading} />
+      )}
     </section>
   );
 };
 
 export default VideoLibrarySection;
-

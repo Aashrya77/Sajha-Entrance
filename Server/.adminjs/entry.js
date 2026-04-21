@@ -1,4 +1,30 @@
 AdminJS.UserComponents = {}
+import ActionButton from '../admin/components/adminjs/ActionButton'
+AdminJS.UserComponents.ActionButton = ActionButton
+import DefaultArrayShowProperty from '../admin/components/adminjs/DefaultArrayShowProperty'
+AdminJS.UserComponents.DefaultArrayShowProperty = DefaultArrayShowProperty
+import DefaultBooleanShowProperty from '../admin/components/adminjs/DefaultBooleanShowProperty'
+AdminJS.UserComponents.DefaultBooleanShowProperty = DefaultBooleanShowProperty
+import DefaultCurrencyShowProperty from '../admin/components/adminjs/DefaultCurrencyShowProperty'
+AdminJS.UserComponents.DefaultCurrencyShowProperty = DefaultCurrencyShowProperty
+import DefaultDatetimeShowProperty from '../admin/components/adminjs/DefaultDatetimeShowProperty'
+AdminJS.UserComponents.DefaultDatetimeShowProperty = DefaultDatetimeShowProperty
+import DefaultMixedShowProperty from '../admin/components/adminjs/DefaultMixedShowProperty'
+AdminJS.UserComponents.DefaultMixedShowProperty = DefaultMixedShowProperty
+import DefaultPhoneShowProperty from '../admin/components/adminjs/DefaultPhoneShowProperty'
+AdminJS.UserComponents.DefaultPhoneShowProperty = DefaultPhoneShowProperty
+import DefaultReferenceShowProperty from '../admin/components/adminjs/DefaultReferenceShowProperty'
+AdminJS.UserComponents.DefaultReferenceShowProperty = DefaultReferenceShowProperty
+import DefaultRichtextShowProperty from '../admin/components/adminjs/DefaultRichtextShowProperty'
+AdminJS.UserComponents.DefaultRichtextShowProperty = DefaultRichtextShowProperty
+import DefaultShowProperty from '../admin/components/adminjs/DefaultShowProperty'
+AdminJS.UserComponents.DefaultShowProperty = DefaultShowProperty
+import DefaultTextareaShowProperty from '../admin/components/adminjs/DefaultTextareaShowProperty'
+AdminJS.UserComponents.DefaultTextareaShowProperty = DefaultTextareaShowProperty
+import PropertyLabel from '../admin/components/adminjs/PropertyLabel'
+AdminJS.UserComponents.PropertyLabel = PropertyLabel
+import PropertyHeader from '../admin/components/adminjs/PropertyHeader'
+AdminJS.UserComponents.PropertyHeader = PropertyHeader
 import Dashboard from '../admin/components/Dashboard'
 AdminJS.UserComponents.Dashboard = Dashboard
 import BulkUploadResults from '../admin/components/BulkUploadResults'
