@@ -114,9 +114,10 @@ const buildChannelConfigError = ({
 const buildYouTubeApiRequestError = ({
   reason = "Unknown error.",
   status = 502,
+  youtubeApiReason = "",
   cause = null,
-} = {}) =>
-  buildYouTubeLibraryError({
+} = {}) => {
+  const error = buildYouTubeLibraryError({
     message: `YouTube API request failed: ${reason}`,
     status,
     code: "youtube_api_request_failed",
@@ -126,6 +127,13 @@ const buildYouTubeApiRequestError = ({
     validationMessageKey: "youtubeSettings.validation.channelLookupFailed",
     cause,
   });
+
+  if (youtubeApiReason) {
+    error.youtubeApiReason = youtubeApiReason;
+  }
+
+  return error;
+};
 
 const toNonNegativeInteger = (value, fallback, options = {}) => {
   const min = options.min ?? 0;
@@ -179,6 +187,13 @@ const buildEmbedUrl = (videoId = "") =>
 
 const buildPlaylistUrl = (playlistId = "") =>
   playlistId ? `https://www.youtube.com/playlist?list=${encodeURIComponent(playlistId)}` : "";
+
+const getYouTubeApiReason = (error = null) =>
+  toTrimmedString(
+    error?.youtubeApiReason ||
+      error?.cause?.payload?.error?.errors?.[0]?.reason ||
+      error?.cause?.payload?.error?.status
+  );
 
 const extractVideoIdFromUrl = (value = "") => {
   const rawValue = toTrimmedString(value);
@@ -366,6 +381,7 @@ const callYouTubeApi = async (endpoint, params = {}, apiKey = "") => {
       throw buildYouTubeApiRequestError({
         reason: "Request timed out. Try again in a moment.",
         status: 504,
+        youtubeApiReason: primaryApiReason,
         cause: error,
       });
     }
@@ -374,6 +390,7 @@ const callYouTubeApi = async (endpoint, params = {}, apiKey = "") => {
       throw buildYouTubeApiRequestError({
         reason: "Quota exceeded. Try again later.",
         status: 429,
+        youtubeApiReason: primaryApiReason,
         cause: error,
       });
     }
@@ -381,6 +398,7 @@ const callYouTubeApi = async (endpoint, params = {}, apiKey = "") => {
     throw buildYouTubeApiRequestError({
       reason: normalizedMessage,
       status: Number(error?.status) || 502,
+      youtubeApiReason: primaryApiReason,
       cause: error,
     });
   }
@@ -1017,16 +1035,22 @@ const fetchChannelPlaylists = async ({ channelId, apiKey }) => {
   }));
 };
 
-const fetchLatestUploadedVideos = async ({ uploadsPlaylistId, apiKey, maxVideos }) => {
+const fetchLatestUploadedVideosBySearch = async ({ channelId, apiKey, maxVideos }) => {
+  if (!channelId) {
+    return [];
+  }
+
   const uniqueVideos = new Map();
   let pageToken = "";
 
   while (uniqueVideos.size < maxVideos) {
     const response = await callYouTubeApi(
-      "playlistItems",
+      "search",
       {
-        part: "snippet,contentDetails,status",
-        playlistId: uploadsPlaylistId,
+        part: "snippet",
+        channelId,
+        type: "video",
+        order: "date",
         maxResults: Math.min(MAX_API_RESULTS, maxVideos),
         pageToken,
       },
@@ -1035,9 +1059,7 @@ const fetchLatestUploadedVideos = async ({ uploadsPlaylistId, apiKey, maxVideos 
 
     const items = Array.isArray(response.items) ? response.items : [];
     items.forEach((item) => {
-      const videoId =
-        toTrimmedString(item?.contentDetails?.videoId) ||
-        toTrimmedString(item?.snippet?.resourceId?.videoId);
+      const videoId = toTrimmedString(item?.id?.videoId);
 
       if (!videoId || uniqueVideos.has(videoId) || uniqueVideos.size >= maxVideos) {
         return;
@@ -1057,9 +1079,90 @@ const fetchLatestUploadedVideos = async ({ uploadsPlaylistId, apiKey, maxVideos 
     title: toTrimmedString(item?.snippet?.title) || "Untitled Video",
     description: toTrimmedString(item?.snippet?.description),
     thumbnail: pickBestThumbnail(item?.snippet?.thumbnails),
-    publishedAt: item?.contentDetails?.videoPublishedAt || item?.snippet?.publishedAt || null,
+    publishedAt: item?.snippet?.publishedAt || null,
     rawData: item,
   }));
+};
+
+const fetchLatestUploadedVideos = ({
+  uploadsPlaylistId,
+  channelId,
+  apiKey,
+  maxVideos,
+}) => {
+  if (!uploadsPlaylistId) {
+    logger.warn("YouTube uploads playlist missing; falling back to channel search", {
+      channelId: toTrimmedString(channelId),
+    });
+
+    return fetchLatestUploadedVideosBySearch({
+      channelId,
+      apiKey,
+      maxVideos,
+    });
+  }
+
+  return (async () => {
+  const uniqueVideos = new Map();
+  let pageToken = "";
+
+    try {
+      while (uniqueVideos.size < maxVideos) {
+        const response = await callYouTubeApi(
+          "playlistItems",
+          {
+            part: "snippet,contentDetails,status",
+            playlistId: uploadsPlaylistId,
+            maxResults: Math.min(MAX_API_RESULTS, maxVideos),
+            pageToken,
+          },
+          apiKey
+        );
+
+        const items = Array.isArray(response.items) ? response.items : [];
+        items.forEach((item) => {
+          const videoId =
+            toTrimmedString(item?.contentDetails?.videoId) ||
+            toTrimmedString(item?.snippet?.resourceId?.videoId);
+
+          if (!videoId || uniqueVideos.has(videoId) || uniqueVideos.size >= maxVideos) {
+            return;
+          }
+
+          uniqueVideos.set(videoId, item);
+        });
+
+        pageToken = toTrimmedString(response.nextPageToken);
+        if (!pageToken || !items.length) {
+          break;
+        }
+      }
+    } catch (error) {
+      if (getYouTubeApiReason(error) !== "playlistNotFound") {
+        throw error;
+      }
+
+      logger.warn("YouTube uploads playlist was not accessible; falling back to channel search", {
+        channelId: toTrimmedString(channelId),
+        uploadsPlaylistId: toTrimmedString(uploadsPlaylistId),
+      });
+
+      return fetchLatestUploadedVideosBySearch({
+        channelId,
+        apiKey,
+        maxVideos,
+      });
+    }
+
+    return Array.from(uniqueVideos.entries()).map(([videoId, item]) => ({
+      videoId,
+      title: toTrimmedString(item?.snippet?.title) || "Untitled Video",
+      description: toTrimmedString(item?.snippet?.description),
+      thumbnail: pickBestThumbnail(item?.snippet?.thumbnails),
+      publishedAt: item?.contentDetails?.videoPublishedAt || item?.snippet?.publishedAt || null,
+      rawData: item,
+    }));
+  })();
 };
 
 const fetchVideoDetails = async ({ videoIds, apiKey }) => {
@@ -1716,10 +1819,10 @@ export const syncYouTubeLibrary = async ({
       });
 
       const channelPayload = formatChannelPayload(channelRecord);
-      if (!channelPayload.channelId || !channelPayload.uploadsPlaylistId) {
+      if (!channelPayload.channelId) {
         throw buildChannelConfigError({
           message:
-            "Channel configuration is invalid. The selected YouTube channel does not expose a valid uploads playlist.",
+            "Channel configuration is invalid. The selected YouTube channel could not be resolved.",
           validationFields: [],
         });
       }
@@ -1742,6 +1845,7 @@ export const syncYouTubeLibrary = async ({
 
       const latestVideoSeeds = await fetchLatestUploadedVideos({
         uploadsPlaylistId: channelPayload.uploadsPlaylistId,
+        channelId: channelPayload.channelId,
         apiKey,
         maxVideos: config.maxVideos,
       });

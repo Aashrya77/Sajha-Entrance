@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import CourseCard from './CourseCard';
 import './VideoLibrarySection.css';
 
 const formatSyncDate = (value) => {
@@ -80,117 +81,88 @@ const PlaylistCard = ({ playlist }) => {
   const canOpen = Boolean(playlist?.playlistUrl);
 
   return (
-    <article className={`video-library-card playlist-card ${canOpen ? 'is-clickable' : ''}`}>
-      {canOpen ? (
-        <a
-          href={playlist.playlistUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="video-library-card__hit-area"
-          aria-label={`Open playlist ${playlist.title || 'playlist'}`}
-        />
-      ) : (
-        <span className="video-library-card__hit-area is-disabled" aria-hidden="true" />
-      )}
-
-      <div className="video-library-card__media">
-        <img src={playlist.thumbnail} alt={playlist.title} loading="lazy" />
-        <span className="video-library-card__badge">
-          <i className="fa-solid fa-list-ul"></i>
-          {playlist.videoCount || 0} videos
-        </span>
-      </div>
-
-      <div className="video-library-card__body">
-        <div className="video-library-card__meta">
-          {playlist.subjectTag ? (
-            <span className="video-library-pill">{playlist.subjectTag}</span>
-          ) : (
-            <span className="video-library-pill subtle">Playlist</span>
-          )}
-        </div>
-
-        <h4>{playlist.title}</h4>
-
-        <div className="video-library-card__footer">
-          <span className="video-library-card__date">
-            <i className="fa-regular fa-calendar"></i>
-            {formatVideoDate(playlist.publishedAt)}
-          </span>
-
-          <span
-            className={`video-library-btn video-library-btn--static ${!canOpen ? 'is-disabled' : ''}`}
-            aria-hidden="true"
-          >
-            Open Playlist
-          </span>
-        </div>
-      </div>
-    </article>
+    <CourseCard
+      className="playlist-card"
+      overlay={
+        canOpen
+          ? {
+              type: 'link',
+              href: playlist.playlistUrl,
+            }
+          : {
+              type: 'link',
+              disabled: true,
+            }
+      }
+      ariaLabel={`Open playlist ${playlist.title || 'playlist'}`}
+      thumbnail={playlist.thumbnail}
+      imageAlt={playlist.title}
+      title={playlist.title}
+      category={playlist.subjectTag || 'Playlist'}
+      categoryIconClass="fa-solid fa-layer-group"
+      categoryTone={playlist.subjectTag ? 'is-subject' : 'is-playlist'}
+      dateLabel={formatVideoDate(playlist.publishedAt)}
+      mediaBadge={{
+        iconClass: 'fa-solid fa-list-ul',
+        label: `${playlist.videoCount || 0} videos`,
+        className: 'is-neutral',
+      }}
+      primaryAction={{
+        label: 'Open Playlist',
+        iconClass: 'fa-solid fa-arrow-up-right-from-square',
+        href: playlist.playlistUrl,
+        disabled: !canOpen,
+      }}
+    />
   );
 };
 
 const VideoCard = ({ video, onWatchVideo }) => {
-  const canWatch = Boolean(video?.youtubeVideoId);
+  const canWatch = Boolean(video?.youtubeVideoId) && typeof onWatchVideo === 'function';
+  const handleWatchVideo = () => {
+    onWatchVideo?.(video);
+  };
 
   return (
-    <article className={`video-library-card ${canWatch ? 'is-clickable' : ''}`}>
-      <button
-        type="button"
-        className="video-library-card__hit-area"
-        onClick={() => onWatchVideo(video)}
-        aria-label={`Watch ${video.title || 'video'}`}
-        disabled={!canWatch}
-      />
-
-      <div className="video-library-card__media">
-        <img src={video.thumbnail} alt={video.title} loading="lazy" />
-        {video.isLiveStreamRecording && (
-          <span className="video-library-card__badge is-live-archive">
-            <i className="fa-solid fa-tower-broadcast"></i>
-            Live Archive
-          </span>
-        )}
-      </div>
-
-      <div className="video-library-card__body">
-        <div className="video-library-card__meta">
-          {video.subjectTag ? (
-            <span className="video-library-pill">{video.subjectTag}</span>
-          ) : (
-            <span className="video-library-pill subtle">Recorded Class</span>
-          )}
-        </div>
-
-        <h4>{video.title}</h4>
-
-        <div className="video-library-card__footer">
-          <span className="video-library-card__date">
-            <i className="fa-regular fa-calendar"></i>
-            {formatVideoDate(video.publishedAt)}
-          </span>
-
-          <div className="video-library-card__actions">
-            <span
-              className={`video-library-btn video-library-btn--static ${!canWatch ? 'is-disabled' : ''}`}
-              aria-hidden="true"
-            >
-              Watch Now
-            </span>
-            {video.videoUrl && (
-              <a
-                href={video.videoUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="video-library-link"
-              >
-                Open in YouTube
-              </a>
-            )}
-          </div>
-        </div>
-      </div>
-    </article>
+    <CourseCard
+      overlay={{
+        type: 'button',
+        onClick: handleWatchVideo,
+        disabled: !canWatch,
+      }}
+      ariaLabel={`Watch ${video.title || 'video'}`}
+      thumbnail={video.thumbnail}
+      imageAlt={video.title}
+      title={video.title}
+      category={video.subjectTag || 'Recorded Class'}
+      categoryIconClass="fa-solid fa-book-open"
+      categoryTone={video.subjectTag ? 'is-subject' : 'is-recorded'}
+      dateLabel={formatVideoDate(video.publishedAt)}
+      mediaBadge={
+        video.isLiveStreamRecording
+          ? {
+              iconClass: 'fa-solid fa-tower-broadcast',
+              label: 'Live Archive',
+              className: 'is-live-archive',
+            }
+          : null
+      }
+      primaryAction={{
+        label: 'Watch Now',
+        iconClass: 'fa-solid fa-circle-play',
+        onClick: handleWatchVideo,
+        disabled: !canWatch,
+      }}
+      secondaryAction={
+        video.videoUrl
+          ? {
+              label: 'Open in YouTube',
+              iconClass: 'fa-brands fa-youtube',
+              href: video.videoUrl,
+            }
+          : null
+      }
+    />
   );
 };
 

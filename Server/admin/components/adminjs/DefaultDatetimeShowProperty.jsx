@@ -1,9 +1,9 @@
 import React from "react";
-import mapValue from "../../../node_modules/adminjs/lib/frontend/components/property-type/datetime/map-value.js";
+import { formatAdminDateTimeValue } from "./adminjs-safe-helpers";
 import SafeValueGroup from "./SafeValueGroup";
 
 const DefaultDatetimeShowProperty = ({ property, record }) => {
-  const value = mapValue(record.params[property.path], property.type);
+  const value = formatAdminDateTimeValue(record.params[property.path], property.type);
 
   return <SafeValueGroup property={property}>{value}</SafeValueGroup>;
 };

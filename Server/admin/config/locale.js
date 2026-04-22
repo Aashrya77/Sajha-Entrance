@@ -691,11 +691,6 @@ const buildAdminLocale = ({ resources = [], pages = [], components = {} } = {}) 
     localeDetection: false,
     withBackend: false,
     partialBundledLanguages: false,
-    resources: {
-      en: {
-        translation: enAdminTranslations,
-      },
-    },
     translations: {
       en: enAdminTranslations,
     },

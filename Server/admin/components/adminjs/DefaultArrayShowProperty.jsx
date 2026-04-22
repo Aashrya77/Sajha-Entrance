@@ -1,7 +1,7 @@
 import React from "react";
 import { Section } from "@adminjs/design-system";
-import { flat } from "../../../node_modules/adminjs/lib/utils/index.js";
-import { convertToSubProperty } from "../../../node_modules/adminjs/lib/frontend/components/property-type/array/convert-to-sub-property.js";
+import { flat } from "adminjs";
+import { convertArraySubProperty } from "./adminjs-safe-helpers";
 import SafeValueGroup from "./SafeValueGroup";
 
 const DefaultArrayShowProperty = (props) => {
@@ -16,7 +16,7 @@ const DefaultArrayShowProperty = (props) => {
     <SafeValueGroup property={property}>
       <Section>
         {(items || []).map((item, index) => {
-          const itemProperty = convertToSubProperty(property, index);
+          const itemProperty = convertArraySubProperty(property, index);
 
           return (
             <ItemComponent
