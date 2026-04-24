@@ -4,8 +4,9 @@
   "description": "MERN Stack Application for Sajha Entrance",
   "main": "index.js",
   "scripts": {
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "dev": "concurrently -k \"npm run server\" \"npm run client:ready\"",
     "server": "cd Server && npm run dev",
+    "client:ready": "node scripts/waitForBackend.mjs && npm run client",
     "client": "cd App && npm start",
     "install-all": "npm install && cd Server && npm install && cd ../App && npm install",
     "start": "cd Server && npm start"
