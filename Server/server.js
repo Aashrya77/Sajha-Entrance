@@ -20,7 +20,6 @@ import BookPaymentRoutes from "./routes/BookPayment.js";
 import InquiryRoutes from "./routes/Inquiry.js";
 import YouTubeLibraryRoutes from "./routes/YouTubeLibrary.js";
 
-import { startAdminPanel } from "./admin/Admin.js";
 import { adminBrandAssets } from "./admin/config/branding.js";
 import { createLogger } from "./utils/logger.js";
 import {
@@ -39,6 +38,10 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const logger = createLogger("server");
 const isProduction = process.env.NODE_ENV === "production";
+const runtimeState = {
+  adminStatus: "pending",
+  startupStatus: "pending",
+};
 
 const staticFileOptions = {
   fallthrough: true,
@@ -131,24 +134,83 @@ if (fs.existsSync(adminBrandAssets.appPublicDirectory)) {
   );
 }
 
-const registerApiRoutes = () => {
-  app.use("/api", HomeRoutes);
-  app.use("/api", BlogRoutes);
-  app.use("/api", CourseRoutes);
-  app.use("/api", CollegeRoutes);
-  app.use("/api/student", AuthRoutes);
-  app.use("/api", ResultRoutes);
-  app.use("/api", PaymentRoutes);
-  app.use("/api", UniversityRoutes);
-  app.use("/api", MockTestRoutes);
-  app.use("/api", BlogUploadRoutes);
-  app.use("/api", BookPaymentRoutes);
-  app.use("/api", InquiryRoutes);
-  app.use("/api/youtube-library", YouTubeLibraryRoutes);
+const registerApiRoutes = (router) => {
+  router.get("/api/health", (_req, res) => {
+    res.json({
+      success: true,
+      data: {
+        status: "ok",
+        timestamp: new Date().toISOString(),
+        uptimeSeconds: Math.round(process.uptime()),
+        adminStatus: runtimeState.adminStatus,
+        startupStatus: runtimeState.startupStatus,
+      },
+    });
+  });
 
-  app.use("/api/*", (req, res) => {
+  router.use("/api", HomeRoutes);
+  router.use("/api", BlogRoutes);
+  router.use("/api", CourseRoutes);
+  router.use("/api", CollegeRoutes);
+  router.use("/api/student", AuthRoutes);
+  router.use("/api", ResultRoutes);
+  router.use("/api", PaymentRoutes);
+  router.use("/api", UniversityRoutes);
+  router.use("/api", MockTestRoutes);
+  router.use("/api", BlogUploadRoutes);
+  router.use("/api", BookPaymentRoutes);
+  router.use("/api", InquiryRoutes);
+  router.use("/api/youtube-library", YouTubeLibraryRoutes);
+
+  router.use("/api/*", (req, res) => {
     res.status(404).json({ error: "API endpoint not found" });
   });
+};
+
+const mountPublicApiRoutes = () => {
+  const apiRouter = express.Router();
+  apiRouter.use(express.json());
+  apiRouter.use(express.urlencoded({ extended: true }));
+  registerApiRoutes(apiRouter);
+  app.use(apiRouter);
+};
+
+const initializeStartupTasks = async () => {
+  try {
+    await syncMockTestIndexes();
+  } catch (error) {
+    logger.error("Mock test index sync error:", error.message);
+  }
+
+  try {
+    const legacyMigration = await backfillLegacyResultExams();
+    if (legacyMigration.migratedResults > 0) {
+      logger.info(
+        `Backfilled ${legacyMigration.migratedResults} legacy results`
+      );
+    }
+  } catch (error) {
+    logger.error("Migration error:", error.message);
+  }
+
+  try {
+    await refreshYouTubeLibrarySchedule();
+  } catch (error) {
+    logger.error("YouTube library scheduler init error:", error.message);
+  }
+
+  try {
+    const { startAdminPanel } = await import("./admin/Admin.js");
+    const adminRouter = await startAdminPanel();
+    app.use(adminRouter);
+    runtimeState.adminStatus = "ready";
+    logger.info("Admin panel initialized");
+  } catch (error) {
+    runtimeState.adminStatus = "failed";
+    logger.error("Admin panel initialization error:", error.message);
+  } finally {
+    runtimeState.startupStatus = "ready";
+  }
 };
 
 
@@ -157,41 +219,14 @@ const startServer = async () => {
   try {
     await connectDB();
     logger.info("MongoDB connected");
-
-    try {
-      await syncMockTestIndexes();
-    } catch (err) {
-      logger.error("Mock test index sync error:", err.message);
-    }
-
-    try {
-      const legacyMigration = await backfillLegacyResultExams();
-      if (legacyMigration.migratedResults > 0) {
-        logger.info(
-          `Backfilled ${legacyMigration.migratedResults} legacy results`
-        );
-      }
-    } catch (err) {
-      logger.error("Migration error:", err.message);
-    }
-
-    try {
-      await refreshYouTubeLibrarySchedule();
-    } catch (err) {
-      logger.error("YouTube library scheduler init error:", err.message);
-    }
-
-    const adminRouter = await startAdminPanel();
-    app.use(adminRouter);
-
-    // Body parser after AdminJS router, before JSON API routes.
-    app.use(express.json());
-    app.use(express.urlencoded({ extended: true }));
-    registerApiRoutes();
+    mountPublicApiRoutes();
 
     app.listen(PORT, () => {
+      runtimeState.startupStatus = "initializing";
       logger.info(`Server running on http://localhost:${PORT}`);
     });
+
+    void initializeStartupTasks();
 
   } catch (error) {
     logger.error("Failed to start server:", error.message);
