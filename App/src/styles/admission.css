@@ -1,0 +1,534 @@
+.admissions-directory {
+  min-height: 100vh;
+  margin-top: 100px;
+  padding: 28px 0 56px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 116, 34, 0.09), transparent 28%),
+    linear-gradient(180deg, #f8fafc 0%, #fdfdfd 45%, #ffffff 100%);
+}
+
+.admissions-directory__container {
+  padding-left: 3rem;
+  padding-right: 3rem;
+}
+
+.admissions-directory__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 20px;
+}
+
+.admissions-directory__heading {
+  max-width: 580px;
+}
+
+.admissions-directory__eyebrow {
+  display: inline-block;
+  margin-bottom: 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--primary-orange);
+}
+
+.admissions-directory__title {
+  margin: 0;
+  color: #1f3c68;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.admissions-directory__subtitle {
+  margin: 10px 0 0;
+  color: #5f6f85;
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.admissions-directory__search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: min(100%, 360px);
+  padding: 0 16px;
+  border: 1px solid #cdd7e4;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+}
+
+.admissions-directory__search svg {
+  color: #6f8198;
+  flex-shrink: 0;
+}
+
+.admissions-directory__search input {
+  width: 100%;
+  height: 56px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #22344f;
+  font-size: 0.98rem;
+}
+
+.admissions-directory__search input::placeholder {
+  color: #8b9ab0;
+}
+
+.admissions-directory__alert {
+  margin-bottom: 18px;
+  padding: 14px 18px;
+  border: 1px solid rgba(255, 116, 34, 0.18);
+  border-radius: 16px;
+  background: rgba(255, 116, 34, 0.08);
+  color: #9a4b1d;
+  font-size: 0.95rem;
+}
+
+.admissions-directory__shell {
+  display: grid;
+  grid-template-columns: minmax(260px, 300px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.admissions-directory__sidebar {
+  position: sticky;
+  top: 128px;
+  padding: 18px;
+  border: 1px solid rgba(213, 220, 232, 0.95);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 22px 50px rgba(15, 23, 42, 0.08);
+}
+
+.admissions-directory__sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.admissions-directory__sidebar-header span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #203b64;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.admissions-directory__clear {
+  border: 0;
+  background: transparent;
+  color: var(--primary-orange);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admissions-directory__clear--inline {
+  padding: 0;
+}
+
+.admissions-directory__filter-group + .admissions-directory__filter-group {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #edf1f6;
+}
+
+.admissions-directory__filter-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+  color: #1f3558;
+  font-size: 0.98rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admissions-directory__filter-toggle svg {
+  color: #5f6f85;
+  transition: transform 0.2s ease;
+}
+
+.admissions-directory__filter-toggle svg.is-open {
+  transform: rotate(180deg);
+}
+
+.admissions-directory__filter-panel {
+  display: grid;
+  gap: 12px;
+  padding-top: 6px;
+}
+
+.admissions-directory__mini-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  border: 1px solid #d8e0ec;
+  border-radius: 10px;
+  background: #fbfcfe;
+}
+
+.admissions-directory__mini-search svg {
+  color: #8898ae;
+  flex-shrink: 0;
+}
+
+.admissions-directory__mini-search input {
+  width: 100%;
+  height: 42px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #22344f;
+  font-size: 0.92rem;
+}
+
+.admissions-directory__mini-search input::placeholder {
+  color: #9ba8ba;
+}
+
+.admissions-directory__checklist {
+  display: grid;
+  gap: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.admissions-directory__checkitem {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  cursor: pointer;
+}
+
+.admissions-directory__checkitem input {
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  accent-color: var(--primary-orange);
+}
+
+.admissions-directory__checkcopy {
+  color: #314766;
+  font-size: 0.94rem;
+  line-height: 1.45;
+}
+
+.admissions-directory__checkcount {
+  min-width: 28px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #eef3f8;
+  color: #667991;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.admissions-directory__filter-empty {
+  padding: 8px 0 4px;
+  color: #8191a6;
+  font-size: 0.9rem;
+}
+
+.admissions-directory__results {
+  min-width: 0;
+}
+
+.admissions-directory__toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.admissions-directory__count {
+  margin: 0;
+  color: #1c355a;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.admissions-directory__caption {
+  margin: 4px 0 0;
+  color: #6b7d94;
+  font-size: 0.94rem;
+}
+
+.admissions-directory__active {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: #f3f6fb;
+  color: #425a78;
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.admissions-directory__list {
+  display: grid;
+  gap: 18px;
+}
+
+.admissions-directory__card {
+  display: block;
+  padding: 22px 24px;
+  border: 1px solid #e4ebf3;
+  border-radius: 22px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.07);
+  color: inherit !important;
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    border-color 0.22s ease;
+}
+
+.admissions-directory__card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(255, 116, 34, 0.28);
+  box-shadow: 0 28px 50px rgba(15, 23, 42, 0.1);
+  color: inherit !important;
+}
+
+.admissions-directory__card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.admissions-directory__card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.admissions-directory__pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.admissions-directory__pill--college {
+  background: rgba(31, 60, 104, 0.11);
+  color: #1f3c68;
+}
+
+.admissions-directory__pill--university {
+  background: rgba(255, 116, 34, 0.12);
+  color: #c35718;
+}
+
+.admissions-directory__pill--status.admissions-directory__pill--open {
+  background: rgba(19, 170, 82, 0.12);
+  color: #16824b;
+}
+
+.admissions-directory__pill--status.admissions-directory__pill--closingSoon {
+  background: rgba(238, 119, 38, 0.12);
+  color: #c55b1a;
+}
+
+.admissions-directory__pill--status.admissions-directory__pill--rolling {
+  background: rgba(60, 119, 215, 0.12);
+  color: #275eaf;
+}
+
+.admissions-directory__pill--status.admissions-directory__pill--closed {
+  background: rgba(219, 73, 73, 0.12);
+  color: #b03a3a;
+}
+
+.admissions-directory__card-arrow {
+  color: #8da0b8;
+  flex-shrink: 0;
+}
+
+.admissions-directory__card-title {
+  margin: 0;
+  color: #203b64;
+  font-size: clamp(1.4rem, 2.3vw, 2rem);
+  font-weight: 800;
+  line-height: 1.24;
+}
+
+.admissions-directory__card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 14px;
+}
+
+.admissions-directory__card-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #57708f;
+  font-size: 0.93rem;
+  font-weight: 600;
+}
+
+.admissions-directory__card-summary {
+  margin: 14px 0 0;
+  color: #5d6f86;
+  font-size: 0.98rem;
+  line-height: 1.65;
+}
+
+.admissions-directory__card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.admissions-directory__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border: 1px solid #dde6f0;
+  border-radius: 999px;
+  background: #f8fbff;
+  color: #465c78;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.admissions-directory__tag--affiliation {
+  border-color: rgba(255, 116, 34, 0.18);
+  background: rgba(255, 116, 34, 0.08);
+  color: #b65319;
+}
+
+.admissions-directory__card-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 18px;
+  color: #304f73;
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+.admissions-directory__card-date svg {
+  color: var(--primary-orange);
+  flex-shrink: 0;
+}
+
+.admissions-directory__empty {
+  padding: 48px 28px;
+  border: 1px dashed #d7e1ec;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.8);
+  text-align: center;
+}
+
+.admissions-directory__empty h3 {
+  margin: 0;
+  color: #203b64;
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.admissions-directory__empty p {
+  max-width: 540px;
+  margin: 10px auto 0;
+  color: #6a7d95;
+  font-size: 0.98rem;
+  line-height: 1.65;
+}
+
+.admissions-directory__empty .btn-primary {
+  margin-top: 18px;
+}
+
+@media (max-width: 1199px) {
+  .admissions-directory__container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  .admissions-directory__shell {
+    grid-template-columns: 280px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 991px) {
+  .admissions-directory {
+    margin-top: 88px;
+    padding-top: 20px;
+  }
+
+  .admissions-directory__container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .admissions-directory__header,
+  .admissions-directory__toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admissions-directory__search {
+    min-width: 100%;
+  }
+
+  .admissions-directory__shell {
+    grid-template-columns: 1fr;
+  }
+
+  .admissions-directory__sidebar {
+    position: static;
+  }
+}
+
+@media (max-width: 767px) {
+  .admissions-directory__card {
+    padding: 18px;
+    border-radius: 18px;
+  }
+
+  .admissions-directory__card-title {
+    font-size: 1.45rem;
+  }
+
+  .admissions-directory__card-meta,
+  .admissions-directory__card-tags {
+    gap: 10px;
+  }
+
+  .admissions-directory__card-date {
+    font-size: 0.92rem;
+  }
+}

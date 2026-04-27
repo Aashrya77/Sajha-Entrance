@@ -27,11 +27,19 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
     if (path.includes('/book') || path.includes('/cart')) return 'Books';
     if (path.includes('/result')) return 'Results';
     if (path.includes('/contact')) return 'Contact';
+    if (path.includes('/admission')) return 'Admission';
+    if (path.includes('/news')) return 'News';
+    if (path.includes('/event')) return 'Event';
+    if (path.includes('/scholarship')) return 'Scholarship';
     return '';
   };
 
   const parentGroup = getParentGroup();
   const moreLinks = [
+    { to: '/admission', label: 'ADMISSION', group: 'Admission' },
+    { to: '/news', label: 'NEWS', group: 'News' },
+    { to: '/events', label: 'EVENTS', group: 'Event' },
+    { to: '/scholarships', label: 'SCHOLARSHIPS', group: 'Scholarship' },
     { to: '/about', label: 'ABOUT', group: 'About' },
     { to: '/blogs', label: 'BLOGS', group: 'Blogs' },
     { to: '/services', label: 'SERVICES', group: 'Services' },

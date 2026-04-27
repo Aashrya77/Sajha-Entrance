@@ -112,3 +112,22 @@
 .newsletter-input::placeholder {
   color: rgba(255, 255, 255, 0.75);
 }
+
+.footer-legal-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.footer-legal-links a {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary-black);
+}
+
+.footer-legal-links a:hover {
+  color: var(--primary-orange);
+}

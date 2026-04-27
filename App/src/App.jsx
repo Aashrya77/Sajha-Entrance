@@ -16,6 +16,10 @@ import Blogs from './pages/Blogs/Blogs';
 import BlogDetail from './pages/BlogDetail/BlogDetail';
 import Contact from './pages/Contact/Contact';
 import Services from './pages/Services/Services';
+import Admission from './pages/Admission/Admission';
+import News from './pages/News/News';
+import Event from './pages/Event/Event';
+import Scholarship from './pages/Scholarship/Scholarship';
 import StudentLogin from './pages/StudentLogin/StudentLogin';
 import StudentRegister from './pages/StudentRegister/StudentRegister';
 import StudentProfile from './pages/StudentProfile/StudentProfile';
@@ -35,6 +39,8 @@ import Cart from './components/Books/Cart';
 import { booksData } from './data/booksData';
 import PaymentSuccess from './pages/PaymentSuccess/PaymentSuccess';
 import PaymentFailure from './pages/PaymentFailure/PaymentFailure';
+import TermsConditions from './pages/Legal/TermsConditions';
+import PrivacyPolicy from './pages/Legal/PrivacyPolicy';
 
 // ScrollToTop component to reset scroll position on route change
 const ScrollToTop = () => {
@@ -160,6 +166,11 @@ function App() {
         <Route path="/blog/:id" element={<BlogDetail />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/services" element={<Services />} />
+        <Route path="/admission" element={<Admission />} />
+        <Route path="/news" element={<News />} />
+        <Route path="/news/:id" element={<News />} />
+        <Route path="/events" element={<Event />} />
+        <Route path="/scholarships" element={<Scholarship />} />
         <Route path="/results" element={<Results />} />
         <Route path="/books" element={<BookList books={booksData} addToCart={addToCart} />} />
         <Route path="/book/:id" element={<BookDetail books={booksData} addToCart={addToCart} />} />
@@ -171,6 +182,8 @@ function App() {
         <Route path="/reset-password/:token" element={<ForgotPasswordForm />} />
         <Route path="/payment/success" element={<PaymentSuccess />} />
         <Route path="/payment/failure" element={<PaymentFailure />} />
+        <Route path="/terms-and-conditions" element={<TermsConditions />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       {!isAuthPage && <Footer />}

@@ -93,6 +93,10 @@ const Footer = () => {
           </div>
           <hr className="mb-0 mt-0"/>
           <div className="d-flex flex-column align-items-center justify-content-center mb-3 mt-3">
+            <div className="footer-legal-links">
+              <Link to="/terms-and-conditions">Terms & Conditions</Link>
+              <Link to="/privacy-policy">Privacy Policy</Link>
+            </div>
             <span style={{fontSize: '14.5px', color: 'var(--primary-orange)', fontWeight: 500}}>Hand Crafted with ☕ and ❤️ by <a href="https://www.linkedin.com/in/mukesh-bhat/" target="_blank" rel="noopener noreferrer">Mukesh Bhat</a></span>
             <span style={{fontSize: '14.5px'}} className="mt-1">Copyright 2026 | All Rights Reserved</span>
           </div>
