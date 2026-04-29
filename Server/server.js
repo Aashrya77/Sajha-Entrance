@@ -38,6 +38,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const logger = createLogger("server");
 const isProduction = process.env.NODE_ENV === "production";
+
 const runtimeState = {
   adminStatus: "pending",
   startupStatus: "pending",
@@ -60,7 +61,7 @@ if (isProduction) {
   app.set("trust proxy", 1);
 }
 
-// ================= MIDDLEWARE =================
+// ================= GLOBAL MIDDLEWARE =================
 app.use(
   cors({
     origin: [
@@ -74,12 +75,9 @@ app.use(
 
 app.use(cookieParser());
 
-// ================= STATIC FILES (FIXED) =================
-
-// 1. Serve entire public folder
+// ================= STATIC FILES =================
 app.use(express.static(publicDirectory, staticFileOptions));
 
-// 2. Backfill missing media files from legacy folders on demand
 app.get(/^\/media\/([^/]+)\/(.+)$/, async (req, res, next) => {
   const type = req.params?.[0];
   const requestedAssetPath = normalizeRequestedMediaPath(req.params?.[1] || "");
@@ -105,23 +103,26 @@ app.get(/^\/media\/([^/]+)\/(.+)$/, async (req, res, next) => {
 
   try {
     const legacyFilePath = await findLegacyMediaFile(mediaType, safeFilename);
+
     if (!legacyFilePath) {
       return next();
     }
 
     await fs.promises.mkdir(targetDirectory, { recursive: true });
     await fs.promises.copyFile(legacyFilePath, canonicalTargetPath);
+
     return res.sendFile(canonicalTargetPath);
   } catch (error) {
-    logger.error(`Media fallback failed for ${mediaType}/${safeFilename}:`, error.message);
+    logger.error(
+      `Media fallback failed for ${mediaType}/${safeFilename}:`,
+      error.message
+    );
     return next();
   }
 });
 
-// 3. Canonical media route
 app.use("/media", express.static(mediaRootDirectory, staticFileOptions));
 
-// 4. AdminJS assets
 if (fs.existsSync(adminBrandAssets.appPublicDirectory)) {
   app.use(
     adminBrandAssets.publicMountPath,
@@ -134,6 +135,25 @@ if (fs.existsSync(adminBrandAssets.appPublicDirectory)) {
   );
 }
 
+// ================= ADMINJS =================
+// IMPORTANT:
+// AdminJS must be mounted BEFORE express.json() / express.urlencoded().
+const initializeAdminPanel = async () => {
+  try {
+    const { startAdminPanel } = await import("./admin/Admin.js");
+    const adminRouter = await startAdminPanel();
+
+    app.use(adminRouter);
+
+    runtimeState.adminStatus = "ready";
+    logger.info("Admin panel initialized");
+  } catch (error) {
+    runtimeState.adminStatus = "failed";
+    logger.error("Admin panel initialization error:", error.message);
+  }
+};
+
+// ================= API ROUTES =================
 const registerApiRoutes = (router) => {
   router.get("/api/health", (_req, res) => {
     res.json({
@@ -162,19 +182,23 @@ const registerApiRoutes = (router) => {
   router.use("/api", InquiryRoutes);
   router.use("/api/youtube-library", YouTubeLibraryRoutes);
 
-  router.use("/api/*", (req, res) => {
+  router.use("/api/*", (_req, res) => {
     res.status(404).json({ error: "API endpoint not found" });
   });
 };
 
 const mountPublicApiRoutes = () => {
   const apiRouter = express.Router();
+
   apiRouter.use(express.json());
   apiRouter.use(express.urlencoded({ extended: true }));
+
   registerApiRoutes(apiRouter);
+
   app.use(apiRouter);
 };
 
+// ================= STARTUP TASKS =================
 const initializeStartupTasks = async () => {
   try {
     await syncMockTestIndexes();
@@ -184,10 +208,9 @@ const initializeStartupTasks = async () => {
 
   try {
     const legacyMigration = await backfillLegacyResultExams();
+
     if (legacyMigration.migratedResults > 0) {
-      logger.info(
-        `Backfilled ${legacyMigration.migratedResults} legacy results`
-      );
+      logger.info(`Backfilled ${legacyMigration.migratedResults} legacy results`);
     }
   } catch (error) {
     logger.error("Migration error:", error.message);
@@ -198,37 +221,32 @@ const initializeStartupTasks = async () => {
   } catch (error) {
     logger.error("YouTube library scheduler init error:", error.message);
   }
-
-  try {
-    const { startAdminPanel } = await import("./admin/Admin.js");
-    const adminRouter = await startAdminPanel();
-    app.use(adminRouter);
-    runtimeState.adminStatus = "ready";
-    logger.info("Admin panel initialized");
-  } catch (error) {
-    runtimeState.adminStatus = "failed";
-    logger.error("Admin panel initialization error:", error.message);
-  } finally {
-    runtimeState.startupStatus = "ready";
-  }
 };
-
 
 // ================= START SERVER =================
 const startServer = async () => {
   try {
     await connectDB();
     logger.info("MongoDB connected");
+
+    runtimeState.startupStatus = "initializing";
+
+    // 1. AdminJS first
+    await initializeAdminPanel();
+
+    // 2. API routes after AdminJS
     mountPublicApiRoutes();
 
+    // 3. Start server
     app.listen(PORT, () => {
-      runtimeState.startupStatus = "initializing";
+      runtimeState.startupStatus = "ready";
       logger.info(`Server running on http://localhost:${PORT}`);
     });
 
+    // 4. Background startup tasks
     void initializeStartupTasks();
-
   } catch (error) {
+    runtimeState.startupStatus = "failed";
     logger.error("Failed to start server:", error.message);
     process.exit(1);
   }
