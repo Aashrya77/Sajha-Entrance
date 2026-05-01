@@ -23,6 +23,7 @@ import Scholarship from './pages/Scholarship/Scholarship';
 import StudentLogin from './pages/StudentLogin/StudentLogin';
 import StudentRegister from './pages/StudentRegister/StudentRegister';
 import StudentProfile from './pages/StudentProfile/StudentProfile';
+import AdminRedirect from './pages/AdminRedirect/AdminRedirect';
 import NotFound from './pages/NotFound/NotFound';
 import Results from './pages/Results/Results';
 import Universities from './pages/Universities/Universities';
@@ -184,6 +185,7 @@ function App() {
         <Route path="/payment/failure" element={<PaymentFailure />} />
         <Route path="/terms-and-conditions" element={<TermsConditions />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/sajha-admin/*" element={<AdminRedirect />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       {!isAuthPage && <Footer />}

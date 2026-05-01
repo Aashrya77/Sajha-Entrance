@@ -2,6 +2,8 @@ import axios from 'axios';
 
 const trimTrailingSlashes = (value = '') => value.replace(/\/+$/g, '');
 const ensureLeadingSlash = (value = '') => (value.startsWith('/') ? value : `/${value}`);
+const isAbsoluteUrl = (value = '') => /^https?:\/\//i.test(value);
+const ADMIN_ROOT_PATH = '/sajha-admin';
 
 const configuredBaseUrl = trimTrailingSlashes(import.meta.env.VITE_API_BASE_URL || '');
 export const baseURL = configuredBaseUrl || '/api';
@@ -23,6 +25,22 @@ export const resolveBackendPath = (path = '') => {
   }
 
   return `${cleanBackendBaseUrl}${normalizedPath}`;
+};
+
+export const resolveAdminUrl = () => {
+  const configuredAdminUrl = trimTrailingSlashes(import.meta.env.VITE_ADMIN_URL || '');
+
+  if (configuredAdminUrl) {
+    return configuredAdminUrl;
+  }
+
+  const cleanBackendBaseUrl = trimTrailingSlashes(backendBaseUrl);
+
+  if (!isAbsoluteUrl(cleanBackendBaseUrl)) {
+    return '';
+  }
+
+  return `${cleanBackendBaseUrl}${ADMIN_ROOT_PATH}`;
 };
 
 // Create axios instance with base configuration
