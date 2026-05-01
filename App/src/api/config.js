@@ -27,6 +27,18 @@ export const resolveBackendPath = (path = '') => {
   return `${cleanBackendBaseUrl}${normalizedPath}`;
 };
 
+export const buildAdminUrl = (value = '') => {
+  const cleanValue = trimTrailingSlashes(value);
+
+  if (!cleanValue || !isAbsoluteUrl(cleanValue)) {
+    return '';
+  }
+
+  return cleanValue.endsWith(ADMIN_ROOT_PATH)
+    ? cleanValue
+    : `${cleanValue}${ADMIN_ROOT_PATH}`;
+};
+
 export const resolveAdminUrl = () => {
   const configuredAdminUrl = trimTrailingSlashes(import.meta.env.VITE_ADMIN_URL || '');
 
@@ -34,13 +46,7 @@ export const resolveAdminUrl = () => {
     return configuredAdminUrl;
   }
 
-  const cleanBackendBaseUrl = trimTrailingSlashes(backendBaseUrl);
-
-  if (!isAbsoluteUrl(cleanBackendBaseUrl)) {
-    return '';
-  }
-
-  return `${cleanBackendBaseUrl}${ADMIN_ROOT_PATH}`;
+  return buildAdminUrl(backendBaseUrl);
 };
 
 // Create axios instance with base configuration

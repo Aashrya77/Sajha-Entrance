@@ -50,6 +50,8 @@ const staticFileOptions = {
   maxAge: "7d",
 };
 
+const trimTrailingSlashes = (value = "") => String(value || "").replace(/\/+$/g, "");
+
 const normalizeRequestedMediaPath = (value = "") =>
   String(value || "")
     .replace(/\\/g, "/")
@@ -57,6 +59,15 @@ const normalizeRequestedMediaPath = (value = "") =>
     .map((segment) => path.basename(segment))
     .filter((segment) => segment && segment !== "." && segment !== "..")
     .join("/");
+
+const resolveRequestOrigin = (req) =>
+  trimTrailingSlashes(`${req.protocol}://${req.get("host")}`);
+
+const resolvePublicBackendUrl = (req) =>
+  trimTrailingSlashes(process.env.BACKEND_URL || resolveRequestOrigin(req));
+
+const resolvePublicAdminUrl = (req) =>
+  `${resolvePublicBackendUrl(req)}${ADMIN_ROOT_PATH}`;
 
 if (isProduction) {
   app.set("trust proxy", 1);
@@ -174,6 +185,9 @@ const registerApiRoutes = (router) => {
         uptimeSeconds: Math.round(process.uptime()),
         adminStatus: runtimeState.adminStatus,
         startupStatus: runtimeState.startupStatus,
+        backendUrl: resolvePublicBackendUrl(_req),
+        adminUrl: resolvePublicAdminUrl(_req),
+        adminRootPath: ADMIN_ROOT_PATH,
       },
     });
   });
