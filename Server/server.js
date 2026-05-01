@@ -21,6 +21,7 @@ import InquiryRoutes from "./routes/Inquiry.js";
 import YouTubeLibraryRoutes from "./routes/YouTubeLibrary.js";
 
 import { adminBrandAssets } from "./admin/config/branding.js";
+import { ADMIN_ROOT_PATH } from "./admin/config/paths.js";
 import { createLogger } from "./utils/logger.js";
 import {
   findLegacyMediaFile,
@@ -77,6 +78,15 @@ app.use(cookieParser());
 
 // ================= STATIC FILES =================
 app.use(express.static(publicDirectory, staticFileOptions));
+
+const adminStaticDirectory = path.join(publicDirectory, "admin");
+
+if (fs.existsSync(adminStaticDirectory)) {
+  app.use(
+    ADMIN_ROOT_PATH,
+    express.static(adminStaticDirectory, staticFileOptions)
+  );
+}
 
 app.get(/^\/media\/([^/]+)\/(.+)$/, async (req, res, next) => {
   const type = req.params?.[0];

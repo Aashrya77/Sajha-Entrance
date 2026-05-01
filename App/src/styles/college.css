@@ -207,6 +207,7 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
+  color: #1a365d;
 }
 
 .location-icon {
@@ -216,13 +217,13 @@
   flex-shrink: 0;
 }
 
-  .location-text {
-    font-size: 14px;
-    color: #4a5568;
-    font-weight: 500;
-    line-height: 1.4;
-    flex: 1;
-  }
+.college-location-text {
+  font-size: 14px;
+  color: #4a5568;
+  font-weight: 500;
+  line-height: 1.4;
+  flex: 1;
+}
 
 /* College Profile Page Styles - Facebook-like Design */
 .college-profile {
@@ -1245,7 +1246,7 @@ html {
   }
 
   .university-name,
-  .location-text {
+  .college-location-text {
     font-size: 13px;
   }
 }

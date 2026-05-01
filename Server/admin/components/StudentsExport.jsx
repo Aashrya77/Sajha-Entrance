@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Box, Button, H4, Text } from "@adminjs/design-system";
 import { useLocation, useNavigate } from "react-router";
+import { buildAdminPath } from "../config/paths.js";
 
 const panelStyle = {
   background: "#ffffff",
@@ -27,7 +28,9 @@ const StudentsExport = (props) => {
   const [status, setStatus] = useState("Preparing the Excel file...");
   const [errorMessage, setErrorMessage] = useState("");
 
-  const listUrl = `${props?.resource?.href || "/admin/resources/Student"}${location.search || ""}`;
+  const listUrl = `${
+    props?.resource?.href || buildAdminPath("/resources/Student")
+  }${location.search || ""}`;
 
   useEffect(() => {
     if (hasStartedRef.current) {
@@ -39,10 +42,13 @@ const StudentsExport = (props) => {
 
     const startDownload = async () => {
       try {
-        const response = await fetch(`/admin/api/students/export${location.search || ""}`, {
-          credentials: "same-origin",
-          signal: controller.signal,
-        });
+        const response = await fetch(
+          buildAdminPath(`/api/students/export${location.search || ""}`),
+          {
+            credentials: "same-origin",
+            signal: controller.signal,
+          }
+        );
 
         if (!response.ok) {
           let nextError = "Failed to export students.";

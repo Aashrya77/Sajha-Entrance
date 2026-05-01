@@ -3,6 +3,7 @@ import { Box, Icon, Text } from "@adminjs/design-system";
 import { LoggedIn, Version, ViewHelpers } from "adminjs";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
+import { buildAdminPath } from "../config/paths.js";
 import { adminBrandMeta, dashboardTheme, getToneStyles } from "../config/theme.js";
 
 const h = new ViewHelpers();
@@ -85,7 +86,7 @@ export default function TopBar({ toggleSidebar }) {
                 alt={branding.companyName}
                 onError={(event) => {
                   event.currentTarget.onerror = null;
-                  event.currentTarget.src = "/admin/brand-logo.svg";
+                  event.currentTarget.src = buildAdminPath("/brand-logo.svg");
                 }}
                 style={{
                   width: "auto",

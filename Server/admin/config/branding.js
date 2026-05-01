@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { buildAdminPath } from "./paths.js";
 import { adminBrandMeta, adminTheme } from "./theme.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -10,8 +11,8 @@ const workspaceRoot = path.resolve(__dirname, "../../..");
 const appPublicDirectory = path.join(workspaceRoot, "App", "public");
 const logoRelativeFile = path.join("img", "adminlogo.png");
 const logoSourceFile = path.join(appPublicDirectory, logoRelativeFile);
-const publicMountPath = "/admin/brand-assets";
-const fallbackLogoUrl = "/admin/brand-logo.svg";
+const publicMountPath = buildAdminPath("/brand-assets");
+const fallbackLogoUrl = buildAdminPath("/brand-logo.svg");
 const resolvedLogoUrl = fs.existsSync(logoSourceFile)
   ? `${publicMountPath}/${logoRelativeFile.replace(/\\/g, "/")}`
   : fallbackLogoUrl;
@@ -23,9 +24,9 @@ const adminBrandAssets = {
   logoSourceFile,
   logoUrl: resolvedLogoUrl,
   fallbackLogoUrl,
-  faviconUrl: "/admin/favicon.svg",
-  themeStylesheetUrl: "/admin/admin-theme.css",
-  dashboardStylesheetUrl: "/admin/Dashboard.css",
+  faviconUrl: buildAdminPath("/favicon.svg"),
+  themeStylesheetUrl: buildAdminPath("/admin-theme.css"),
+  dashboardStylesheetUrl: buildAdminPath("/Dashboard.css"),
 };
 
 const adminBranding = {

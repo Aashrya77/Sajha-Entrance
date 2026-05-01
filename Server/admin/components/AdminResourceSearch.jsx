@@ -11,6 +11,7 @@ import {
 } from "@adminjs/design-system";
 import { useTranslation } from "adminjs";
 import { useNavigate } from "react-router";
+import { resolveAdminRootPath } from "../config/paths.js";
 
 const panelStyle = {
   background: "#ffffff",
@@ -113,7 +114,7 @@ const AdminResourceSearch = (props) => {
   const { translateAction, translateLabel, translateProperty } = useTranslation();
   const resource = props?.resource || {};
   const resourceId = resource?.id;
-  const rootPath = window.REDUX_STATE?.paths?.rootPath || "/admin";
+  const rootPath = resolveAdminRootPath();
   const searchableProperties = useMemo(
     () => getSearchableProperties(resource, translateProperty),
     [resource, translateProperty]

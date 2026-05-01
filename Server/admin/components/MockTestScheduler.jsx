@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Box, Button, H2, H4, Label, RichTextEditor, Text } from "@adminjs/design-system";
+import { buildAdminPath } from "../config/paths.js";
 
 const surfaceStyle = {
   background: "#ffffff",
@@ -117,7 +118,7 @@ export default function MockTestScheduler() {
   const loadWorkspace = async (message = "") => {
     setLoading(true);
     try {
-      const response = await fetch("/admin/api/mock-tests/workspace", {
+      const response = await fetch(buildAdminPath("/api/mock-tests/workspace"), {
         credentials: "same-origin",
       });
       const data = await response.json();
@@ -163,7 +164,7 @@ export default function MockTestScheduler() {
           params.append("search", questionSearch.trim());
         }
 
-        const response = await fetch(`/admin/api/mock-tests/questions?${params.toString()}`, {
+        const response = await fetch(buildAdminPath(`/api/mock-tests/questions?${params.toString()}`), {
           credentials: "same-origin",
         });
         const data = await response.json();
@@ -232,7 +233,7 @@ export default function MockTestScheduler() {
   const loadTestDetail = async (testId) => {
     setLoading(true);
     try {
-      const response = await fetch(`/admin/api/mock-tests/${testId}`, {
+      const response = await fetch(buildAdminPath(`/api/mock-tests/${testId}`), {
         credentials: "same-origin",
       });
       const data = await response.json();
@@ -302,8 +303,8 @@ export default function MockTestScheduler() {
 
     try {
       const endpoint = selectedTestId
-        ? `/admin/api/mock-tests/${selectedTestId}`
-        : "/admin/api/mock-tests";
+        ? buildAdminPath(`/api/mock-tests/${selectedTestId}`)
+        : buildAdminPath("/api/mock-tests");
       const method = selectedTestId ? "PATCH" : "POST";
 
       const response = await fetch(endpoint, {
@@ -341,7 +342,7 @@ export default function MockTestScheduler() {
 
   const updateStatus = async (testId, status) => {
     try {
-      const response = await fetch(`/admin/api/mock-tests/${testId}/status`, {
+      const response = await fetch(buildAdminPath(`/api/mock-tests/${testId}/status`), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -369,7 +370,7 @@ export default function MockTestScheduler() {
     }
 
     try {
-      const response = await fetch(`/admin/api/mock-tests/${testId}`, {
+      const response = await fetch(buildAdminPath(`/api/mock-tests/${testId}`), {
         method: "DELETE",
         credentials: "same-origin",
       });

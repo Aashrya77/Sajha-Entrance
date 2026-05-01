@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Box, Button, H2, H4, Icon, Label, Text } from "@adminjs/design-system";
+import { buildAdminPath } from "../config/paths.js";
 
 const fallbackCourses = [
   { code: "BCA", name: "BCA" },
@@ -305,7 +306,7 @@ export default function BulkUploadResults() {
   const loadCourses = async () => {
     setLoadingCourses(true);
     try {
-      const data = await fetchJson("/admin/api/result-courses");
+      const data = await fetchJson(buildAdminPath("/api/result-courses"));
       setCourses(mergeCourses(data.data));
     } catch (error) {
       setCourses(mergeCourses());
@@ -327,7 +328,7 @@ export default function BulkUploadResults() {
     setLoadingExams(true);
     try {
       const data = await fetchJson(
-        `/admin/api/result-exams?course=${encodeURIComponent(courseCode)}`
+        buildAdminPath(`/api/result-exams?course=${encodeURIComponent(courseCode)}`)
       );
       const loadedExams = Array.isArray(data.data) ? data.data : [];
       setExams(loadedExams);
@@ -439,8 +440,8 @@ export default function BulkUploadResults() {
       setPageMessage("");
 
       const endpoint = isCreatingExam
-        ? "/admin/api/result-exams"
-        : `/admin/api/result-exams/${examId}`;
+        ? buildAdminPath("/api/result-exams")
+        : buildAdminPath(`/api/result-exams/${examId}`);
       const method = isCreatingExam ? "POST" : "PATCH";
       const response = await fetchJson(endpoint, {
         method,
@@ -545,7 +546,7 @@ export default function BulkUploadResults() {
       formData.append("examId", examId);
       formData.append("duplicateStrategy", duplicateStrategy);
 
-      const response = await fetch("/admin/api/results/bulk-upload/preview", {
+      const response = await fetch(buildAdminPath("/api/results/bulk-upload/preview"), {
         method: "POST",
         body: formData,
         credentials: "same-origin",
@@ -602,7 +603,7 @@ export default function BulkUploadResults() {
       formData.append("examId", examId);
       formData.append("duplicateStrategy", duplicateStrategy);
 
-      const response = await fetch("/admin/api/results/bulk-upload/import", {
+      const response = await fetch(buildAdminPath("/api/results/bulk-upload/import"), {
         method: "POST",
         body: formData,
         credentials: "same-origin",
@@ -642,10 +643,10 @@ export default function BulkUploadResults() {
 
     try {
       const endpointMap = {
-        publish: `/admin/api/result-exams/${selectedExam._id}/publish`,
-        unpublish: `/admin/api/result-exams/${selectedExam._id}/unpublish`,
-        recalculate: `/admin/api/result-exams/${selectedExam._id}/recalculate-ranks`,
-        delete: `/admin/api/result-exams/${selectedExam._id}`,
+        publish: buildAdminPath(`/api/result-exams/${selectedExam._id}/publish`),
+        unpublish: buildAdminPath(`/api/result-exams/${selectedExam._id}/unpublish`),
+        recalculate: buildAdminPath(`/api/result-exams/${selectedExam._id}/recalculate-ranks`),
+        delete: buildAdminPath(`/api/result-exams/${selectedExam._id}`),
       };
 
       await fetchJson(endpointMap[action], {
@@ -918,7 +919,7 @@ export default function BulkUploadResults() {
                     variant="text"
                     size="sm"
                     as="a"
-                    href="/admin/resources/ResultExam"
+                    href={buildAdminPath("/resources/ResultExam")}
                   >
                     Manage Result Sets
                   </Button>
@@ -1016,9 +1017,11 @@ export default function BulkUploadResults() {
                     size="sm"
                     disabled={!templateCourseCode}
                     as="a"
-                    href={`/admin/api/results/templates?course=${encodeURIComponent(
-                      templateCourseCode
-                    )}&format=csv`}
+                    href={buildAdminPath(
+                      `/api/results/templates?course=${encodeURIComponent(
+                        templateCourseCode
+                      )}&format=csv`
+                    )}
                   >
                     Download CSV Template
                   </Button>
@@ -1028,9 +1031,11 @@ export default function BulkUploadResults() {
                     size="sm"
                     disabled={!templateCourseCode}
                     as="a"
-                    href={`/admin/api/results/templates?course=${encodeURIComponent(
-                      templateCourseCode
-                    )}&format=xlsx`}
+                    href={buildAdminPath(
+                      `/api/results/templates?course=${encodeURIComponent(
+                        templateCourseCode
+                      )}&format=xlsx`
+                    )}
                   >
                     Download Excel Template
                   </Button>
@@ -1252,7 +1257,12 @@ export default function BulkUploadResults() {
                 : "Recalculate Ranks"}
             </Button>
 
-            <Button size="sm" variant="text" as="a" href="/admin/resources/StudentResult">
+            <Button
+              size="sm"
+              variant="text"
+              as="a"
+              href={buildAdminPath("/resources/StudentResult")}
+            >
               View Imported Results
             </Button>
 

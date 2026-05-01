@@ -9,9 +9,10 @@ import {
   Text,
 } from "@adminjs/design-system";
 import renderMathInElement from "katex/dist/contrib/auto-render.js";
+import { buildAdminPath } from "../config/paths.js";
 
 const ADMIN_KATEX_STYLESHEET_ID = "sajha-admin-katex-css";
-const ADMIN_KATEX_STYLESHEET_HREF = "/admin/vendor/katex/katex.min.css";
+const ADMIN_KATEX_STYLESHEET_HREF = buildAdminPath("/vendor/katex/katex.min.css");
 
 const surfaceStyle = {
   background: "#ffffff",
@@ -365,7 +366,7 @@ export default function MockTestWorkspace() {
     setLoading(true);
 
     try {
-      const response = await fetch("/admin/api/mock-tests/workspace", {
+      const response = await fetch(buildAdminPath("/api/mock-tests/workspace"), {
         credentials: "same-origin",
       });
       const data = await response.json();
@@ -398,7 +399,7 @@ export default function MockTestWorkspace() {
 
     try {
       const response = await fetch(
-        `/admin/api/mock-tests/subjects/${normalizedSubjectId}/workspace`,
+        buildAdminPath(`/api/mock-tests/subjects/${normalizedSubjectId}/workspace`),
         {
           credentials: "same-origin",
         }
@@ -653,7 +654,7 @@ export default function MockTestWorkspace() {
     setLoading(true);
 
     try {
-      const response = await fetch(`/admin/api/mock-tests/${testId}`, {
+      const response = await fetch(buildAdminPath(`/api/mock-tests/${testId}`), {
         credentials: "same-origin",
       });
       const data = await response.json();
@@ -866,8 +867,8 @@ export default function MockTestWorkspace() {
 
     try {
       const endpoint = activeQuestionId
-        ? `/admin/api/mock-tests/subjects/${activeSubjectId}/questions/${activeQuestionId}`
-        : `/admin/api/mock-tests/subjects/${activeSubjectId}/questions`;
+        ? buildAdminPath(`/api/mock-tests/subjects/${activeSubjectId}/questions/${activeQuestionId}`)
+        : buildAdminPath(`/api/mock-tests/subjects/${activeSubjectId}/questions`);
       const method = activeQuestionId ? "PATCH" : "POST";
       const response = await fetch(endpoint, {
         method,
@@ -932,7 +933,7 @@ export default function MockTestWorkspace() {
 
     try {
       const response = await fetch(
-        `/admin/api/mock-tests/subjects/${activeSubjectId}/questions/${questionId}`,
+        buildAdminPath(`/api/mock-tests/subjects/${activeSubjectId}/questions/${questionId}`),
         {
           method: "DELETE",
           credentials: "same-origin",
@@ -988,7 +989,7 @@ export default function MockTestWorkspace() {
 
     try {
       const response = await fetch(
-        `/admin/api/mock-tests/subjects/${activeSubjectId}/questions/reorder`,
+        buildAdminPath(`/api/mock-tests/subjects/${activeSubjectId}/questions/reorder`),
         {
           method: "POST",
           headers: {
@@ -1031,7 +1032,7 @@ export default function MockTestWorkspace() {
 
     try {
       const response = await fetch(
-        `/admin/api/mock-tests/subjects/${activeSubjectId}/questions/publish`,
+        buildAdminPath(`/api/mock-tests/subjects/${activeSubjectId}/questions/publish`),
         {
           method: "POST",
           headers: {
@@ -1071,8 +1072,8 @@ export default function MockTestWorkspace() {
 
     try {
       const endpoint = selectedTestId
-        ? `/admin/api/mock-tests/${selectedTestId}`
-        : "/admin/api/mock-tests";
+        ? buildAdminPath(`/api/mock-tests/${selectedTestId}`)
+        : buildAdminPath("/api/mock-tests");
       const method = selectedTestId ? "PATCH" : "POST";
 
       const response = await fetch(endpoint, {
@@ -1107,7 +1108,7 @@ export default function MockTestWorkspace() {
 
   const updateStatus = async (testId, status) => {
     try {
-      const response = await fetch(`/admin/api/mock-tests/${testId}/status`, {
+      const response = await fetch(buildAdminPath(`/api/mock-tests/${testId}/status`), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -1133,7 +1134,7 @@ export default function MockTestWorkspace() {
     }
 
     try {
-      const response = await fetch(`/admin/api/mock-tests/${testId}`, {
+      const response = await fetch(buildAdminPath(`/api/mock-tests/${testId}`), {
         method: "DELETE",
         credentials: "same-origin",
       });

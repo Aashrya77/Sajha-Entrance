@@ -9,9 +9,10 @@ import {
   Text,
 } from "@adminjs/design-system";
 import renderMathInElement from "katex/dist/contrib/auto-render.js";
+import { buildAdminPath } from "../config/paths.js";
 
 const ADMIN_KATEX_STYLESHEET_ID = "sajha-admin-katex-css";
-const ADMIN_KATEX_STYLESHEET_HREF = "/admin/vendor/katex/katex.min.css";
+const ADMIN_KATEX_STYLESHEET_HREF = buildAdminPath("/vendor/katex/katex.min.css");
 
 const surfaceStyle = {
   background: "#ffffff",
@@ -220,7 +221,7 @@ export default function MockQuestionStudio(props) {
     setLoading(true);
     try {
       const response = await fetch(
-        `/admin/api/mock-test-subjects/${subjectId}/workspace`,
+        buildAdminPath(`/api/mock-test-subjects/${subjectId}/workspace`),
         {
           credentials: "same-origin",
         }
@@ -443,8 +444,8 @@ export default function MockQuestionStudio(props) {
 
     try {
       const endpoint = activeQuestionId
-        ? `/admin/api/mock-test-subjects/${subjectId}/questions/${activeQuestionId}`
-        : `/admin/api/mock-test-subjects/${subjectId}/questions`;
+        ? buildAdminPath(`/api/mock-test-subjects/${subjectId}/questions/${activeQuestionId}`)
+        : buildAdminPath(`/api/mock-test-subjects/${subjectId}/questions`);
       const method = activeQuestionId ? "PATCH" : "POST";
       const response = await fetch(endpoint, {
         method,
@@ -488,7 +489,7 @@ export default function MockQuestionStudio(props) {
 
     try {
       const response = await fetch(
-        `/admin/api/mock-test-subjects/${subjectId}/questions/publish`,
+        buildAdminPath(`/api/mock-test-subjects/${subjectId}/questions/publish`),
         {
           method: "POST",
           headers: {
@@ -524,7 +525,7 @@ export default function MockQuestionStudio(props) {
 
     try {
       const response = await fetch(
-        `/admin/api/mock-test-subjects/${subjectId}/questions/${questionId}`,
+        buildAdminPath(`/api/mock-test-subjects/${subjectId}/questions/${questionId}`),
         {
           method: "DELETE",
           credentials: "same-origin",
@@ -567,7 +568,7 @@ export default function MockQuestionStudio(props) {
 
     try {
       const response = await fetch(
-        `/admin/api/mock-test-subjects/${subjectId}/questions/reorder`,
+        buildAdminPath(`/api/mock-test-subjects/${subjectId}/questions/reorder`),
         {
           method: "POST",
           headers: {
