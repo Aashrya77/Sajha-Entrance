@@ -171,6 +171,7 @@ function App() {
         <Route path="/news" element={<News />} />
         <Route path="/news/:id" element={<News />} />
         <Route path="/events" element={<Event />} />
+        <Route path="/events/:id" element={<Event />} />
         <Route path="/scholarships" element={<Scholarship />} />
         <Route path="/results" element={<Results />} />
         <Route path="/books" element={<BookList books={booksData} addToCart={addToCart} />} />
