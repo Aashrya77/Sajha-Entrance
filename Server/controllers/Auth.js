@@ -6,6 +6,7 @@ import crypto from "crypto";
 import { getClassStatus } from "./Class.js";
 import { MailHandler } from "./MailHandler.js";
 import { resolveRecordedClassMedia } from "../utils/youtube.js";
+import { resolvePublicFrontendUrl } from "../utils/publicUrl.js";
 import { getCourseRegexMatchers } from "../utils/courseAccess.js";
 import {
   buildOnlineClassCourseQuery,
@@ -26,19 +27,7 @@ const generateToken = (id, studentId, email) => {
   return jwt.sign({ id, studentId, email }, JWT_SECRET, { expiresIn: JWT_EXPIRY });
 };
 
-const buildFrontendUrl = (req) => {
-  const configuredFrontendUrl = process.env.FRONTEND_URL || process.env.CLIENT_URL;
-  if (configuredFrontendUrl) {
-    return configuredFrontendUrl.replace(/\/+$/g, "");
-  }
-
-  const requestOrigin = req.get("origin");
-  if (requestOrigin) {
-    return requestOrigin.replace(/\/+$/g, "");
-  }
-
-  return `${req.protocol}://${req.get("host")}`.replace(/\/+$/g, "");
-};
+const buildFrontendUrl = (req) => resolvePublicFrontendUrl(req);
 
 const hashResetToken = (token) =>
   crypto.createHash("sha256").update(token).digest("hex");

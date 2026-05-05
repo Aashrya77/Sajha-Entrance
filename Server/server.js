@@ -29,6 +29,7 @@ import {
   mediaRootDirectory,
   publicDirectory,
 } from "./utils/media.js";
+import { resolvePublicBackendUrl } from "./utils/publicUrl.js";
 import { backfillLegacyResultExams } from "./services/resultService.js";
 import { syncMockTestIndexes } from "./services/mockTestIndexService.js";
 import { refreshYouTubeLibrarySchedule } from "./services/youtubeLibraryScheduler.js";
@@ -50,8 +51,6 @@ const staticFileOptions = {
   maxAge: "7d",
 };
 
-const trimTrailingSlashes = (value = "") => String(value || "").replace(/\/+$/g, "");
-
 const normalizeRequestedMediaPath = (value = "") =>
   String(value || "")
     .replace(/\\/g, "/")
@@ -59,12 +58,6 @@ const normalizeRequestedMediaPath = (value = "") =>
     .map((segment) => path.basename(segment))
     .filter((segment) => segment && segment !== "." && segment !== "..")
     .join("/");
-
-const resolveRequestOrigin = (req) =>
-  trimTrailingSlashes(`${req.protocol}://${req.get("host")}`);
-
-const resolvePublicBackendUrl = (req) =>
-  trimTrailingSlashes(process.env.BACKEND_URL || resolveRequestOrigin(req));
 
 const resolvePublicAdminUrl = (req) =>
   `${resolvePublicBackendUrl(req)}${ADMIN_ROOT_PATH}`;

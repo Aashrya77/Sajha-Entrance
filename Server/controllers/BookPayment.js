@@ -1,5 +1,9 @@
 import crypto from "crypto";
 import BookOrderModel from "../models/BookOrder.js";
+import {
+  resolvePublicBackendUrl,
+  resolvePublicFrontendUrl,
+} from "../utils/publicUrl.js";
 
 // eSewa config from env
 const getEsewaConfig = () => ({
@@ -86,6 +90,7 @@ export const initiateBookPayment = async (req, res) => {
     const signature = generateSignature(signatureMessage, config.secretKey);
 
     // eSewa form parameters
+    const backendUrl = resolvePublicBackendUrl(req);
     const esewaParams = {
       amount: String(amount),
       tax_amount: String(taxAmount),
@@ -94,8 +99,8 @@ export const initiateBookPayment = async (req, res) => {
       product_code: config.merchantCode,
       product_service_charge: "0",
       product_delivery_charge: "0",
-      success_url: `${process.env.BACKEND_URL || "http://localhost:5000"}/api/book-payment/esewa/success`,
-      failure_url: `${process.env.BACKEND_URL || "http://localhost:5000"}/api/book-payment/esewa/failure`,
+      success_url: `${backendUrl}/api/book-payment/esewa/success`,
+      failure_url: `${backendUrl}/api/book-payment/esewa/failure`,
       signed_field_names: "total_amount,transaction_uuid,product_code",
       signature,
     };
@@ -121,7 +126,7 @@ export const initiateBookPayment = async (req, res) => {
  */
 export const esewaBookSuccess = async (req, res) => {
   try {
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const frontendUrl = resolvePublicFrontendUrl(req);
     const config = getEsewaConfig();
 
     const encodedData = req.query.data;
@@ -188,7 +193,7 @@ export const esewaBookSuccess = async (req, res) => {
     );
   } catch (error) {
     console.error("eSewa book success callback error:", error);
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const frontendUrl = resolvePublicFrontendUrl(req);
     return res.redirect(`${frontendUrl}/payment/failure?reason=server_error&type=book`);
   }
 };
@@ -199,7 +204,7 @@ export const esewaBookSuccess = async (req, res) => {
  */
 export const esewaBookFailure = async (req, res) => {
   try {
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const frontendUrl = resolvePublicFrontendUrl(req);
 
     const encodedData = req.query.data;
     if (encodedData) {
@@ -220,7 +225,7 @@ export const esewaBookFailure = async (req, res) => {
     return res.redirect(`${frontendUrl}/payment/failure?reason=payment_failed&type=book`);
   } catch (error) {
     console.error("eSewa book failure callback error:", error);
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const frontendUrl = resolvePublicFrontendUrl(req);
     return res.redirect(`${frontendUrl}/payment/failure?reason=server_error&type=book`);
   }
 };

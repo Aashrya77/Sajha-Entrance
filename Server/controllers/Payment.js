@@ -2,6 +2,10 @@ import crypto from "crypto";
 import PaymentModel from "../models/Payment.js";
 import CourseModel from "../models/Course.js";
 import Student from "../models/Student.js";
+import {
+  resolvePublicBackendUrl,
+  resolvePublicFrontendUrl,
+} from "../utils/publicUrl.js";
 
 // eSewa config from env
 const getEsewaConfig = () => ({
@@ -84,8 +88,7 @@ export const initiatePayment = async (req, res) => {
     const signatureMessage = `total_amount=${totalAmount},transaction_uuid=${transactionUuid},product_code=${config.merchantCode}`;
     const signature = generateSignature(signatureMessage, config.secretKey);
 
-    // Frontend base URL for success/failure redirects
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const backendUrl = resolvePublicBackendUrl(req);
 
     // eSewa form parameters
     const esewaParams = {
@@ -96,8 +99,8 @@ export const initiatePayment = async (req, res) => {
       product_code: config.merchantCode,
       product_service_charge: "0",
       product_delivery_charge: "0",
-      success_url: `${process.env.BACKEND_URL || "http://localhost:5000"}/api/payment/esewa/success`,
-      failure_url: `${process.env.BACKEND_URL || "http://localhost:5000"}/api/payment/esewa/failure`,
+      success_url: `${backendUrl}/api/payment/esewa/success`,
+      failure_url: `${backendUrl}/api/payment/esewa/failure`,
       signed_field_names: "total_amount,transaction_uuid,product_code",
       signature,
     };
@@ -123,7 +126,7 @@ export const initiatePayment = async (req, res) => {
  */
 export const esewaSuccess = async (req, res) => {
   try {
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const frontendUrl = resolvePublicFrontendUrl(req);
     const config = getEsewaConfig();
 
     // eSewa sends the response as a base64-encoded JSON in the `data` query param
@@ -204,7 +207,7 @@ export const esewaSuccess = async (req, res) => {
     );
   } catch (error) {
     console.error("eSewa success callback error:", error);
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const frontendUrl = resolvePublicFrontendUrl(req);
     return res.redirect(`${frontendUrl}/payment/failure?reason=server_error`);
   }
 };
@@ -215,7 +218,7 @@ export const esewaSuccess = async (req, res) => {
  */
 export const esewaFailure = async (req, res) => {
   try {
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const frontendUrl = resolvePublicFrontendUrl(req);
 
     // Try to decode data if present
     const encodedData = req.query.data;
@@ -237,7 +240,7 @@ export const esewaFailure = async (req, res) => {
     return res.redirect(`${frontendUrl}/payment/failure?reason=payment_failed`);
   } catch (error) {
     console.error("eSewa failure callback error:", error);
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const frontendUrl = resolvePublicFrontendUrl(req);
     return res.redirect(`${frontendUrl}/payment/failure?reason=server_error`);
   }
 };

@@ -1,6 +1,15 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import API, { buildAdminUrl, resolveAdminUrl } from '../../api/config';
+import API, {
+  ADMIN_ROOT_PATH,
+  buildAdminUrl,
+  isLocalUrl,
+  resolveAdminRouteUrl,
+  resolveAdminUrl,
+} from '../../api/config';
+
+const ADMIN_HARD_RELOAD_KEY = 'sajha-admin-hard-reload';
+const normalizeUrl = (value = '') => String(value || '').replace(/\/+$/g, '');
 
 const AdminRedirect = () => {
   const [adminUrl, setAdminUrl] = useState(() => resolveAdminUrl());
@@ -8,20 +17,28 @@ const AdminRedirect = () => {
   const [statusMessage, setStatusMessage] = useState('');
 
   const currentRouteUrl = useMemo(
-    () => `${window.location.origin}${window.location.pathname}`.replace(/\/+$/g, ''),
+    () => normalizeUrl(`${window.location.origin}${window.location.pathname}`),
     []
   );
 
   useEffect(() => {
     if (adminUrl) {
-      const normalizedAdminUrl = adminUrl.replace(/\/+$/g, '');
+      const normalizedAdminUrl = normalizeUrl(adminUrl);
+      const hasAttemptedHardReload =
+        window.sessionStorage.getItem(ADMIN_HARD_RELOAD_KEY) === currentRouteUrl;
 
-      if (normalizedAdminUrl === currentRouteUrl) {
+      if (normalizedAdminUrl === currentRouteUrl && hasAttemptedHardReload) {
         setStatusMessage(
-          'The admin route resolves to this same frontend host, but production is still serving the public app here. The host needs a rewrite or proxy for /sajha-admin.'
+          'The /sajha-admin route is still being served by the public app after a hard reload. Point /sajha-admin to the backend AdminJS server in production.'
         );
         setIsResolving(false);
         return undefined;
+      }
+
+      if (normalizedAdminUrl === currentRouteUrl) {
+        window.sessionStorage.setItem(ADMIN_HARD_RELOAD_KEY, currentRouteUrl);
+      } else {
+        window.sessionStorage.removeItem(ADMIN_HARD_RELOAD_KEY);
       }
 
       const timeoutId = window.setTimeout(() => {
@@ -37,10 +54,21 @@ const AdminRedirect = () => {
       try {
         const response = await API.get('/health');
         const healthData = response?.data?.data || {};
-        const discoveredAdminUrl =
-          healthData.adminUrl || buildAdminUrl(healthData.backendUrl || '');
+        const discoveredAdminUrl = healthData.adminUrl || buildAdminUrl(healthData.backendUrl || '');
+        const sameOriginAdminUrl = resolveAdminRouteUrl(
+          healthData.adminRootPath || ADMIN_ROOT_PATH
+        );
+        const shouldPreferSameOriginAdminUrl =
+          Boolean(sameOriginAdminUrl) &&
+          (!discoveredAdminUrl ||
+            (isLocalUrl(discoveredAdminUrl) && !isLocalUrl(window.location.origin)));
 
         if (!isActive) {
+          return;
+        }
+
+        if (shouldPreferSameOriginAdminUrl) {
+          setAdminUrl(sameOriginAdminUrl);
           return;
         }
 
@@ -49,11 +77,23 @@ const AdminRedirect = () => {
           return;
         }
 
+        if (sameOriginAdminUrl) {
+          setAdminUrl(sameOriginAdminUrl);
+          return;
+        }
+
         setStatusMessage(
           'This frontend host is not configured to open the admin portal directly yet.'
         );
       } catch (_error) {
         if (!isActive) {
+          return;
+        }
+
+        const fallbackAdminUrl = resolveAdminRouteUrl();
+
+        if (fallbackAdminUrl) {
+          setAdminUrl(fallbackAdminUrl);
           return;
         }
 
