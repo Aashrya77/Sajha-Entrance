@@ -14,6 +14,7 @@ import { fileURLToPath } from "url";
 import componentLoader, { Components } from "./ComponentLoader.js";
 import { adminAssets, adminBranding } from "./config/branding.js";
 import { buildAdminLocale } from "./config/locale.js";
+import { ADMIN_ROOT_PATH, buildAdminPath } from "./config/paths.js";
 import { adminBrandMeta } from "./config/theme.js";
 import {
   authenticateAdminUser,
@@ -227,7 +228,9 @@ const buildYouTubeSettingsNotice = ({
 });
 
 const buildYouTubeSettingsRedirectUrl = (resourceId, recordId) =>
-  `/admin/resources/${resourceId}/records/${recordId}/show?refresh=${Date.now()}`;
+  buildAdminPath(
+    `/resources/${resourceId}/records/${recordId}/show?refresh=${Date.now()}`
+  );
 
 const buildYouTubeSettingsRecordDebugSnapshot = (record = null) => ({
   recordId: normalizeAdminInputString(record?.param?.("_id") || record?.params?._id),
@@ -1596,7 +1599,7 @@ const startAdminPanel = async () => {
                 message: "Exam and related result set deleted successfully.",
                 type: "success",
               },
-              redirectUrl: `/admin/resources/${context.resource.id()}`,
+              redirectUrl: buildAdminPath(`/resources/${context.resource.id()}`),
             };
           },
         },
@@ -2306,7 +2309,10 @@ const startAdminPanel = async () => {
 
   const adminOptions = {
     resources: adminResources,
-    rootPath: "/admin",
+    rootPath: ADMIN_ROOT_PATH,
+    loginPath: buildAdminPath("/login"),
+    logoutPath: buildAdminPath("/logout"),
+    refreshTokenPath: buildAdminPath("/refresh-token"),
     componentLoader,
     branding: adminBranding,
     assets: adminAssets,
@@ -2548,9 +2554,9 @@ const startAdminPanel = async () => {
   );
 
   const Router = express.Router();
-  Router.use("/admin/vendor/katex", express.static(katexAssetsDirectory));
+  Router.use(buildAdminPath("/vendor/katex"), express.static(katexAssetsDirectory));
   if (!isProduction) {
-    Router.get("/admin/frontend/assets/design-system.bundle.js", (_req, res) => {
+    Router.get(buildAdminPath("/frontend/assets/design-system.bundle.js"), (_req, res) => {
       res.type("application/javascript");
       res.sendFile(adminJsDesignSystemProductionBundlePath);
     });

@@ -177,7 +177,7 @@ const Home = () => {
 
                       <div className="college-location-section">
                         <i className="fa-solid fa-location-dot location-icon"></i>
-                        <span className="location-text">{college.collegeAddress}</span>
+                        <span className="college-location-text">{college.collegeAddress}</span>
                       </div>
                     </div>
                   </div>

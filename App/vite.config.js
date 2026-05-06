@@ -2,6 +2,7 @@ import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
 const defaultProxyTarget = 'http://127.0.0.1:5000';
+const adminProxyPath = '/sajha-admin';
 
 const resolveProxyTarget = (value = '') => {
   const normalizedValue = String(value || '').trim();
@@ -49,7 +50,7 @@ export default defineConfig(({ mode }) => {
           target: proxyTarget,
           changeOrigin: true,
         },
-        '/admin': {
+        [adminProxyPath]: {
           target: proxyTarget,
           changeOrigin: true
         },

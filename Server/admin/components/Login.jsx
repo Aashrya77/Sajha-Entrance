@@ -1,8 +1,9 @@
 import React from "react";
 import { Button, FormGroup, Input, Label, MessageBox } from "@adminjs/design-system";
-import { useSelector } from "react-redux";
-import { adminBrandMeta } from "../config/theme.js";
 import { useTranslation } from "adminjs";
+import { useSelector } from "react-redux";
+import { buildAdminPath } from "../config/paths.js";
+import { adminBrandMeta } from "../config/theme.js";
 
 export default function Login() {
   const props = window.__APP_STATE__ || {};
@@ -26,7 +27,7 @@ export default function Login() {
               className="sajha-login-card__logo"
               onError={(event) => {
                 event.currentTarget.onerror = null;
-                event.currentTarget.src = "/admin/brand-logo.svg";
+                event.currentTarget.src = buildAdminPath("/brand-logo.svg");
               }}
             />
           ) : (
