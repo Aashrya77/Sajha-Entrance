@@ -61,7 +61,8 @@ export default defineConfig(({ mode }) => {
       }
     },
     build: {
-      outDir: 'dist',
+      outDir: '../Server/public',
+      emptyOutDir: false,
       sourcemap: false
     }
   };

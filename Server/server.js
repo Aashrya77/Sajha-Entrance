@@ -254,13 +254,22 @@ const startServer = async () => {
     // 2. API routes after AdminJS
     mountPublicApiRoutes();
 
-    // 3. Start server
+    // 3. SPA fallback - serve index.html for all non-API, non-static routes
+    const indexPath = path.join(publicDirectory, "index.html");
+    if (fs.existsSync(indexPath)) {
+      app.get("*", (_req, res) => {
+        res.sendFile(indexPath);
+      });
+      logger.info("SPA fallback route registered");
+    }
+
+    // 4. Start server
     app.listen(PORT, () => {
       runtimeState.startupStatus = "ready";
       logger.info(`Server running on http://localhost:${PORT}`);
     });
 
-    // 4. Background startup tasks
+    // 5. Background startup tasks
     void initializeStartupTasks();
   } catch (error) {
     runtimeState.startupStatus = "failed";
