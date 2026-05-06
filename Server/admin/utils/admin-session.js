@@ -34,6 +34,8 @@ export const buildAdminSessionConfig = () => {
     proxy: isProduction,
     cookie: {
       httpOnly: true,
+      // Keep the admin session available to protected backend routes outside the AdminJS mount.
+      path: "/",
       secure: isProduction,
       sameSite: "lax",
       maxAge: adminSessionMaxAgeMs,

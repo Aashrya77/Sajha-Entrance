@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { noticeAPI, authAPI } from './api/services';
+import { ADMIN_ROOT_PATH } from './api/config';
 
 // Import components
 import Navbar from './components/Navbar/Navbar';
@@ -186,7 +187,7 @@ function App() {
         <Route path="/payment/failure" element={<PaymentFailure />} />
         <Route path="/terms-and-conditions" element={<TermsConditions />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-        <Route path="/sajha-admin/*" element={<AdminRedirect />} />
+        <Route path={`${ADMIN_ROOT_PATH}/*`} element={<AdminRedirect />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       {!isAuthPage && <Footer />}

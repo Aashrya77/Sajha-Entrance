@@ -8,7 +8,7 @@ import API, {
   resolveAdminUrl,
 } from '../../api/config';
 
-const ADMIN_HARD_RELOAD_KEY = 'sajha-admin-hard-reload';
+const ADMIN_HARD_RELOAD_KEY = `${ADMIN_ROOT_PATH.replace(/^\/+/, '')}-hard-reload`;
 const normalizeUrl = (value = '') => String(value || '').replace(/\/+$/g, '');
 
 const AdminRedirect = () => {
@@ -29,7 +29,7 @@ const AdminRedirect = () => {
 
       if (normalizedAdminUrl === currentRouteUrl && hasAttemptedHardReload) {
         setStatusMessage(
-          'The /sajha-admin route is still being served by the public app after a hard reload. Point /sajha-admin to the backend AdminJS server in production.'
+          `The ${ADMIN_ROOT_PATH} route is still being served by the public app after a hard reload. Point ${ADMIN_ROOT_PATH} to the backend AdminJS server in production.`
         );
         setIsResolving(false);
         return undefined;
