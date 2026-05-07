@@ -51,6 +51,12 @@ const staticFileOptions = {
   maxAge: "7d",
 };
 
+const adminStaticFileOptions = {
+  ...staticFileOptions,
+  index: false,
+  redirect: false,
+};
+
 const normalizeRequestedMediaPath = (value = "") =>
   String(value || "")
     .replace(/\\/g, "/")
@@ -88,7 +94,7 @@ const adminStaticDirectory = path.join(publicDirectory, "admin");
 if (fs.existsSync(adminStaticDirectory)) {
   app.use(
     ADMIN_ROOT_PATH,
-    express.static(adminStaticDirectory, staticFileOptions)
+    express.static(adminStaticDirectory, adminStaticFileOptions)
   );
 }
 
