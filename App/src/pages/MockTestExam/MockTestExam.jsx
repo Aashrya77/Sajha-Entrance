@@ -464,11 +464,6 @@ const MockTestExam = () => {
                   {testData.courseName || testData.course}
                 </span>
               </div>
-              <h1>{testData.title}</h1>
-              <p>
-                Navigate subject-wise, track your question state from the panel, and
-                submit when you are satisfied with your responses.
-              </p>
             </div>
 
             <button
@@ -511,34 +506,36 @@ const MockTestExam = () => {
         </section>
 
         <section className="mock-test-exam__subjects">
-          <div className="mock-test-exam__subjects-heading">
-            <h2>Subjects</h2>
-            <p>Switch subjects instantly to focus on one section at a time.</p>
-          </div>
+          <div className="mock-test-exam__subjects-row">
+            <div className="mock-test-exam__subjects-heading">
+              <h2>Subjects</h2>
+              <p>Switch subjects instantly to focus on one section at a time.</p>
+            </div>
 
-          <div className="mock-test-exam__subjects-tabs">
-            {subjectTabs.map((subject) => {
-              const questionCount =
-                subject === ALL_SUBJECTS
-                  ? questions.length
-                  : questions.filter((question) => question.subject === subject).length;
+            <div className="mock-test-exam__subjects-tabs">
+              {subjectTabs.map((subject) => {
+                const questionCount =
+                  subject === ALL_SUBJECTS
+                    ? questions.length
+                    : questions.filter((question) => question.subject === subject).length;
 
-              return (
-                <button
-                  key={subject}
-                  type="button"
-                  className={`mock-test-exam__subject-tab ${
-                    selectedSubject === subject
-                      ? "mock-test-exam__subject-tab--active"
-                      : ""
-                  }`.trim()}
-                  onClick={() => setSelectedSubject(subject)}
-                >
-                  <span>{subject === ALL_SUBJECTS ? "All Questions" : subject}</span>
-                  <small>{questionCount}</small>
-                </button>
-              );
-            })}
+                return (
+                  <button
+                    key={subject}
+                    type="button"
+                    className={`mock-test-exam__subject-tab ${
+                      selectedSubject === subject
+                        ? "mock-test-exam__subject-tab--active"
+                        : ""
+                    }`.trim()}
+                    onClick={() => setSelectedSubject(subject)}
+                  >
+                    <span>{subject === ALL_SUBJECTS ? "All Questions" : subject}</span>
+                    <small>{questionCount}</small>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <div className="mock-test-exam__review-filters">

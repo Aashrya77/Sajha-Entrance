@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const studentDisplayName = String(studentData?.name || '').trim() || 'Profile';
 
   useEffect(() => {
     setIsMenuOpen(false);
@@ -101,10 +102,13 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
                 <Link
                   to="/student/profile"
                   className="navbar-mobile-quick-link navbar-mobile-quick-link--primary navbar-mobile-quick-link--profile text-decoration-none"
-                  aria-label="Profile"
-                  title="Profile"
+                  aria-label={`Profile for ${studentDisplayName}`}
+                  title={studentDisplayName}
                 >
                   <i className="fa-solid fa-user"></i>
+                  <span className="navbar-mobile-quick-link__label navbar-mobile-quick-link__label--name">
+                    {studentDisplayName}
+                  </span>
                 </Link>
               ) : (
                 <Link
@@ -190,10 +194,11 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
                 <Link
                   to="/student/profile"
                   className="navbar-profile-icon-link text-decoration-none"
-                  aria-label="Profile"
-                  title="Profile"
+                  aria-label={`Profile for ${studentDisplayName}`}
+                  title={studentDisplayName}
                 >
                   <i className="fa-solid fa-user"></i>
+                  <span className="navbar-profile-name">{studentDisplayName}</span>
                 </Link>
               ) : (
                 <>
