@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { mockTestAPI } from "../../api/services";
 import { resolveBackendPath } from "../../api/config";
@@ -107,6 +107,7 @@ const MockTestExam = () => {
   const [selectedSubject, setSelectedSubject] = useState(ALL_SUBJECTS);
   const [flaggedQuestions, setFlaggedQuestions] = useState([]);
   const [reviewFilter, setReviewFilter] = useState("all");
+  const questionRefs = useRef(new Map());
 
   useEffect(() => {
     const fetchTest = async () => {
@@ -260,26 +261,6 @@ const MockTestExam = () => {
     }
   }, [currentQuestion, filteredQuestions]);
 
-  const currentQuestionData = useMemo(
-    () => questions.find((question) => question.index === currentQuestion) || null,
-    [currentQuestion, questions]
-  );
-  const isCurrentQuestionVisibleInFilter = filteredQuestions.some(
-    (question) => question.index === currentQuestion
-  );
-  const visibleCurrentQuestionData = isCurrentQuestionVisibleInFilter
-    ? currentQuestionData
-    : null;
-
-  const currentAnswer = useMemo(
-    () =>
-      answers.find((answer) => answer.questionIndex === currentQuestion) || {
-        questionIndex: currentQuestion,
-        selectedOption: -1,
-      },
-    [answers, currentQuestion]
-  );
-
   const answeredCount = answers.filter((answer) => answer.selectedOption !== -1).length;
   const unansweredCount = answers.length - answeredCount;
   const flaggedCount = flaggedQuestions.length;
@@ -291,17 +272,18 @@ const MockTestExam = () => {
     return sum + (Number(questions[answer.questionIndex]?.marks) || 0);
   }, 0);
 
-  const activeFilteredIndex = filteredQuestions.findIndex(
-    (question) => question.index === currentQuestion
-  );
-
   const statusMeta = getStatusMeta(testData?.availabilityStatus || "live");
-  const isCurrentQuestionFlagged = flaggedQuestions.includes(currentQuestion);
-
-  const selectOption = (optionIndex) => {
+  const introMetrics = [
+    { label: "Questions", value: testData?.totalQuestions ?? 0 },
+    { label: "Full Marks", value: testData?.totalMarks ?? 0 },
+    { label: "Duration", value: `${testData?.duration ?? 0} min` },
+    { label: "Pass Marks", value: testData?.passMarks ?? 0 },
+  ];
+  const selectOption = (questionIndex, optionIndex) => {
+    setCurrentQuestion(questionIndex);
     setAnswers((previous) =>
       previous.map((answer) =>
-        answer.questionIndex === currentQuestion
+        answer.questionIndex === questionIndex
           ? {
               ...answer,
               selectedOption:
@@ -314,33 +296,23 @@ const MockTestExam = () => {
 
   const jumpToQuestion = (questionIndex) => {
     setCurrentQuestion(questionIndex);
+    const questionNode = questionRefs.current.get(questionIndex);
+
+    if (questionNode) {
+      questionNode.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
   };
 
-  const toggleQuestionFlag = () => {
+  const toggleQuestionFlag = (questionIndex) => {
+    setCurrentQuestion(questionIndex);
     setFlaggedQuestions((previous) =>
-      previous.includes(currentQuestion)
-        ? previous.filter((questionIndex) => questionIndex !== currentQuestion)
-        : [...previous, currentQuestion]
+      previous.includes(questionIndex)
+        ? previous.filter((entry) => entry !== questionIndex)
+        : [...previous, questionIndex]
     );
-  };
-
-  const goToPreviousQuestion = () => {
-    if (activeFilteredIndex <= 0) {
-      return;
-    }
-
-    setCurrentQuestion(filteredQuestions[activeFilteredIndex - 1].index);
-  };
-
-  const goToNextQuestion = () => {
-    if (
-      activeFilteredIndex < 0 ||
-      activeFilteredIndex >= filteredQuestions.length - 1
-    ) {
-      return;
-    }
-
-    setCurrentQuestion(filteredQuestions[activeFilteredIndex + 1].index);
   };
 
   if (loading) {
@@ -389,40 +361,42 @@ const MockTestExam = () => {
         <div className="mock-test-exam-page__container">
           <div className="mock-test-exam__intro-card">
             <div className="mock-test-exam__intro-head">
-              <div>
-                <span className={statusMeta.className}>{statusMeta.label}</span>
-                <h2>{testData.title}</h2>
-              </div>
+              <span className={statusMeta.className}>{statusMeta.label}</span>
+              {testData.courseName || testData.course ? (
+                <span className="mock-test-exam__intro-course">
+                  {testData.courseName || testData.course}
+                </span>
+              ) : null}
             </div>
 
-            {testData.description ? (
-              <FormattedContent
-                html={testData.description}
-                className="mock-test-exam__intro-copy"
-              />
-            ) : null}
+            <div className="mock-test-exam__intro-title">
+              <h2>{testData.title}</h2>
+              {testData.description ? (
+                <FormattedContent
+                  html={testData.description}
+                  className="mock-test-exam__intro-copy"
+                />
+              ) : (
+                <p className="mock-test-exam__intro-copy">
+                  Review the overview and instructions below before you begin the mock test.
+                </p>
+              )}
+            </div>
 
             <div className="mock-test-exam__intro-metrics">
-              <div className="mock-test-exam__intro-metric">
-                <span>Questions</span>
-                <strong>{testData.totalQuestions}</strong>
-              </div>
-              <div className="mock-test-exam__intro-metric">
-                <span>Full Marks</span>
-                <strong>{testData.totalMarks}</strong>
-              </div>
-              <div className="mock-test-exam__intro-metric">
-                <span>Duration</span>
-                <strong>{testData.duration} min</strong>
-              </div>
-              <div className="mock-test-exam__intro-metric">
-                <span>Pass Marks</span>
-                <strong>{testData.passMarks || 0}</strong>
-              </div>
+              {introMetrics.map((metric) => (
+                <div className="mock-test-exam__intro-metric" key={metric.label}>
+                  <span>{metric.label}</span>
+                  <strong>{metric.value}</strong>
+                </div>
+              ))}
             </div>
 
             <div className="mock-test-exam__intro-notice">
-              <strong>Instructions</strong>
+              <div className="mock-test-exam__intro-notice-head">
+                <strong>Instructions</strong>
+                <span>Keep these in mind while you work through the test.</span>
+              </div>
               {testData.instructions ? (
                 <FormattedContent
                   html={testData.instructions}
@@ -438,14 +412,19 @@ const MockTestExam = () => {
               )}
             </div>
 
-            <button
-              type="button"
-              className="mock-test-exam__primary-action"
-              onClick={() => setStarted(true)}
-            >
-              <i className="fa-solid fa-play"></i>
-              Start Test
-            </button>
+            <div className="mock-test-exam__intro-actions">
+              <p className="mock-test-exam__intro-action-note">
+                The timer begins right after you start the test.
+              </p>
+              <button
+                type="button"
+                className="mock-test-exam__primary-action mock-test-exam__primary-action--inline"
+                onClick={() => setStarted(true)}
+              >
+                <i className="fa-solid fa-play"></i>
+                Start Test
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -577,137 +556,128 @@ const MockTestExam = () => {
 
         <section className="mock-test-exam__workspace">
           <div className="mock-test-exam__question-stage">
-            {visibleCurrentQuestionData ? (
-              <article
-                className={`mock-test-exam__question-card ${
-                  isCurrentQuestionFlagged ? "mock-test-exam__question-card--flagged" : ""
-                }`.trim()}
-              >
-                <header className="mock-test-exam__question-head">
-                  <div className="mock-test-exam__question-tags">
-                    <span className="mock-test-exam__question-badge">
-                      Question {visibleCurrentQuestionData.questionNumber}
-                    </span>
-                    <span className="mock-test-exam__question-pill">
-                      {visibleCurrentQuestionData.subject}
-                    </span>
-                    {isCurrentQuestionFlagged ? (
-                      <span className="mock-test-exam__question-flag-badge">
-                        <i className="fa-regular fa-flag"></i>
-                        Marked for Review
-                      </span>
-                    ) : null}
-                  </div>
+            {filteredQuestions.length ? (
+              <div className="mock-test-exam__question-list">
+                {filteredQuestions.map((question) => {
+                  const questionAnswer = answers.find(
+                    (answer) => answer.questionIndex === question.index
+                  ) || {
+                    questionIndex: question.index,
+                    selectedOption: -1,
+                  };
+                  const isCurrentQuestion = question.index === currentQuestion;
+                  const isQuestionFlagged = flaggedQuestions.includes(question.index);
 
-                  <div className="mock-test-exam__question-meta-wrap">
-                    <div className="mock-test-exam__question-meta">
-                      <span>{filteredQuestions.length} in this view</span>
-                      <span>{visibleCurrentQuestionData.marks || 0} marks</span>
-                    </div>
-                    <button
-                      type="button"
-                      className={`mock-test-exam__flag-toggle ${
-                        isCurrentQuestionFlagged
-                          ? "mock-test-exam__flag-toggle--active"
-                          : ""
-                      }`.trim()}
-                      onClick={toggleQuestionFlag}
+                  return (
+                    <article
+                      key={question.index}
+                      ref={(node) => {
+                        if (node) {
+                          questionRefs.current.set(question.index, node);
+                        } else {
+                          questionRefs.current.delete(question.index);
+                        }
+                      }}
+                      className={`mock-test-exam__question-card ${
+                        isQuestionFlagged ? "mock-test-exam__question-card--flagged" : ""
+                      } ${isCurrentQuestion ? "mock-test-exam__question-card--current" : ""}`.trim()}
                     >
-                      <i
-                        className={`${
-                          isCurrentQuestionFlagged ? "fa-solid" : "fa-regular"
-                        } fa-flag`}
-                      ></i>
-                      {isCurrentQuestionFlagged ? "Remove Flag" : "Mark for Review"}
-                    </button>
-                  </div>
-                </header>
-
-                <div className="mock-test-exam__question-body">
-                  <FormattedContent
-                    html={visibleCurrentQuestionData.questionText}
-                    className="mock-test-exam__question-text"
-                  />
-
-                  {visibleCurrentQuestionData.questionImage ? (
-                    <img
-                      src={resolveBackendPath(visibleCurrentQuestionData.questionImage)}
-                      alt={`Question ${visibleCurrentQuestionData.questionNumber}`}
-                      className="mock-test-exam__question-image"
-                    />
-                  ) : null}
-                </div>
-
-                <div className="mock-test-exam__options">
-                  {(visibleCurrentQuestionData.options || []).map((option, optionIndex) => {
-                    const isSelected = currentAnswer.selectedOption === optionIndex;
-
-                    return (
-                      <button
-                        key={optionIndex}
-                        type="button"
-                        className={`mock-test-exam__option ${
-                          isSelected ? "mock-test-exam__option--selected" : ""
-                        }`.trim()}
-                        onClick={() => selectOption(optionIndex)}
-                      >
-                        <div className="mock-test-exam__option-top">
-                          <span className="mock-test-exam__option-label">
-                            {String.fromCharCode(65 + optionIndex)}
+                      <header className="mock-test-exam__question-head">
+                        <div className="mock-test-exam__question-tags">
+                          <span className="mock-test-exam__question-badge">
+                            Question {question.questionNumber}
                           </span>
-                          <FormattedContent
-                            html={option.text}
-                            className="mock-test-exam__option-text"
-                          />
+                          <span className="mock-test-exam__question-pill">{question.subject}</span>
+                          {isQuestionFlagged ? (
+                            <span className="mock-test-exam__question-flag-badge">
+                              <i className="fa-regular fa-flag"></i>
+                              Marked for Review
+                            </span>
+                          ) : null}
                         </div>
 
-                        {option.image ? (
+                        <div className="mock-test-exam__question-meta-wrap">
+                          <div className="mock-test-exam__question-meta">
+                            <span>{question.marks || 0} marks</span>
+                          </div>
+                          <button
+                            type="button"
+                            className={`mock-test-exam__flag-toggle ${
+                              isQuestionFlagged ? "mock-test-exam__flag-toggle--active" : ""
+                            }`.trim()}
+                            onClick={() => toggleQuestionFlag(question.index)}
+                          >
+                            <i
+                              className={`${
+                                isQuestionFlagged ? "fa-solid" : "fa-regular"
+                              } fa-flag`}
+                            ></i>
+                            {isQuestionFlagged ? "Remove Flag" : "Mark for Review"}
+                          </button>
+                        </div>
+                      </header>
+
+                      <div className="mock-test-exam__question-body">
+                        <FormattedContent
+                          html={question.questionText}
+                          className="mock-test-exam__question-text"
+                        />
+
+                        {question.questionImage ? (
                           <img
-                            src={resolveBackendPath(option.image)}
-                            alt={`Option ${String.fromCharCode(65 + optionIndex)}`}
-                            className="mock-test-exam__option-image"
+                            src={resolveBackendPath(question.questionImage)}
+                            alt={`Question ${question.questionNumber}`}
+                            className="mock-test-exam__question-image"
                           />
                         ) : null}
-                      </button>
-                    );
-                  })}
-                </div>
+                      </div>
 
-                <footer className="mock-test-exam__actions">
-                  <div className="mock-test-exam__actions-hint">
-                    {activeFilteredIndex >= 0 ? (
-                      <span>
-                        Viewing {activeFilteredIndex + 1} of {filteredQuestions.length}{" "}
-                        {selectedSubject === ALL_SUBJECTS ? "questions" : selectedSubject}
-                      </span>
-                    ) : null}
-                  </div>
+                      <div
+                        className="mock-test-exam__options"
+                        role="radiogroup"
+                        aria-label={`Options for question ${question.questionNumber}`}
+                      >
+                        {(question.options || []).map((option, optionIndex) => {
+                          const isSelected = questionAnswer.selectedOption === optionIndex;
+                          const optionLabel = String.fromCharCode(65 + optionIndex);
 
-                  <div className="mock-test-exam__actions-group">
-                    <button
-                      type="button"
-                      className="mock-test-exam__ghost-button"
-                      onClick={goToPreviousQuestion}
-                      disabled={activeFilteredIndex <= 0}
-                    >
-                      <i className="fa-solid fa-arrow-left"></i>
-                      Previous
-                    </button>
-                    <button
-                      type="button"
-                      className="mock-test-exam__solid-button"
-                      onClick={goToNextQuestion}
-                      disabled={
-                        activeFilteredIndex < 0 ||
-                        activeFilteredIndex >= filteredQuestions.length - 1
-                      }
-                    >
-                      Next
-                      <i className="fa-solid fa-arrow-right"></i>
-                    </button>
-                  </div>
-                </footer>
-              </article>
+                          return (
+                            <button
+                              key={optionIndex}
+                              type="button"
+                              role="radio"
+                              aria-checked={isSelected}
+                              className={`mock-test-exam__option ${
+                                isSelected ? "mock-test-exam__option--selected" : ""
+                              }`.trim()}
+                              onClick={() => selectOption(question.index, optionIndex)}
+                            >
+                              <div className="mock-test-exam__option-head">
+                                <span className="mock-test-exam__option-radio" aria-hidden="true">
+                                  <span className="mock-test-exam__option-radio-dot"></span>
+                                </span>
+                                <span className="mock-test-exam__option-label">{optionLabel}</span>
+                                <FormattedContent
+                                  html={option.text}
+                                  className="mock-test-exam__option-text"
+                                />
+                              </div>
+
+                              {option.image ? (
+                                <img
+                                  src={resolveBackendPath(option.image)}
+                                  alt={`Option ${optionLabel}`}
+                                  className="mock-test-exam__option-image"
+                                />
+                              ) : null}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
             ) : (
               <div className="mock-test-exam__empty-state">
                 No questions are available for this filter. Try switching the subject or
