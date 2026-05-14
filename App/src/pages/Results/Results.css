@@ -2,10 +2,46 @@
   min-height: calc(100vh - 200px);
   padding-bottom: 60px;
 }
+
 .results-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 30px 20px;
+}
+
+.results-page-title {
+  font-size: clamp(2rem, 3vw, 3rem);
+  font-weight: 900;
+  color: var(--primary-orange);
+  letter-spacing: 0.02em;
+}
+
+.results-page-subtitle {
+  max-width: 680px;
+  margin-inline: auto;
+  font-size: 15px;
+}
+
+.results-layout {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.95fr) minmax(0, 1.35fr);
+  grid-template-areas:
+    "search leaderboard"
+    "result result";
+  gap: 24px;
+  align-items: start;
+}
+
+.results-search-pane {
+  grid-area: search;
+}
+
+.results-result-pane {
+  grid-area: result;
+}
+
+.results-leaderboard-pane {
+  grid-area: leaderboard;
 }
 
 /* Search Card */
@@ -68,6 +104,9 @@
   color: white;
   border: 2px solid #f85606;
   font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 12px 24px;
   border-radius: 0 8px 8px 0;
   transition: all 0.3s ease;
@@ -144,6 +183,11 @@
   color: white;
 }
 
+.results-section-title {
+  font-weight: 800;
+  font-size: clamp(1.5rem, 2.4vw, 2rem);
+}
+
 /* Result Table */
 .result-table-wrapper {
   padding: 0;
@@ -191,12 +235,25 @@
   color: #28a745;
   font-size: 18px;
   font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .status-fail {
   color: #dc3545;
   font-size: 18px;
   font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-text {
+  display: none;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 .total-row {
@@ -353,6 +410,10 @@
   font-size: 15px;
 }
 
+.leaderboard-student-name {
+  color: #1f2937;
+}
+
 .leaderboard-table tbody tr:hover {
   background-color: #fef7f2;
 }
@@ -421,6 +482,37 @@
 }
 
 /* Responsive */
+@media screen and (max-width: 991.98px) {
+  .results-container {
+    padding: 24px 16px;
+  }
+
+  .results-layout {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "search"
+      "result"
+      "leaderboard";
+  }
+
+  .result-search-card {
+    position: static;
+    top: auto;
+  }
+
+  .result-card-header {
+    padding: 24px;
+  }
+
+  .result-student-name {
+    font-size: 24px;
+  }
+
+  .result-summary {
+    padding: 20px 24px;
+  }
+}
+
 @media screen and (max-width: 768px) {
   .result-card-header {
     padding: 20px;
@@ -437,9 +529,10 @@
   }
 
   .result-summary {
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    padding: 18px;
   }
 
   .summary-value {
@@ -447,11 +540,12 @@
   }
 
   .result-search-card {
-    padding: 30px 20px;
+    padding: 26px 20px;
   }
 
   .leaderboard-header-card {
     flex-direction: column;
+    padding: 16px;
   }
 
   .leaderboard-exam-meta {
@@ -487,20 +581,220 @@
   }
 }
 
-@media screen and (max-width: 480px) {
+@media screen and (max-width: 575.98px) {
+  .results-page {
+    padding-bottom: 40px;
+  }
+
+  .results-container {
+    padding: 20px 12px;
+  }
+
+  .results-page-title {
+    font-size: 1.8rem;
+  }
+
+  .results-page-subtitle {
+    font-size: 13px;
+    margin-bottom: 1.5rem !important;
+  }
+
   .search-icon-wrapper {
     width: 56px;
     height: 56px;
     font-size: 22px;
   }
 
+  .result-search-card {
+    padding: 22px 16px;
+    border-radius: 10px;
+  }
+
+  .result-search-card h3 {
+    font-size: 1.15rem;
+    margin-bottom: 1rem !important;
+  }
+
+  .result-search-card .form-select,
   .result-search-card .form-control {
     font-size: 14px;
     padding: 10px 12px;
   }
 
+  .result-search-input-group {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .result-search-input-group > .form-control,
+  .result-search-input-group > .btn-search {
+    width: 100%;
+  }
+
+  .result-search-card .form-control {
+    border-right: 2px solid #e0e0e0;
+    border-radius: 8px;
+    width: 100%;
+  }
+
   .btn-search {
+    width: 100%;
+    justify-content: center;
     padding: 10px 16px;
     font-size: 14px;
+    border-radius: 8px;
+  }
+
+  .results-section-title {
+    font-size: 1.3rem;
+  }
+
+  .leaderboard-exam-title {
+    font-size: 16px;
+  }
+
+  .leaderboard-exam-meta,
+  .leaderboard-eyebrow {
+    font-size: 12px;
+  }
+
+  .result-card {
+    border-radius: 10px;
+  }
+
+  .result-card-header {
+    padding: 16px;
+    gap: 14px;
+  }
+
+  .result-student-name {
+    font-size: 20px;
+    margin-bottom: 10px;
+  }
+
+  .result-meta {
+    gap: 6px;
+  }
+
+  .result-meta-item {
+    font-size: 12px;
+  }
+
+  .result-badge {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+    font-size: 13px;
+    padding: 9px 14px;
+  }
+
+  .result-header-right {
+    width: 100%;
+  }
+
+  .result-table thead,
+  .leaderboard-table thead,
+  .result-table tfoot {
+    display: none;
+  }
+
+  .result-table,
+  .result-table tbody,
+  .leaderboard-table,
+  .leaderboard-table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .result-table tbody tr,
+  .leaderboard-table tbody tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 12px;
+    padding: 14px 12px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .result-table tbody td,
+  .leaderboard-table tbody td {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: none;
+    text-align: left !important;
+    font-size: 13px;
+  }
+
+  .result-table tbody td::before,
+  .leaderboard-table tbody td::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 4px;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .result-table tbody td.subject-name,
+  .leaderboard-table tbody td.leaderboard-student-name {
+    grid-column: 1 / -1;
+    font-size: 14px;
+  }
+
+  .status-text {
+    display: inline;
+  }
+
+  .result-summary {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 14px 12px;
+  }
+
+  .summary-item {
+    padding: 10px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid #e5e7eb;
+  }
+
+  .summary-label {
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+
+  .summary-value {
+    font-size: 17px;
+  }
+
+  .result-remarks,
+  .result-footer {
+    padding-inline: 16px;
+    font-size: 12px;
+  }
+
+  .result-footer {
+    text-align: left;
+  }
+
+  .rank-badge {
+    width: 30px;
+    height: 30px;
+    font-size: 13px;
+  }
+
+  .rank-1-badge,
+  .rank-2-badge,
+  .rank-3-badge {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+  }
+
+  .percentage-badge {
+    padding: 4px 10px;
+    font-size: 12px;
   }
 }

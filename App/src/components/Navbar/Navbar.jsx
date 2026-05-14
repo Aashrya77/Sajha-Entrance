@@ -8,12 +8,42 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
 
   useEffect(() => {
     setIsMenuOpen(false);
-
-    const navbarContent = document.getElementById('navbarContent');
-    if (navbarContent) {
-      navbarContent.classList.remove('show');
-    }
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (!isMenuOpen) {
+      return undefined;
+    }
+
+    const originalOverflow = document.body.style.overflow;
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isMenuOpen]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 992) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
   
   const getParentGroup = () => {
     const path = location.pathname;
@@ -51,11 +81,6 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
 
   const handleMobileNavClose = () => {
     setIsMenuOpen(false);
-
-    const navbarContent = document.getElementById('navbarContent');
-    if (navbarContent) {
-      navbarContent.classList.remove('show');
-    }
   };
 
   return (
@@ -67,12 +92,10 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
               <button 
                 className="navbar-toggler mobile-nav-toggle" 
                 type="button" 
-                data-bs-toggle="collapse" 
-                data-bs-target="#navbarContent" 
                 aria-controls="navbarContent" 
                 aria-expanded={isMenuOpen} 
                 aria-label="Toggle navigation"
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                onClick={() => setIsMenuOpen((prev) => !prev)}
                 style={{ border: 'none', outline: 'none', boxShadow: 'none' }}
               >
                 {isMenuOpen ? (
@@ -125,7 +148,10 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
           <Link to="/" className="d-none d-lg-flex align-items-center text-decoration-none">
             <img src="/img/adminlogo.png" className="navbar-logo" alt="Sajha Entrance" style={{height: '80px', width: '140px'}} />
           </Link>
-          <div className="collapse navbar-collapse" id="navbarContent">
+          <div
+            className={`collapse navbar-collapse ${isMenuOpen ? 'show' : ''}`}
+            id="navbarContent"
+          >
             <ul className="navbar-nav mx-auto mb-2 mb-lg-0">
               <li className="nav-item">
                 <Link to="/" className="nav-link" onClick={handleMobileNavClose} style={{color: parentGroup === 'Home' ? '#ff6b35' : '#333', fontWeight: parentGroup === 'Home' ? 700 : 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>HOME</Link>
@@ -212,6 +238,12 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
               )}
             </div>
           </div>
+
+          <div
+            className={`mobile-nav-backdrop ${isMenuOpen ? 'is-visible' : ''}`}
+            onClick={handleMobileNavClose}
+            aria-hidden="true"
+          />
         </div>
       </nav>
       

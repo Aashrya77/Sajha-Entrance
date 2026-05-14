@@ -205,18 +205,15 @@ const Results = () => {
   return (
     <div className="results-page mt-5 pt-5">
       <div className="container-fluid results-container">
-        <h1
-          className="text-uppercase mb-2 text-center"
-          style={{ fontWeight: 900, color: "var(--primary-orange)" }}
-        >
+        <h1 className="results-page-title text-uppercase mb-2 text-center">
           EXAM <span style={{ color: "var(--primary-black)" }}>RESULTS</span>
         </h1>
-        <p className="text-center text-muted mb-5">
+        <p className="results-page-subtitle text-center text-muted mb-5">
           Search published entrance results by course, symbol number, and exam.
         </p>
 
-        <div className="row g-4">
-          <div className="col-lg-5">
+        <div className="results-layout">
+          <div className="results-search-pane">
             <div className="result-search-card">
               <div className="search-icon-wrapper">
                 <i className="fa-solid fa-magnifying-glass"></i>
@@ -258,7 +255,7 @@ const Results = () => {
                   </select>
                 </div>
 
-                <div className="input-group mb-3">
+                <div className="input-group result-search-input-group mb-3">
                   <input
                     type="text"
                     className="form-control form-control-lg"
@@ -289,102 +286,8 @@ const Results = () => {
             </div>
           </div>
 
-          <div className="col-lg-7">
-            <div className="top-results-section">
-              <h2 className="text-center mb-3" style={{ fontWeight: 800 }}>
-                <i
-                  className="fa-solid fa-trophy me-2"
-                  style={{ color: "#f5a623" }}
-                ></i>
-                TOP <span style={{ color: "var(--primary-orange)" }}>10</span>{" "}
-                RESULTS
-              </h2>
-
-              <div className="leaderboard-header-card">
-                <div>
-                  <div className="leaderboard-eyebrow">
-                    {course ? `${course} Leaderboard` : "Select a Course"}
-                  </div>
-                  <div className="leaderboard-exam-title">
-                    {leaderboard.exam?.title || "Latest published exam will appear here"}
-                  </div>
-                </div>
-                <div className="leaderboard-exam-meta">
-                  {leaderboard.exam
-                    ? `Exam Date: ${formatLongDate(leaderboard.exam.examDate)}`
-                    : "Published toppers update after result publication"}
-                </div>
-              </div>
-
-              {leaderboardLoading ? (
-                <div className="text-center py-5">
-                  <div
-                    className="spinner-border"
-                    style={{ color: "var(--primary-orange)" }}
-                    role="status"
-                  >
-                    <span className="visually-hidden">Loading...</span>
-                  </div>
-                </div>
-              ) : leaderboard.students && leaderboard.students.length > 0 ? (
-                <div className="leaderboard-card">
-                  <table className="table leaderboard-table mb-0">
-                    <thead>
-                      <tr>
-                        <th>Rank</th>
-                        <th>Student Name</th>
-                        <th>Symbol No.</th>
-                        <th className="text-center">Marks</th>
-                        <th className="text-center">Percentage</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {leaderboard.students.map((student, index) => (
-                        <tr
-                          key={`${student.symbolNumber}-${student.rank || index}`}
-                          className={index < 3 ? `top-rank rank-${index + 1}` : ""}
-                        >
-                          <td>
-                            <span
-                              className={`rank-badge ${
-                                index < 3 ? `rank-${index + 1}-badge` : ""
-                              }`}
-                            >
-                              {index === 0 ? (
-                                <i className="fa-solid fa-crown me-1"></i>
-                              ) : null}
-                              {student.rank || index + 1}
-                            </span>
-                          </td>
-                          <td className="fw-semibold">{student.studentName}</td>
-                          <td>{student.symbolNumber}</td>
-                          <td className="text-center">
-                            {student.totalObtainedMarks} / {student.totalFullMarks}
-                          </td>
-                          <td className="text-center">
-                            <span className="percentage-badge">
-                              {student.percentage}%
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="text-center py-4">
-                  <p className="text-muted">
-                    No published topper list is available for {course || "this course"} yet.
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {result ? (
-          <div className="row justify-content-center mt-4">
-            <div className="col-lg-10">
+          {result ? (
+            <div className="results-result-pane">
               <div className="result-card">
                 <div className="result-card-header">
                   <div className="result-header-left">
@@ -438,7 +341,7 @@ const Results = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {result.subjects.map((subject, index) => (
+                      {(result.subjects || []).map((subject, index) => (
                         <tr
                           key={`${subject.subjectName}-${index}`}
                           className={getSubjectStatus(
@@ -446,19 +349,29 @@ const Results = () => {
                             subject.passMarks
                           )}
                         >
-                          <td>{index + 1}</td>
-                          <td className="subject-name">{subject.subjectName}</td>
-                          <td className="text-center">{subject.fullMarks}</td>
-                          <td className="text-center">{subject.passMarks}</td>
-                          <td className="text-center fw-bold">{subject.obtainedMarks}</td>
-                          <td className="text-center">
+                          <td data-label="S.N.">{index + 1}</td>
+                          <td className="subject-name" data-label="Subject">
+                            {subject.subjectName}
+                          </td>
+                          <td className="text-center" data-label="Full Marks">
+                            {subject.fullMarks}
+                          </td>
+                          <td className="text-center" data-label="Pass Marks">
+                            {subject.passMarks}
+                          </td>
+                          <td className="text-center fw-bold" data-label="Obtained Marks">
+                            {subject.obtainedMarks}
+                          </td>
+                          <td className="text-center" data-label="Status">
                             {subject.obtainedMarks >= subject.passMarks ? (
                               <span className="status-pass">
                                 <i className="fa-solid fa-check"></i>
+                                <span className="status-text">Pass</span>
                               </span>
                             ) : (
                               <span className="status-fail">
                                 <i className="fa-solid fa-xmark"></i>
+                                <span className="status-text">Fail</span>
                               </span>
                             )}
                           </td>
@@ -520,8 +433,105 @@ const Results = () => {
                 </div>
               </div>
             </div>
+          ) : null}
+
+          <div className="results-leaderboard-pane">
+            <div className="top-results-section">
+              <h2 className="results-section-title text-center mb-3">
+                <i
+                  className="fa-solid fa-trophy me-2"
+                  style={{ color: "#f5a623" }}
+                ></i>
+                TOP <span style={{ color: "var(--primary-orange)" }}>10</span>{" "}
+                RESULTS
+              </h2>
+
+              <div className="leaderboard-header-card">
+                <div>
+                  <div className="leaderboard-eyebrow">
+                    {course ? `${course} Leaderboard` : "Select a Course"}
+                  </div>
+                  <div className="leaderboard-exam-title">
+                    {leaderboard.exam?.title || "Latest published exam will appear here"}
+                  </div>
+                </div>
+                <div className="leaderboard-exam-meta">
+                  {leaderboard.exam
+                    ? `Exam Date: ${formatLongDate(leaderboard.exam.examDate)}`
+                    : "Published toppers update after result publication"}
+                </div>
+              </div>
+
+              {leaderboardLoading ? (
+                <div className="text-center py-5">
+                  <div
+                    className="spinner-border"
+                    style={{ color: "var(--primary-orange)" }}
+                    role="status"
+                  >
+                    <span className="visually-hidden">Loading...</span>
+                  </div>
+                </div>
+              ) : leaderboard.students && leaderboard.students.length > 0 ? (
+                <div className="leaderboard-card">
+                  <table className="table leaderboard-table mb-0">
+                    <thead>
+                      <tr>
+                        <th>Rank</th>
+                        <th>Student Name</th>
+                        <th>Symbol No.</th>
+                        <th className="text-center">Marks</th>
+                        <th className="text-center">Percentage</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {leaderboard.students.map((student, index) => (
+                        <tr
+                          key={`${student.symbolNumber}-${student.rank || index}`}
+                          className={index < 3 ? `top-rank rank-${index + 1}` : ""}
+                        >
+                          <td data-label="Rank">
+                            <span
+                              className={`rank-badge ${
+                                index < 3 ? `rank-${index + 1}-badge` : ""
+                              }`}
+                            >
+                              {index === 0 ? (
+                                <i className="fa-solid fa-crown me-1"></i>
+                              ) : null}
+                              {student.rank || index + 1}
+                            </span>
+                          </td>
+                          <td
+                            className="fw-semibold leaderboard-student-name"
+                            data-label="Student Name"
+                          >
+                            {student.studentName}
+                          </td>
+                          <td data-label="Symbol No.">{student.symbolNumber}</td>
+                          <td className="text-center" data-label="Marks">
+                            {student.totalObtainedMarks} / {student.totalFullMarks}
+                          </td>
+                          <td className="text-center" data-label="Percentage">
+                            <span className="percentage-badge">
+                              {student.percentage}%
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-muted">
+                    No published topper list is available for {course || "this course"} yet.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
-        ) : null}
+        </div>
       </div>
     </div>
   );
