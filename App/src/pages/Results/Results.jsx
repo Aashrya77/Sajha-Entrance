@@ -24,6 +24,22 @@ const formatLongDate = (value) =>
       })
     : "Not published";
 
+const formatScore = (value) => Number(value || 0).toLocaleString("en-US");
+
+const getInitials = (name = "") => {
+  const parts = String(name)
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2);
+
+  if (!parts.length) {
+    return "SE";
+  }
+
+  return parts.map((part) => part[0]?.toUpperCase() || "").join("");
+};
+
 const Results = () => {
   const [courses, setCourses] = useState([]);
   const [course, setCourse] = useState("");
@@ -201,6 +217,31 @@ const Results = () => {
 
   const getSubjectStatus = (obtained, pass) =>
     obtained >= pass ? "subject-pass" : "subject-fail";
+
+  const leaderboardStudents = Array.isArray(leaderboard.students)
+    ? leaderboard.students
+    : [];
+  const getStudentRank = (student, index) => student?.rank || index + 1;
+  const isCurrentStudent = (student) =>
+    Boolean(result?.symbolNumber && student?.symbolNumber === result.symbolNumber);
+  const currentStudentListed = leaderboardStudents.some((student) =>
+    isCurrentStudent(student)
+  );
+  const mobileCurrentStudent =
+    result && !currentStudentListed
+      ? {
+          rank: result.rank || "-",
+          studentName: result.studentName,
+          symbolNumber: result.symbolNumber,
+          totalObtainedMarks: result.totalObtainedMarks,
+          percentage: result.percentage,
+        }
+      : null;
+  const podiumStudents = [
+    { placement: 2, student: leaderboardStudents[1] || null },
+    { placement: 1, student: leaderboardStudents[0] || null },
+    { placement: 3, student: leaderboardStudents[2] || null },
+  ];
 
   return (
     <div className="results-page mt-5 pt-5">
@@ -437,13 +478,20 @@ const Results = () => {
 
           <div className="results-leaderboard-pane">
             <div className="top-results-section">
-              <h2 className="results-section-title text-center mb-3">
+              <h2 className="results-section-title results-section-title--desktop text-center mb-3">
                 <i
                   className="fa-solid fa-trophy me-2"
                   style={{ color: "#f5a623" }}
                 ></i>
                 TOP <span style={{ color: "var(--primary-orange)" }}>10</span>{" "}
                 RESULTS
+              </h2>
+              <h2 className="results-section-title results-section-title--mobile text-center mb-3">
+                <i
+                  className="fa-solid fa-users me-2"
+                  style={{ color: "#4f7cff" }}
+                ></i>
+                STUDENT <span style={{ color: "var(--primary-orange)" }}>RANKINGS</span>
               </h2>
 
               <div className="leaderboard-header-card">
@@ -473,7 +521,8 @@ const Results = () => {
                   </div>
                 </div>
               ) : leaderboard.students && leaderboard.students.length > 0 ? (
-                <div className="leaderboard-card">
+                <>
+                <div className="leaderboard-card leaderboard-card--desktop">
                   <table className="table leaderboard-table mb-0">
                     <thead>
                       <tr>
@@ -485,10 +534,12 @@ const Results = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {leaderboard.students.map((student, index) => (
+                      {leaderboardStudents.map((student, index) => (
                         <tr
                           key={`${student.symbolNumber}-${student.rank || index}`}
-                          className={index < 3 ? `top-rank rank-${index + 1}` : ""}
+                          className={`${index < 3 ? `top-rank rank-${index + 1}` : ""} ${
+                            isCurrentStudent(student) ? "leaderboard-row-current" : ""
+                          }`}
                         >
                           <td data-label="Rank">
                             <span
@@ -522,6 +573,99 @@ const Results = () => {
                     </tbody>
                   </table>
                 </div>
+                <div className="leaderboard-card leaderboard-card--mobile">
+                  <div className="leaderboard-mobile-shell">
+                    <div className="leaderboard-mobile-podium">
+                      {podiumStudents.map(({ placement, student }) =>
+                        student ? (
+                          <div
+                            key={`podium-${student.symbolNumber}-${placement}`}
+                            className={`leaderboard-podium-slot leaderboard-podium-slot--${placement}`}
+                          >
+                            <div className="leaderboard-podium-avatar-wrap">
+                              {placement === 1 ? (
+                                <i className="fa-solid fa-crown leaderboard-podium-crown"></i>
+                              ) : null}
+                              <div className="leaderboard-podium-avatar">
+                                {getInitials(student.studentName)}
+                              </div>
+                            </div>
+                            <div className="leaderboard-podium-name">
+                              {student.studentName}
+                            </div>
+                            <div className="leaderboard-podium-score">
+                              {formatScore(student.totalObtainedMarks)}
+                            </div>
+                            <div
+                              className={`leaderboard-podium-block leaderboard-podium-block--${placement}`}
+                            >
+                              <span>{placement}</span>
+                            </div>
+                          </div>
+                        ) : null
+                      )}
+                    </div>
+
+                    <div className="leaderboard-mobile-list">
+                      <div className="leaderboard-mobile-list-header">
+                        <span>Rank</span>
+                        <span>Student</span>
+                        <span>Marks</span>
+                      </div>
+
+                      <div className="leaderboard-mobile-list-body">
+                        {leaderboardStudents.map((student, index) => {
+                          const currentStudentRow = isCurrentStudent(student);
+
+                          return (
+                            <div
+                              key={`mobile-${student.symbolNumber}-${student.rank || index}`}
+                              className={`leaderboard-mobile-row ${
+                                currentStudentRow ? "leaderboard-mobile-row--current" : ""
+                              }`}
+                            >
+                              <div className="leaderboard-mobile-rank">
+                                {getStudentRank(student, index)}
+                              </div>
+                              <div className="leaderboard-mobile-student">
+                                <div className="leaderboard-mobile-row-name">
+                                  {currentStudentRow ? "You" : student.studentName}
+                                </div>
+                                <div className="leaderboard-mobile-row-meta">
+                                  {currentStudentRow
+                                    ? `${student.studentName} • ${student.symbolNumber}`
+                                    : `${student.symbolNumber} • ${student.percentage}%`}
+                                </div>
+                              </div>
+                              <div className="leaderboard-mobile-points">
+                                {formatScore(student.totalObtainedMarks)}
+                              </div>
+                            </div>
+                          );
+                        })}
+
+                        {mobileCurrentStudent ? (
+                          <div className="leaderboard-mobile-row leaderboard-mobile-row--you-only">
+                            <div className="leaderboard-mobile-rank">
+                              {mobileCurrentStudent.rank}
+                            </div>
+                            <div className="leaderboard-mobile-student">
+                              <div className="leaderboard-mobile-row-name">You</div>
+                              <div className="leaderboard-mobile-row-meta">
+                                {mobileCurrentStudent.studentName} •{" "}
+                                {mobileCurrentStudent.symbolNumber}
+                              </div>
+                            </div>
+                            <div className="leaderboard-mobile-points">
+                              {formatScore(mobileCurrentStudent.totalObtainedMarks)}
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                </>
               ) : (
                 <div className="text-center py-4">
                   <p className="text-muted">
