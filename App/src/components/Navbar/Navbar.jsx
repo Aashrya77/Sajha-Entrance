@@ -1,13 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const moreMenuRef = useRef(null);
   const studentDisplayName = String(studentData?.name || '').trim() || 'Profile';
 
   useEffect(() => {
     setIsMenuOpen(false);
+    setIsMoreOpen(false);
   }, [location.pathname]);
 
   useEffect(() => {
@@ -36,6 +39,10 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
       if (window.innerWidth >= 992) {
         setIsMenuOpen(false);
       }
+
+      if (window.innerWidth < 992) {
+        setIsMoreOpen(false);
+      }
     };
 
     window.addEventListener('resize', handleResize);
@@ -44,6 +51,32 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
       window.removeEventListener('resize', handleResize);
     };
   }, []);
+
+  useEffect(() => {
+    if (!isMoreOpen) {
+      return undefined;
+    }
+
+    const handleDocumentClick = (event) => {
+      if (!moreMenuRef.current?.contains(event.target)) {
+        setIsMoreOpen(false);
+      }
+    };
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        setIsMoreOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleDocumentClick);
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.removeEventListener('mousedown', handleDocumentClick);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isMoreOpen]);
   
   const getParentGroup = () => {
     const path = location.pathname;
@@ -66,6 +99,14 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
   };
 
   const parentGroup = getParentGroup();
+  const hideNoticeBar = location.pathname.startsWith('/mocktest/');
+  const primaryLinks = [
+    { to: '/', label: 'HOME', group: 'Home' },
+    { to: '/colleges', label: 'COLLEGES', group: 'College' },
+    { to: '/mocktests', label: 'MOCK TEST', group: 'MockTest' },
+    { to: '/courses', label: 'COURSES', group: 'Course' },
+    { to: '/books', label: 'BOOKS', group: 'Books' },
+  ];
   const moreLinks = [
     { to: '/admission', label: 'ADMISSION', group: 'Admission' },
     { to: '/news', label: 'NEWS', group: 'News' },
@@ -78,9 +119,49 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
     {to: '/universities', label: 'UNIVERSITIES', group: 'University' },
     { to: '/contact', label: 'CONTACT', group: 'Contact' },
   ];
+  const isGroupActive = (group) => parentGroup === group;
+  const isMoreActive = moreLinks.some((link) => link.group === parentGroup);
+  const getPrimaryNavClass = (group) =>
+    `nav-link navbar-nav-link${isGroupActive(group) ? ' navbar-nav-link--active' : ''}`;
+  const moreButtonClass = `nav-link dropdown-toggle navbar-more-button${
+    isMoreActive ? ' navbar-more-button--active' : ''
+  }`;
+  const getDropdownItemClass = (group) =>
+    `dropdown-item navbar-dropdown-item${
+      isGroupActive(group) ? ' navbar-dropdown-item--active' : ''
+    }`;
+  const getPrimaryNavStyle = (group) => ({
+    color: isGroupActive(group) ? '#ff6b35' : '#333',
+    fontWeight: isGroupActive(group) ? 700 : 600,
+    fontSize: '14px',
+    padding: '8px 12px',
+    transition: 'color 0.2s ease',
+  });
+  const moreButtonStyle = {
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    color: isMoreActive ? '#ff6b35' : '#333',
+    fontWeight: isMoreActive ? 700 : 600,
+    fontSize: '14px',
+    padding: '8px 12px',
+    transition: 'color 0.2s ease',
+  };
+  const getDropdownItemStyle = (group) => ({
+    color: isGroupActive(group) ? '#ff6b35' : '#333',
+    fontWeight: isGroupActive(group) ? 700 : 500,
+  });
 
   const handleMobileNavClose = () => {
     setIsMenuOpen(false);
+  };
+
+  const handleMoreToggle = () => {
+    setIsMoreOpen((prev) => !prev);
+  };
+
+  const handleMoreClose = () => {
+    setIsMoreOpen(false);
   };
 
   return (
@@ -153,33 +234,44 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
             id="navbarContent"
           >
             <ul className="navbar-nav mx-auto mb-2 mb-lg-0">
-              <li className="nav-item">
-                <Link to="/" className="nav-link" onClick={handleMobileNavClose} style={{color: parentGroup === 'Home' ? '#ff6b35' : '#333', fontWeight: parentGroup === 'Home' ? 700 : 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>HOME</Link>
-              </li>
-              <li className="nav-item">
-                <Link to="/colleges" className="nav-link" onClick={handleMobileNavClose} style={{color: parentGroup === 'College' ? '#ff6b35' : '#333', fontWeight: parentGroup === 'College' ? 700 : 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>COLLEGES</Link>
-              </li>
-              <li className="nav-item">
-                <Link to="/mocktests" className="nav-link" onClick={handleMobileNavClose} style={{color: parentGroup === 'MockTest' ? '#ff6b35' : '#333', fontWeight: parentGroup === 'MockTest' ? 700 : 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>MOCK TEST</Link>
-              </li>
-              <li className="nav-item">
-                <Link to="/courses" className="nav-link" onClick={handleMobileNavClose} style={{color: parentGroup === 'Course' ? '#ff6b35' : '#333', fontWeight: parentGroup === 'Course' ? 700 : 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>COURSES</Link>
-              </li>
-              <li className='nav-item'>
-                <Link to="/books" className="nav-link" onClick={handleMobileNavClose} style={{color: parentGroup === 'BOOKS' ? '#ff6b35' : '#333', fontWeight: parentGroup === 'BOOKS' ? 700 : 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>BOOKS</Link>
-              </li>
-              <li className="nav-item dropdown d-none d-lg-block">
-                <button className="nav-link dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" style={{background: 'none', border: 'none', cursor: 'pointer', color: '#333', fontWeight: 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}>
+              {primaryLinks.map((link) => (
+                <li key={link.to} className="nav-item">
+                  <Link
+                    to={link.to}
+                    className={getPrimaryNavClass(link.group)}
+                    onClick={handleMobileNavClose}
+                    aria-current={isGroupActive(link.group) ? 'page' : undefined}
+                    style={getPrimaryNavStyle(link.group)}
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+              <li
+                ref={moreMenuRef}
+                className={`nav-item dropdown d-none d-lg-block${isMoreOpen ? ' show' : ''}`}
+              >
+                <button
+                  type="button"
+                  className={moreButtonClass}
+                  aria-expanded={isMoreOpen}
+                  onClick={handleMoreToggle}
+                  style={moreButtonStyle}
+                >
                   MORE
                 </button>
-                <ul className="dropdown-menu">
+                <ul className={`dropdown-menu${isMoreOpen ? ' show' : ''}`}>
                   {moreLinks.map((link) => (
                     <li key={link.to}>
                       <Link
-                        className="dropdown-item"
+                        className={getDropdownItemClass(link.group)}
                         to={link.to}
-                        onClick={handleMobileNavClose}
-                        style={parentGroup === link.group ? {color: '#ff6b35', fontWeight: 600} : {color: '#333'}}
+                        onClick={() => {
+                          handleMobileNavClose();
+                          handleMoreClose();
+                        }}
+                        aria-current={isGroupActive(link.group) ? 'page' : undefined}
+                        style={getDropdownItemStyle(link.group)}
                       >
                         {link.label}
                       </Link>
@@ -191,9 +283,10 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
                 <li key={`mobile-${link.to}`} className="nav-item d-lg-none">
                   <Link
                     to={link.to}
-                    className="nav-link"
+                    className={getPrimaryNavClass(link.group)}
                     onClick={handleMobileNavClose}
-                    style={{color: parentGroup === link.group ? '#ff6b35' : '#333', fontWeight: parentGroup === link.group ? 700 : 600, fontSize: '14px', padding: '8px 12px', transition: 'color 0.2s ease'}}
+                    aria-current={isGroupActive(link.group) ? 'page' : undefined}
+                    style={getPrimaryNavStyle(link.group)}
                   >
                     {link.label}
                   </Link>
@@ -247,20 +340,22 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
         </div>
       </nav>
       
-      <div className="notice-bar" style={{backgroundColor: '#ff6b35', color: '#fff', padding: '8px 0', position: 'fixed', top: '76px', left: 0, right: 0, zIndex: 1029}}>
-        <div className="container d-flex align-items-center justify-content-center">
-          <span className="badge" style={{backgroundColor: '#333', color: '#fff', fontSize: '11px', fontWeight: 600, padding: '4px 10px', marginRight: '12px', borderRadius: '4px'}}>NOTICE</span>
-          <div className="notice-text" style={{fontSize: '14px', fontWeight: 500, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis'}}>
-            {notice?.url ? (
-              <a href={notice.url} style={{color: '#fff', textDecoration: 'none'}}>
-                {notice.title || 'Hello this is Sajha Entrance'}
-              </a>
-            ) : (
-              <span>{notice?.title || 'Hello this is Sajha Entrance'}</span>
-            )}
+      {!hideNoticeBar && (
+        <div className="notice-bar" style={{backgroundColor: '#ff6b35', color: '#fff', padding: '8px 0', position: 'fixed', top: '76px', left: 0, right: 0, zIndex: 1029}}>
+          <div className="container d-flex align-items-center justify-content-center">
+            <span className="badge" style={{backgroundColor: '#333', color: '#fff', fontSize: '11px', fontWeight: 600, padding: '4px 10px', marginRight: '12px', borderRadius: '4px'}}>NOTICE</span>
+            <div className="notice-text" style={{fontSize: '14px', fontWeight: 500, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis'}}>
+              {notice?.url ? (
+                <a href={notice.url} style={{color: '#fff', textDecoration: 'none'}}>
+                  {notice.title || 'Hello this is Sajha Entrance'}
+                </a>
+              ) : (
+                <span>{notice?.title || 'Hello this is Sajha Entrance'}</span>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </>
   );
 };
