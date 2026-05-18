@@ -150,7 +150,6 @@ const buildCourseTemplateHeaders = (courseCode, options = {}) => {
     const subjectNumber = index + 1;
     headers.push(`Subject ${subjectNumber} Name`);
     headers.push(`Subject ${subjectNumber} Full Marks`);
-    headers.push(`Subject ${subjectNumber} Pass Marks`);
     headers.push(`Subject ${subjectNumber} Obtained Marks`);
   });
 
@@ -175,7 +174,6 @@ const buildCourseTemplateExampleRow = (courseCode, options = {}) => {
     const subjectNumber = index + 1;
     row[`Subject ${subjectNumber} Name`] = subjectName;
     row[`Subject ${subjectNumber} Full Marks`] = 100;
-    row[`Subject ${subjectNumber} Pass Marks`] = 40;
     row[`Subject ${subjectNumber} Obtained Marks`] = 65 + index * 4;
   });
 

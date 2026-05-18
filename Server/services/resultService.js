@@ -19,6 +19,7 @@ const DEFAULT_TOPPER_LIMIT = 10;
 const LEGACY_EXAM_TITLE_PREFIX = "Legacy Result";
 const RESULT_EXAM_STATUSES = new Set(["draft", "scheduled", "published"]);
 const SUPPORTED_TEMPLATE_FORMATS = new Set(["csv", "xlsx"]);
+const OVERALL_PASS_PERCENTAGE = 35;
 
 const FIELD_ALIASES = {
   symbolNumber: [
@@ -148,6 +149,44 @@ function parseNumericValue(value) {
 
   const parsedValue = Number(normalizedValue);
   return Number.isFinite(parsedValue) ? parsedValue : null;
+}
+
+function calculatePercentage(totalObtainedMarks, totalFullMarks) {
+  return totalFullMarks > 0
+    ? Number(((totalObtainedMarks / totalFullMarks) * 100).toFixed(2))
+    : 0;
+}
+
+function getOverallResultStatus(percentage) {
+  return Number(percentage || 0) < OVERALL_PASS_PERCENTAGE ? "Fail" : "Pass";
+}
+
+function getResultPercentage(result = {}) {
+  if (
+    result.percentage === undefined ||
+    result.percentage === null ||
+    result.percentage === ""
+  ) {
+    return calculatePercentage(
+      Number(result.totalObtainedMarks || 0),
+      Number(result.totalFullMarks || 0)
+    );
+  }
+
+  const storedPercentage = Number(result.percentage);
+  if (Number.isFinite(storedPercentage)) {
+    return storedPercentage;
+  }
+
+  return calculatePercentage(
+    Number(result.totalObtainedMarks || 0),
+    Number(result.totalFullMarks || 0)
+  );
+}
+
+function normalizeStoredPassMarks(value) {
+  const passMarks = Number(value);
+  return Number.isFinite(passMarks) && passMarks > 0 ? passMarks : 0;
 }
 
 function toUtcStartOfDay(value) {
@@ -520,16 +559,14 @@ function extractSubjectsFromRow(normalizedRow) {
 function calculateResultMetrics(subjects = []) {
   const preparedSubjects = subjects.map((subject) => {
     const fullMarks = Number(subject.fullMarks || 0);
-    const passMarks = Number(subject.passMarks || 0);
+    const passMarks = normalizeStoredPassMarks(subject.passMarks);
     const obtainedMarks = Number(subject.obtainedMarks || 0);
-    const status = obtainedMarks >= passMarks ? "Pass" : "Fail";
 
     return {
       subjectName: normalizeSubjectName(subject.subjectName),
       fullMarks,
       passMarks,
       obtainedMarks,
-      status,
     };
   });
 
@@ -545,16 +582,14 @@ function calculateResultMetrics(subjects = []) {
     (sum, subject) => sum + subject.obtainedMarks,
     0
   );
-  const percentage =
-    totalFullMarks > 0
-      ? Number(((totalObtainedMarks / totalFullMarks) * 100).toFixed(2))
-      : 0;
-  const resultStatus = preparedSubjects.every((subject) => subject.status === "Pass")
-    ? "Pass"
-    : "Fail";
+  const percentage = calculatePercentage(totalObtainedMarks, totalFullMarks);
+  const resultStatus = getOverallResultStatus(percentage);
 
   return {
-    subjects: preparedSubjects,
+    subjects: preparedSubjects.map((subject) => ({
+      ...subject,
+      status: resultStatus,
+    })),
     totalFullMarks,
     totalPassMarks,
     totalObtainedMarks,
@@ -599,13 +634,13 @@ function alignSubjectsToTemplate(subjects, templateSubjects) {
     }
 
     const fullMarks = Number(matchedSubject.fullMarks || 0);
-    const passMarks = Number(matchedSubject.passMarks || 0);
-    if (
-      fullMarks !== Number(templateSubject.fullMarks || 0) ||
-      passMarks !== Number(templateSubject.passMarks || 0)
-    ) {
+    const passMarks =
+      matchedSubject.passMarks === null || matchedSubject.passMarks === undefined
+        ? normalizeStoredPassMarks(templateSubject.passMarks)
+        : normalizeStoredPassMarks(matchedSubject.passMarks);
+    if (fullMarks !== Number(templateSubject.fullMarks || 0)) {
       errors.push(
-        `Subject "${templateSubject.name}" marks do not match the selected exam template.`
+        `Subject "${templateSubject.name}" full marks do not match the selected exam template.`
       );
       return;
     }
@@ -1042,10 +1077,6 @@ async function analyzeResultUpload({
         rowErrors.push(`Full marks are required for "${subjectLabel}".`);
       }
 
-      if (subject.passMarks === null || Number.isNaN(subject.passMarks)) {
-        rowErrors.push(`Pass marks are required for "${subjectLabel}".`);
-      }
-
       if (subject.obtainedMarks === null || Number.isNaN(subject.obtainedMarks)) {
         rowErrors.push(`Obtained marks are required for "${subjectLabel}".`);
       }
@@ -1054,20 +1085,8 @@ async function analyzeResultUpload({
         rowErrors.push(`Full marks cannot be negative for "${subjectLabel}".`);
       }
 
-      if (subject.passMarks !== null && subject.passMarks < 0) {
-        rowErrors.push(`Pass marks cannot be negative for "${subjectLabel}".`);
-      }
-
       if (subject.obtainedMarks !== null && subject.obtainedMarks < 0) {
         rowErrors.push(`Obtained marks cannot be negative for "${subjectLabel}".`);
-      }
-
-      if (
-        subject.fullMarks !== null &&
-        subject.passMarks !== null &&
-        subject.passMarks > subject.fullMarks
-      ) {
-        rowErrors.push(`Pass marks cannot exceed full marks for "${subjectLabel}".`);
       }
 
       if (
@@ -1305,7 +1324,10 @@ function haveSameRankingScore(left, right, subjectOrder) {
     return false;
   }
 
-  if (left.resultStatus !== right.resultStatus) {
+  if (
+    getOverallResultStatus(getResultPercentage(left)) !==
+    getOverallResultStatus(getResultPercentage(right))
+  ) {
     return false;
   }
 
@@ -1324,8 +1346,11 @@ function haveSameRankingScore(left, right, subjectOrder) {
 
 function sortResultsForRanking(results, subjectOrder) {
   return [...results].sort((left, right) => {
-    if (left.resultStatus !== right.resultStatus) {
-      return left.resultStatus === "Pass" ? -1 : 1;
+    const leftStatus = getOverallResultStatus(getResultPercentage(left));
+    const rightStatus = getOverallResultStatus(getResultPercentage(right));
+
+    if (leftStatus !== rightStatus) {
+      return leftStatus === "Pass" ? -1 : 1;
     }
 
     if (left.totalObtainedMarks !== right.totalObtainedMarks) {
@@ -1507,6 +1532,9 @@ async function getLatestPublishedExamForCourse(course) {
 }
 
 function mapResultForPublic(result, exam) {
+  const percentage = getResultPercentage(result);
+  const resultStatus = getOverallResultStatus(percentage);
+
   return {
     id: result._id,
     studentName: result.studentName,
@@ -1524,9 +1552,9 @@ function mapResultForPublic(result, exam) {
     totalFullMarks: result.totalFullMarks,
     totalPassMarks: result.totalPassMarks,
     totalObtainedMarks: result.totalObtainedMarks,
-    percentage: result.percentage,
-    resultStatus: result.resultStatus || result.result,
-    result: result.result || result.resultStatus,
+    percentage,
+    resultStatus,
+    result: resultStatus,
     rank: result.rank,
     remarks: result.remarks || "",
     publishedAt: result.publishedAt || exam?.publishDate || null,
@@ -1593,7 +1621,7 @@ async function getPublishedTopResults({ course, examId, limit = DEFAULT_TOPPER_L
       const results = await StudentResult.find({
         exam: courseExam._id,
         course: resultCourse.code,
-        resultStatus: "Pass",
+        percentage: { $gte: OVERALL_PASS_PERCENTAGE },
       })
         .sort({ rank: 1, totalObtainedMarks: -1, percentage: -1 })
         .limit(safeLimit)
@@ -1627,7 +1655,7 @@ async function getPublishedTopResults({ course, examId, limit = DEFAULT_TOPPER_L
   const results = await StudentResult.find({
     exam: exam._id,
     course: normalizedCourseCode,
-    resultStatus: "Pass",
+    percentage: { $gte: OVERALL_PASS_PERCENTAGE },
   })
     .sort({ rank: 1, totalObtainedMarks: -1, percentage: -1 })
     .limit(safeLimit)

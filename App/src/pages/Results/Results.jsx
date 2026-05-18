@@ -211,12 +211,13 @@ const Results = () => {
     }
   };
 
-  const finalResultStatus = result?.resultStatus || result?.result || "";
+  const finalResultStatus = result
+    ? Number(result.percentage || 0) < 35
+      ? "Fail"
+      : "Pass"
+    : "";
   const getResultBadgeClass = (resultStatus) =>
     resultStatus === "Pass" ? "result-badge-pass" : "result-badge-fail";
-
-  const getSubjectStatus = (obtained, pass) =>
-    obtained >= pass ? "subject-pass" : "subject-fail";
 
   const leaderboardStudents = Array.isArray(leaderboard.students)
     ? leaderboard.students
@@ -376,20 +377,12 @@ const Results = () => {
                         <th>S.N.</th>
                         <th>Subject</th>
                         <th className="text-center">Full Marks</th>
-                        <th className="text-center">Pass Marks</th>
                         <th className="text-center">Obtained Marks</th>
-                        <th className="text-center">Status</th>
                       </tr>
                     </thead>
                     <tbody>
                       {(result.subjects || []).map((subject, index) => (
-                        <tr
-                          key={`${subject.subjectName}-${index}`}
-                          className={getSubjectStatus(
-                            subject.obtainedMarks,
-                            subject.passMarks
-                          )}
-                        >
+                        <tr key={`${subject.subjectName}-${index}`}>
                           <td data-label="S.N.">{index + 1}</td>
                           <td className="subject-name" data-label="Subject">
                             {subject.subjectName}
@@ -397,24 +390,8 @@ const Results = () => {
                           <td className="text-center" data-label="Full Marks">
                             {subject.fullMarks}
                           </td>
-                          <td className="text-center" data-label="Pass Marks">
-                            {subject.passMarks}
-                          </td>
                           <td className="text-center fw-bold" data-label="Obtained Marks">
                             {subject.obtainedMarks}
-                          </td>
-                          <td className="text-center" data-label="Status">
-                            {subject.obtainedMarks >= subject.passMarks ? (
-                              <span className="status-pass">
-                                <i className="fa-solid fa-check"></i>
-                                <span className="status-text">Pass</span>
-                              </span>
-                            ) : (
-                              <span className="status-fail">
-                                <i className="fa-solid fa-xmark"></i>
-                                <span className="status-text">Fail</span>
-                              </span>
-                            )}
                           </td>
                         </tr>
                       ))}
@@ -424,11 +401,9 @@ const Results = () => {
                         <td></td>
                         <td className="fw-bold">Total</td>
                         <td className="text-center fw-bold">{result.totalFullMarks}</td>
-                        <td className="text-center fw-bold">{result.totalPassMarks}</td>
                         <td className="text-center fw-bold">
                           {result.totalObtainedMarks}
                         </td>
-                        <td></td>
                       </tr>
                     </tfoot>
                   </table>

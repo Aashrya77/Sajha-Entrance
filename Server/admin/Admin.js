@@ -1682,7 +1682,7 @@ const startAdminPanel = async () => {
           type: "number",
         },
         "subjects.status": {
-          label: "Subject Status",
+          label: "Calculated Result",
           isVisible: { edit: false, list: false, show: true, filter: false },
         },
         totalFullMarks: {

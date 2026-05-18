@@ -11,6 +11,7 @@ const normalizeDateValue = (value) => {
 };
 const SUBJECT_UPDATE_FIELD_PATTERN =
   /^subjects\.(\d+)\.(subjectName|fullMarks|passMarks|obtainedMarks)$/;
+const OVERALL_PASS_PERCENTAGE = 35;
 
 const normalizeSubjectName = (value) =>
   String(value || "")
@@ -32,14 +33,43 @@ const toFiniteNumber = (value, fallback = 0) => {
   return Number.isFinite(parsedFallback) ? parsedFallback : 0;
 };
 
+const calculatePercentage = (totalObtainedMarks, totalFullMarks) =>
+  totalFullMarks > 0
+    ? Number(((totalObtainedMarks / totalFullMarks) * 100).toFixed(2))
+    : 0;
+
+const getOverallResultStatus = (percentage) =>
+  Number(percentage || 0) < OVERALL_PASS_PERCENTAGE ? "Fail" : "Pass";
+
+const getResultPercentage = (result = {}) => {
+  if (
+    result.percentage === undefined ||
+    result.percentage === null ||
+    result.percentage === ""
+  ) {
+    return calculatePercentage(
+      Number(result.totalObtainedMarks || 0),
+      Number(result.totalFullMarks || 0)
+    );
+  }
+
+  const storedPercentage = Number(result.percentage);
+  if (Number.isFinite(storedPercentage)) {
+    return storedPercentage;
+  }
+
+  return calculatePercentage(
+    Number(result.totalObtainedMarks || 0),
+    Number(result.totalFullMarks || 0)
+  );
+};
+
 const normalizeSubjectRecord = (subject = {}) => {
   const normalizedSubject = subject?.toObject ? subject.toObject() : { ...subject };
   normalizedSubject.subjectName = normalizeSubjectName(normalizedSubject.subjectName);
   normalizedSubject.fullMarks = toFiniteNumber(normalizedSubject.fullMarks);
-  normalizedSubject.passMarks = toFiniteNumber(normalizedSubject.passMarks);
+  normalizedSubject.passMarks = Math.max(0, toFiniteNumber(normalizedSubject.passMarks));
   normalizedSubject.obtainedMarks = toFiniteNumber(normalizedSubject.obtainedMarks);
-  normalizedSubject.status =
-    normalizedSubject.obtainedMarks >= normalizedSubject.passMarks ? "Pass" : "Fail";
 
   return normalizedSubject;
 };
@@ -69,18 +99,15 @@ const calculateResultMetricsFromSubjects = (subjects = []) => {
     (sum, subject) => sum + Number(subject.obtainedMarks || 0),
     0
   );
-  const percentage =
-    totalFullMarks > 0
-      ? Number(((totalObtainedMarks / totalFullMarks) * 100).toFixed(2))
-      : 0;
+  const percentage = calculatePercentage(totalObtainedMarks, totalFullMarks);
 
-  const finalStatus =
-    preparedSubjects.length > 0 && preparedSubjects.every((subject) => subject.status === "Pass")
-      ? "Pass"
-      : "Fail";
+  const finalStatus = getOverallResultStatus(percentage);
 
   return {
-    subjects: preparedSubjects,
+    subjects: preparedSubjects.map((subject) => ({
+      ...subject,
+      status: finalStatus,
+    })),
     totalFullMarks,
     totalPassMarks,
     totalObtainedMarks,
@@ -228,7 +255,10 @@ const haveSameRankingScore = (left, right, subjectOrder = []) => {
     return false;
   }
 
-  if (left.resultStatus !== right.resultStatus) {
+  if (
+    getOverallResultStatus(getResultPercentage(left)) !==
+    getOverallResultStatus(getResultPercentage(right))
+  ) {
     return false;
   }
 
@@ -247,8 +277,11 @@ const haveSameRankingScore = (left, right, subjectOrder = []) => {
 
 const sortResultsForRanking = (results = [], subjectOrder = []) =>
   [...results].sort((left, right) => {
-    if (left.resultStatus !== right.resultStatus) {
-      return left.resultStatus === "Pass" ? -1 : 1;
+    const leftStatus = getOverallResultStatus(getResultPercentage(left));
+    const rightStatus = getOverallResultStatus(getResultPercentage(right));
+
+    if (leftStatus !== rightStatus) {
+      return leftStatus === "Pass" ? -1 : 1;
     }
 
     if (left.totalObtainedMarks !== right.totalObtainedMarks) {

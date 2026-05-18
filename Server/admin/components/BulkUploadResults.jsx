@@ -791,8 +791,7 @@ export default function BulkUploadResults() {
             Max file size: 8 MB
             <br />
             Required sample columns: `Symbol No.`, `Student Name`, `Course`, `Exam Date`,
-            `Subject 1 Name`, `Subject 1 Full Marks`, `Subject 1 Pass Marks`,
-            `Subject 1 Obtained Marks`, `Remarks`
+            `Subject 1 Name`, `Subject 1 Full Marks`, `Subject 1 Obtained Marks`, `Remarks`
           </Box>
 
           <Box style={{ display: "grid", gap: "16px" }}>
@@ -1331,11 +1330,11 @@ export default function BulkUploadResults() {
               }}
             >
               <Text style={{ display: "block", fontWeight: 700, marginBottom: "8px" }}>
-                Subject Template Used for Calculation
+                Subject Template Used
               </Text>
               <Text style={{ color: "#475569", lineHeight: 1.6 }}>
                 {previewResult.templateSubjects
-                  .map((subject) => `${subject.name} (${subject.fullMarks}/${subject.passMarks})`)
+                  .map((subject) => `${subject.name} (${subject.fullMarks})`)
                   .join(", ")}
               </Text>
             </Box>
