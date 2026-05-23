@@ -445,6 +445,35 @@ const MockTestExam = () => {
               </div>
             </div>
 
+            <div className="mock-test-exam__metrics">
+              <div className="mock-test-exam__metric">
+                <span className="mock-test-exam__metric-label">Full Marks</span>
+                <strong className="mock-test-exam__metric-value">{testData.totalMarks}</strong>
+              </div>
+              <div className="mock-test-exam__metric">
+                <span className="mock-test-exam__metric-label">Marks Obtained</span>
+                <strong className="mock-test-exam__metric-value">{attemptedMarks}</strong>
+              </div>
+              <div className="mock-test-exam__metric">
+                <span className="mock-test-exam__metric-label">Timer</span>
+                <strong
+                  className={`mock-test-exam__metric-value ${getTimerToneClass(timeLeft)}`.trim()}
+                >
+                  {formatTime(timeLeft)}
+                </strong>
+              </div>
+              <div className="mock-test-exam__metric">
+                <span className="mock-test-exam__metric-label">Progress</span>
+                <strong className="mock-test-exam__metric-value">
+                  {answeredCount}/{testData.totalQuestions}
+                </strong>
+              </div>
+              <div className="mock-test-exam__metric">
+                <span className="mock-test-exam__metric-label">Flagged</span>
+                <strong className="mock-test-exam__metric-value">{flaggedCount}</strong>
+              </div>
+            </div>
+
             <button
               type="button"
               className="mock-test-exam__submit-trigger"
@@ -452,35 +481,6 @@ const MockTestExam = () => {
             >
               Submit Test
             </button>
-          </div>
-
-          <div className="mock-test-exam__metrics">
-            <div className="mock-test-exam__metric">
-              <span className="mock-test-exam__metric-label">Full Marks</span>
-              <strong className="mock-test-exam__metric-value">{testData.totalMarks}</strong>
-            </div>
-            <div className="mock-test-exam__metric">
-              <span className="mock-test-exam__metric-label">Marks Obtained</span>
-              <strong className="mock-test-exam__metric-value">{attemptedMarks}</strong>
-            </div>
-            <div className="mock-test-exam__metric">
-              <span className="mock-test-exam__metric-label">Timer</span>
-              <strong
-                className={`mock-test-exam__metric-value ${getTimerToneClass(timeLeft)}`.trim()}
-              >
-                {formatTime(timeLeft)}
-              </strong>
-            </div>
-            <div className="mock-test-exam__metric">
-              <span className="mock-test-exam__metric-label">Progress</span>
-              <strong className="mock-test-exam__metric-value">
-                {answeredCount}/{testData.totalQuestions}
-              </strong>
-            </div>
-            <div className="mock-test-exam__metric">
-              <span className="mock-test-exam__metric-label">Flagged</span>
-              <strong className="mock-test-exam__metric-value">{flaggedCount}</strong>
-            </div>
           </div>
         </section>
 

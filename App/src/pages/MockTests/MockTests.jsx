@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { mockTestAPI } from "../../api/services";
 import Loader from "../../components/Loader/Loader";
+import "./MockTests.css";
 
 const formatDateTime = (value) =>
   value
@@ -158,16 +159,9 @@ const MockTests = ({ isAuthenticated }) => {
   }
 
   return (
-    <div style={{ paddingTop: "125px", minHeight: "100vh", backgroundColor: "#f8f9fa" }}>
+    <div className="mock-tests-page">
       <div className="container">
-        <div
-          style={{
-            display: "flex",
-            gap: "0",
-            borderBottom: "2px solid #e0e0e0",
-            marginBottom: "24px",
-          }}
-        >
+        <div className="mock-tests-page__tabs">
           {[
             { key: "online", label: "Online Exam", icon: "fa-laptop" },
             { key: "physical", label: "Physical Exam", icon: "fa-building" },
@@ -176,28 +170,22 @@ const MockTests = ({ isAuthenticated }) => {
           ].map((tab) => (
             <button
               key={tab.key}
+              type="button"
               onClick={() => {
                 setActiveTab(tab.key);
                 if (tab.key === "results") {
                   window.location.href = isAuthenticated ? "/mocktest-results" : "/student/login";
                 }
               }}
-              style={{
-                padding: "12px 28px",
-                fontSize: "15px",
-                fontWeight: activeTab === tab.key ? 700 : 500,
-                color: activeTab === tab.key ? "#1a365d" : "#888",
-                background: "none",
-                border: "none",
-                borderBottom:
-                  activeTab === tab.key ? "3px solid #1a365d" : "3px solid transparent",
-                cursor: "pointer",
-                transition: "all 0.2s ease",
-                fontStyle:
-                  tab.key === "online" || tab.key === "physical" ? "italic" : "normal",
-              }}
+              className={`mock-tests-page__tab ${
+                activeTab === tab.key ? "mock-tests-page__tab--active" : ""
+              } ${
+                tab.key === "online" || tab.key === "physical"
+                  ? "mock-tests-page__tab--secondary"
+                  : ""
+              }`.trim()}
             >
-              <i className={`fa-solid ${tab.icon} me-2`}></i>
+              <i className={`fa-solid ${tab.icon} mock-tests-page__tab-icon`}></i>
               {tab.label}
             </button>
           ))}
@@ -218,34 +206,17 @@ const MockTests = ({ isAuthenticated }) => {
           <>
             <form
               onSubmit={handleSearch}
-              style={{
-                background: "#fff",
-                borderRadius: "10px",
-                padding: "4px",
-                border: "1px solid #e0e0e0",
-                display: "flex",
-                alignItems: "center",
-                marginBottom: "28px",
-                maxWidth: "680px",
-              }}
+              className="mock-tests-page__search"
             >
               <i
-                className="fa-solid fa-magnifying-glass"
-                style={{ padding: "0 12px", color: "#aaa" }}
+                className="fa-solid fa-magnifying-glass mock-tests-page__search-icon"
               ></i>
               <input
                 type="text"
                 placeholder="Search by mock test, course, or subject"
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
-                style={{
-                  flex: 1,
-                  border: "none",
-                  outline: "none",
-                  padding: "10px 4px",
-                  fontSize: "15px",
-                  background: "transparent",
-                }}
+                className="mock-tests-page__search-input"
               />
               {searchTerm ? (
                 <button
@@ -254,13 +225,7 @@ const MockTests = ({ isAuthenticated }) => {
                     setSearchTerm("");
                     fetchMockTests("");
                   }}
-                  style={{
-                    border: "none",
-                    background: "none",
-                    cursor: "pointer",
-                    padding: "0 12px",
-                    color: "#aaa",
-                  }}
+                  className="mock-tests-page__search-clear"
                 >
                   <i className="fa-solid fa-xmark"></i>
                 </button>
@@ -292,7 +257,7 @@ const MockTests = ({ isAuthenticated }) => {
                 <p>Try adjusting your search or check back later.</p>
               </div>
             ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+              <div className="mock-tests-page__grid">
                 {filteredTests.map((test) => {
                   const availability = getAvailabilityMeta(test, now);
                   const canStart = test.canStart && test.availabilityStatus === "live";
@@ -301,54 +266,26 @@ const MockTests = ({ isAuthenticated }) => {
                   return (
                     <div
                       key={test._id}
-                      style={{
-                        background: "#fff",
-                        borderRadius: "16px",
-                        padding: "24px 28px",
-                        border: "1px solid #e8e8e8",
-                        transition: "box-shadow 0.2s ease",
-                        boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
-                      }}
-                      onMouseOver={(event) => {
-                        event.currentTarget.style.boxShadow = "0 4px 15px rgba(0,0,0,0.08)";
-                      }}
-                      onMouseOut={(event) => {
-                        event.currentTarget.style.boxShadow = "0 1px 3px rgba(0,0,0,0.04)";
-                      }}
+                      className="mock-tests-page__card"
                     >
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "flex-start",
-                          marginBottom: "14px",
-                          flexWrap: "wrap",
-                          gap: "10px",
-                        }}
-                      >
-                        <div style={{ display: "grid", gap: "8px" }}>
-                          <h3 style={{ fontSize: "18px", fontWeight: 700, color: "#1a365d", margin: 0 }}>
+                      <div className="mock-tests-page__card-head">
+                        <div className="mock-tests-page__card-title-group">
+                          <h3 className="mock-tests-page__card-title">
                             {test.title}
                           </h3>
-                          <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                          <div className="mock-tests-page__badge-row">
                             <span
+                              className="mock-tests-page__badge"
                               style={{
                                 ...getBadgeStyle(availability.tone),
-                                borderRadius: "999px",
-                                padding: "5px 12px",
-                                fontSize: "12px",
-                                fontWeight: 700,
                               }}
                             >
                               {availability.label}
                             </span>
                             <span
+                              className="mock-tests-page__badge"
                               style={{
                                 ...getBadgeStyle("neutral"),
-                                borderRadius: "999px",
-                                padding: "5px 12px",
-                                fontSize: "12px",
-                                fontWeight: 700,
                               }}
                             >
                               {test.totalQuestions} questions
@@ -356,85 +293,46 @@ const MockTests = ({ isAuthenticated }) => {
                           </div>
                         </div>
 
-                        <span
-                          style={{
-                            padding: "4px 14px",
-                            borderRadius: "20px",
-                            fontSize: "13px",
-                            fontWeight: 600,
-                            border: "1.5px solid #ff6b35",
-                            color: "#ff6b35",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
+                        <span className="mock-tests-page__marks">
                           Total marks: {test.totalMarks}
                         </span>
                       </div>
 
                       {test.description ? (
-                        <p style={{ color: "#475569", lineHeight: 1.7, marginBottom: "16px" }}>
+                        <p className="mock-tests-page__description">
                           {test.description.replace(/<[^>]*>/g, " ").trim()}
                         </p>
                       ) : null}
 
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
-                          gap: "10px",
-                          marginBottom: "16px",
-                          fontSize: "14px",
-                          color: "#475569",
-                        }}
-                      >
-                        <div>
+                      <div className="mock-tests-page__meta-grid">
+                        <div className="mock-tests-page__meta-item">
                           <strong>Course:</strong> {test.courseName || test.course || "General"}
                         </div>
-                        <div>
+                        <div className="mock-tests-page__meta-item">
                           <strong>Subjects:</strong>{" "}
                           {test.subjectNames?.length ? test.subjectNames.join(", ") : "Mixed"}
                         </div>
-                        <div>
+                        <div className="mock-tests-page__meta-item">
                           <strong>Duration:</strong> {test.duration} mins
                         </div>
-                        <div>
+                        <div className="mock-tests-page__meta-item">
                           <strong>Pass Marks:</strong> {test.passMarks || 0}
                         </div>
-                        <div>
+                        <div className="mock-tests-page__meta-item">
                           <strong>Start:</strong> {formatDateTime(test.startAt)}
                         </div>
-                        <div>
+                        <div className="mock-tests-page__meta-item">
                           <strong>End:</strong> {formatDateTime(test.endAt)}
                         </div>
                       </div>
 
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          flexWrap: "wrap",
-                          gap: "12px",
-                        }}
-                      >
-                        <div style={{ color: "#64748b", fontSize: "13px" }}>{availability.helper}</div>
+                      <div className="mock-tests-page__card-footer">
+                        <div className="mock-tests-page__helper">{availability.helper}</div>
 
                         {canStart ? (
                           <Link
                             to={actionHref}
-                            style={{
-                              padding: "10px 32px",
-                              borderRadius: "25px",
-                              fontSize: "14px",
-                              fontWeight: 600,
-                              backgroundColor: "#ff6b35",
-                              color: "#fff",
-                              textDecoration: "none",
-                              border: "none",
-                              cursor: "pointer",
-                              transition: "all 0.2s ease",
-                              display: "inline-block",
-                            }}
+                            className="mock-tests-page__action mock-tests-page__action--primary"
                           >
                             Start Test
                           </Link>
@@ -442,16 +340,7 @@ const MockTests = ({ isAuthenticated }) => {
                           <button
                             type="button"
                             disabled
-                            style={{
-                              padding: "10px 24px",
-                              borderRadius: "25px",
-                              fontSize: "14px",
-                              fontWeight: 600,
-                              backgroundColor: "#e2e8f0",
-                              color: "#64748b",
-                              border: "none",
-                              cursor: "not-allowed",
-                            }}
+                            className="mock-tests-page__action mock-tests-page__action--disabled"
                           >
                             {availability.label === "Scheduled" ? "Starts Soon" : "Unavailable"}
                           </button>
