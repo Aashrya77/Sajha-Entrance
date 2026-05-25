@@ -21,6 +21,7 @@ import {
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 const JWT_EXPIRY = process.env.JWT_EXPIRY || "7d";
 const PASSWORD_RESET_EXPIRY_MS = 1000 * 60 * 30;
+const STUDENT_REGISTRATION_ATTEMPTS = 3;
 
 // Generate JWT Token
 const generateToken = (id, studentId, email) => {
@@ -34,6 +35,53 @@ const hashResetToken = (token) =>
 
 const resolveStudentCourseForResponse = (value = "") =>
   normalizeStudentCourse(value) || String(value || "").trim();
+
+const getDuplicateKeyField = (error) => {
+  const keyPatternField = Object.keys(error?.keyPattern || {})[0];
+  if (keyPatternField) {
+    return keyPatternField;
+  }
+
+  const keyValueField = Object.keys(error?.keyValue || {})[0];
+  if (keyValueField) {
+    return keyValueField;
+  }
+
+  const messageMatch = String(error?.message || "").match(/index:\s+([^\s_]+)_/i);
+  return messageMatch?.[1] || "";
+};
+
+const buildDuplicateFieldMessage = (fieldName) => {
+  if (fieldName === "email") {
+    return "An account with this email already exists.";
+  }
+
+  if (fieldName === "studentId") {
+    return "Registration failed because a student ID conflict occurred. Please try again.";
+  }
+
+  return "A record with this information already exists.";
+};
+
+const createStudentWithRetry = async (studentPayload) => {
+  for (let attempt = 1; attempt <= STUDENT_REGISTRATION_ATTEMPTS; attempt += 1) {
+    try {
+      const student = new Student(studentPayload);
+      await student.save();
+      return student;
+    } catch (error) {
+      const duplicateField = getDuplicateKeyField(error);
+      const shouldRetryStudentIdConflict =
+        error?.code === 11000 &&
+        duplicateField === "studentId" &&
+        attempt < STUDENT_REGISTRATION_ATTEMPTS;
+
+      if (!shouldRetryStudentIdConflict) {
+        throw error;
+      }
+    }
+  }
+};
 
 // Student Register
 export const register = async (req, res) => {
@@ -55,7 +103,7 @@ export const register = async (req, res) => {
       return res.status(400).json({ success: false, error: "An account with this email already exists." });
     }
 
-    const student = new Student({
+    await createStudentWithRetry({
       name: name.trim(),
       email: email.toLowerCase().trim(),
       password,
@@ -65,8 +113,6 @@ export const register = async (req, res) => {
       course: normalizedCourse,
     });
 
-    await student.save();
-
     res.status(201).json({
       success: true,
       message: "Registration successful! Please login.",
@@ -74,7 +120,10 @@ export const register = async (req, res) => {
   } catch (error) {
     console.error("Register error:", error);
     if (error.code === 11000) {
-      return res.status(400).json({ success: false, error: "An account with this email already exists." });
+      return res.status(400).json({
+        success: false,
+        error: buildDuplicateFieldMessage(getDuplicateKeyField(error)),
+      });
     }
     res.status(500).json({ success: false, error: "Registration failed. Please try again." });
   }

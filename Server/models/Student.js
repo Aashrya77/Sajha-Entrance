@@ -1,9 +1,56 @@
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
+import Counter from "./Counter.js";
 import {
   isValidStudentCourse,
   normalizeStudentCourse,
 } from "../constants/studentCourses.js";
+
+const STUDENT_ID_COUNTER_KEY = "studentId";
+const STUDENT_ID_PREFIX = "SE-";
+const STUDENT_ID_REGEX = /^SE-(\d+)$/;
+
+const formatStudentId = (value) =>
+  `${STUDENT_ID_PREFIX}${String(value).padStart(4, "0")}`;
+
+const extractStudentIdSequence = (studentId = "") => {
+  const match = String(studentId).match(STUDENT_ID_REGEX);
+  return match ? Number(match[1]) : 0;
+};
+
+const getMaxExistingStudentSequence = async () => {
+  const students = await mongoose
+    .model("Student")
+    .find({ studentId: STUDENT_ID_REGEX })
+    .select("studentId")
+    .lean();
+
+  return students.reduce((maxValue, student) => {
+    const nextValue = extractStudentIdSequence(student?.studentId);
+    return nextValue > maxValue ? nextValue : maxValue;
+  }, 0);
+};
+
+const getNextStudentId = async () => {
+  const existingCounter = await Counter.findById(STUDENT_ID_COUNTER_KEY).lean();
+
+  if (!existingCounter) {
+    const maxExistingSequence = await getMaxExistingStudentSequence();
+    await Counter.updateOne(
+      { _id: STUDENT_ID_COUNTER_KEY },
+      { $max: { seq: maxExistingSequence } },
+      { upsert: true, setDefaultsOnInsert: true }
+    );
+  }
+
+  const counter = await Counter.findByIdAndUpdate(
+    STUDENT_ID_COUNTER_KEY,
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true, setDefaultsOnInsert: true }
+  ).lean();
+
+  return formatStudentId(counter.seq);
+};
 
 const StudentSchema = new mongoose.Schema({
   studentId: {
@@ -74,8 +121,7 @@ const StudentSchema = new mongoose.Schema({
 // Auto-generate studentId before saving
 StudentSchema.pre("save", async function (next) {
   if (!this.studentId) {
-    const count = await mongoose.model("Student").countDocuments();
-    this.studentId = `SE-${String(count + 1).padStart(4, "0")}`;
+    this.studentId = await getNextStudentId();
   }
   if (this.isModified("password")) {
     try {
