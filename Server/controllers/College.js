@@ -1,9 +1,9 @@
-import Notice from "../models/Notice.js";
 import College from "../models/College.js";
 import Course from "../models/Course.js";
 import Advertisement from "../models/Advertisement.js";
 import Popup from "../models/Popup.js";
 import mongoose from "mongoose";
+import { getPublicNotice } from "../utils/notice.js";
 import {
   mediaFieldMaps,
   normalizeCollectionMedia,
@@ -16,7 +16,7 @@ const CollegeDetail = async (req, res) => {
       return res.status(404).json({ success: false, error: "Invalid college ID" });
     }
     
-    const notice = await Notice.findOne().sort({ _id: -1 }).exec();
+    const notice = await getPublicNotice();
     const advertisement = await Advertisement.findOne().sort({ _id: -1 }).exec();
     const popup = await Popup.findOne({ isActive: true }).exec();
     
@@ -67,7 +67,7 @@ const GetColleges = async (req, res) => {
     const location = req.query.location;
 
     const courses = await Course.find().limit(6).exec();
-    const notice = await Notice.findOne().sort({ _id: -1 }).exec();
+    const notice = await getPublicNotice();
     const advertisement = await Advertisement.findOne().sort({ _id: -1 }).exec();
     const popup = await Popup.findOne({ isActive: true }).exec();
 

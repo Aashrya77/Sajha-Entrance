@@ -1,9 +1,9 @@
-import Notice from "../models/Notice.js";
 import Course from "../models/Course.js";
 import College from "../models/College.js";
 import Advertisement from "../models/Advertisement.js";
 import Popup from "../models/Popup.js";
 import mongoose from "mongoose";
+import { getPublicNotice } from "../utils/notice.js";
 
 // Helper function to format plain text content
 function formatContent(text) {
@@ -69,7 +69,7 @@ const CourseDetail = async (req, res) => {
       return res.status(404).json({ success: false, error: "Invalid course ID" });
     }
     
-    const notice = await Notice.findOne().sort({ _id: -1 }).exec();
+    const notice = await getPublicNotice();
     const advertisement = await Advertisement.findOne().sort({ _id: -1 }).exec();
     const popup = await Popup.findOne({ isActive: true }).exec();
     
@@ -105,7 +105,7 @@ const CourseDetail = async (req, res) => {
 
 const GetCourses = async (req, res) => {
   try {
-    const notice = await Notice.findOne().sort({ _id: -1 }).exec();
+    const notice = await getPublicNotice();
     const courses = await Course.find().sort({ title: 1 }).exec();
     const advertisement = await Advertisement.findOne().sort({ _id: -1 }).exec();
     const popup = await Popup.findOne({ isActive: true }).exec();

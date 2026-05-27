@@ -78,6 +78,7 @@ import BookOrderModel from "../models/BookOrder.js";
 import InquiryModel from "../models/Inquiry.js";
 import BlogAdminResource from "./resources/blog.resource.js";
 import AdvertisementAdminResource from "./resources/advertisement.resource.js";
+import NoticeAdminResource from "./resources/notice.resource.js";
 import PopupAdminResource from "./resources/popup.resource.js";
 import LandingAdAdminResource from "./resources/landing-ad.resource.js";
 import CollegeAdminResource from "./resources/college.resource.js";
@@ -2106,7 +2107,7 @@ const startAdminPanel = async () => {
     AdminUserAdminResource,
     AdminNotificationAdminResource,
     BlogAdminResource,
-    mergeResourceOptions(Notice, {
+    mergeResourceOptions(NoticeAdminResource, {
       navigation: contentNavigation,
     }),
     AdvertisementAdminResource,

@@ -1,4 +1,3 @@
-import Notice from "../models/Notice.js";
 import Course from "../models/Course.js";
 import College from "../models/College.js";
 import Blog from "../models/Blog.js";
@@ -15,12 +14,13 @@ import {
   normalizeCollectionMedia,
   normalizeMediaFields,
 } from "../utils/media.js";
+import { getPublicNotice } from "../utils/notice.js";
 
 dotenv.config();
 
 const HomeDetails = async (req, res) => {
   try {
-    const notice = await Notice.findOne().sort({ _id: -1 }).exec();
+    const notice = await getPublicNotice();
     const courses = await Course.find().limit(4).exec();
     const colleges = await College.find().limit(4).exec();
     const popupRecord = await Popup.findOne({ isActive: true }).exec();
@@ -69,7 +69,7 @@ const HomeDetails = async (req, res) => {
 
 const ContactPage = async (req, res) => {
   try {
-    const notice = await Notice.findOne().sort({ _id: -1 }).exec();
+    const notice = await getPublicNotice();
     const courses = await Course.find().exec();
     const popup = await Popup.findOne({ isActive: true }).exec();
     res.json({
@@ -131,7 +131,7 @@ const SendContact = async (req, res) => {
 
 const GetServices = async (req, res) => {
   try {
-    const notice = await Notice.findOne().sort({ _id: -1 }).exec();
+    const notice = await getPublicNotice();
     const popup = await Popup.findOne({ isActive: true }).exec();
     res.json({
       success: true,
@@ -156,7 +156,7 @@ const GetAbout = async (req, res) => {
   try {
     const blogs = await Blog.find().sort({ _id: -1 }).limit(5).exec();
     const courses = await Course.find().limit(5).exec();
-    const notice = await Notice.findOne().sort({ _id: -1 }).exec();
+    const notice = await getPublicNotice();
     const popup = await Popup.findOne({ isActive: true }).exec();
     res.json({
       success: true,
@@ -197,7 +197,7 @@ const PostSubscribe = async (req, res) => {
 
 const GetNotice = async (req, res) => {
   try {
-    const notice = await Notice.findOne({ isActive: true }).sort({ createdAt: -1 });
+    const notice = await getPublicNotice();
     res.json({
       success: true,
       data: notice
