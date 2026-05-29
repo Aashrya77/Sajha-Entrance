@@ -3,10 +3,7 @@ import { homeAPI } from '../../api/services';
 import { STUDENT_COURSE_OPTIONS } from '../../constants/studentCourses';
 import '../../styles/contact.css';
 
-const contactCourseOptions = [
-  { value: 'IOE', label: 'IOE' },
-  ...STUDENT_COURSE_OPTIONS,
-];
+const contactCourseOptions = STUDENT_COURSE_OPTIONS;
 
 const Contact = () => {
   const [formData, setFormData] = useState({

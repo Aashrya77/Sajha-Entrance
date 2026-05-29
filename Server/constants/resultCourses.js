@@ -31,7 +31,7 @@ const RESULT_COURSES = Object.freeze([
     code: "IOE",
     name: "IOE",
     fullName: "IOE Entrance",
-    aliases: ["IOE", "IOE ENTRANCE", "ENGINEERING"],
+    aliases: ["IOE", "IOT", "IOE ENTRANCE", "ENGINEERING"],
     templateSubjects: ["Physics", "Chemistry", "Math", "English"],
   },
 ]);

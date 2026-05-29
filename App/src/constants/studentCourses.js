@@ -5,8 +5,12 @@ export const STUDENT_COURSE_VALUES = Object.freeze([
   "BIT",
   "BCA",
   "CMAT",
-  "IOT",
+  "IOE",
   NEB_PREPARATION_COURSE,
+]);
+
+const STUDENT_COURSE_ALIASES = Object.freeze([
+  ["IOT", "IOE"],
 ]);
 
 const normalizeStudentCourseLookupValue = (value = "") =>
@@ -19,6 +23,10 @@ const STUDENT_COURSE_LOOKUP = STUDENT_COURSE_VALUES.reduce((lookup, course) => {
   lookup.set(normalizeStudentCourseLookupValue(course), course);
   return lookup;
 }, new Map());
+
+STUDENT_COURSE_ALIASES.forEach(([alias, course]) => {
+  STUDENT_COURSE_LOOKUP.set(normalizeStudentCourseLookupValue(alias), course);
+});
 
 export const normalizeStudentCourse = (value = "") =>
   STUDENT_COURSE_LOOKUP.get(normalizeStudentCourseLookupValue(value)) || "";

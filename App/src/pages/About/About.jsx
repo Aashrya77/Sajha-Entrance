@@ -4,10 +4,7 @@ import { STUDENT_COURSE_OPTIONS } from '../../constants/studentCourses';
 import Loader from '../../components/Loader/Loader';
 import './Aboutpage.css'; 
 
-const contactCourseOptions = [
-  { value: 'IOE', label: 'IOE' },
-  ...STUDENT_COURSE_OPTIONS,
-];
+const contactCourseOptions = STUDENT_COURSE_OPTIONS;
 
 const About = () => {
   const [loading, setLoading] = useState(true);
