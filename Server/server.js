@@ -19,6 +19,7 @@ import BlogUploadRoutes from "./routes/BlogUpload.js";
 import BookPaymentRoutes from "./routes/BookPayment.js";
 import InquiryRoutes from "./routes/Inquiry.js";
 import YouTubeLibraryRoutes from "./routes/YouTubeLibrary.js";
+import ActivityRoutes from "./routes/Activity.js";
 
 import { adminBrandAssets } from "./admin/config/branding.js";
 import { ADMIN_ROOT_PATH } from "./admin/config/paths.js";
@@ -203,6 +204,7 @@ const registerApiRoutes = (router) => {
   router.use("/api", BlogUploadRoutes);
   router.use("/api", BookPaymentRoutes);
   router.use("/api", InquiryRoutes);
+  router.use("/api", ActivityRoutes);
   router.use("/api/youtube-library", YouTubeLibraryRoutes);
 
   router.use("/api/*", (_req, res) => {

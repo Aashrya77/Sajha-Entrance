@@ -35,6 +35,7 @@ import {
   YOUTUBE_LIBRARY_COURSE_OPTIONS,
 } from "../constants/youtubeLibrary.js";
 import { formatOnlineClassCourseLabel } from "../utils/onlineClassCourses.js";
+import { getActiveUsersSnapshot } from "../utils/activeUsers.js";
 import { buildAdminSessionConfig } from "./utils/admin-session.js";
 import { refreshYouTubeLibrarySchedule } from "../services/youtubeLibraryScheduler.js";
 import {
@@ -2095,6 +2096,7 @@ const startAdminPanel = async () => {
         })),
         notifications,
         unreadNotifications,
+        liveActiveUsers: getActiveUsersSnapshot(),
       };
     } catch (error) {
       logger.error("Dashboard handler error:", error);
@@ -2368,6 +2370,17 @@ const startAdminPanel = async () => {
     "/api/students/export",
     requireAdminPermission("students", "view"),
     exportStudentsWorkbook
+  );
+
+  adminRouter.get(
+    "/api/live-users",
+    requireAdminPermission("dashboard", "view"),
+    (_req, res) => {
+      res.json({
+        success: true,
+        data: getActiveUsersSnapshot(),
+      });
+    }
   );
 
   adminRouter.get(

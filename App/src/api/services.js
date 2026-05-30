@@ -154,3 +154,7 @@ export const resultAPI = {
 export const inquiryAPI = {
   submitInquiry: (data) => API.post('/inquiry', data),
 };
+
+export const activityAPI = {
+  sendHeartbeat: (data) => API.post('/activity/heartbeat', data),
+};
