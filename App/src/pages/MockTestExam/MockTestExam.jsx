@@ -230,6 +230,11 @@ const MockTestExam = () => {
     return [ALL_SUBJECTS, ...orderedSubjects];
   }, [questions, testData?.subjectNames]);
 
+  const answersByQuestion = useMemo(
+    () => new Map(answers.map((answer) => [answer.questionIndex, answer])),
+    [answers]
+  );
+
   const filteredQuestions = useMemo(
     () =>
       questions.filter(
@@ -238,13 +243,11 @@ const MockTestExam = () => {
           (reviewFilter === "all" ||
             (reviewFilter === "flagged" && flaggedQuestions.includes(question.index)) ||
             (reviewFilter === "answered" &&
-              answers.find((answer) => answer.questionIndex === question.index)?.selectedOption !==
-                -1) ||
+              answersByQuestion.get(question.index)?.selectedOption !== -1) ||
             (reviewFilter === "unanswered" &&
-              (answers.find((answer) => answer.questionIndex === question.index)
-                ?.selectedOption ?? -1) === -1))
+              (answersByQuestion.get(question.index)?.selectedOption ?? -1) === -1))
       ),
-    [answers, flaggedQuestions, questions, reviewFilter, selectedSubject]
+    [answersByQuestion, flaggedQuestions, questions, reviewFilter, selectedSubject]
   );
 
   useEffect(() => {
@@ -264,13 +267,6 @@ const MockTestExam = () => {
   const answeredCount = answers.filter((answer) => answer.selectedOption !== -1).length;
   const unansweredCount = answers.length - answeredCount;
   const flaggedCount = flaggedQuestions.length;
-  const attemptedMarks = answers.reduce((sum, answer) => {
-    if (answer.selectedOption === -1) {
-      return sum;
-    }
-
-    return sum + (Number(questions[answer.questionIndex]?.marks) || 0);
-  }, 0);
 
   const statusMeta = getStatusMeta(testData?.availabilityStatus || "live");
   const introMetrics = [
@@ -434,123 +430,157 @@ const MockTestExam = () => {
   return (
     <div className="mock-test-exam-page">
       <div className="mock-test-exam-page__container">
-        <section className="mock-test-exam__header">
+        <section className="mock-test-exam__header" aria-label="Mock test controls">
           <div className="mock-test-exam__header-main">
             <div className="mock-test-exam__header-copy">
-              <div className="mock-test-exam__header-row">
+              <div className="mock-test-exam__title-row">
                 <span className={statusMeta.className}>{statusMeta.label}</span>
+                <h1>{testData.title}</h1>
+              </div>
+              {testData.courseName || testData.course ? (
                 <span className="mock-test-exam__header-course">
                   {testData.courseName || testData.course}
                 </span>
-              </div>
+              ) : null}
             </div>
 
-            <div className="mock-test-exam__metrics">
-              <div className="mock-test-exam__metric">
-                <span className="mock-test-exam__metric-label">Full Marks</span>
-                <strong className="mock-test-exam__metric-value">{testData.totalMarks}</strong>
-              </div>
-              <div className="mock-test-exam__metric">
-                <span className="mock-test-exam__metric-label">Marks Obtained</span>
-                <strong className="mock-test-exam__metric-value">{attemptedMarks}</strong>
-              </div>
-              <div className="mock-test-exam__metric">
-                <span className="mock-test-exam__metric-label">Timer</span>
+            <div className="mock-test-exam__header-actions">
+              <div
+                className="mock-test-exam__timer"
+                role="timer"
+                aria-label={`Time remaining ${formatTime(timeLeft)}`}
+              >
+                <span className="mock-test-exam__timer-label">
+                  <i className="fa-regular fa-clock" aria-hidden="true"></i>
+                  Timer
+                </span>
                 <strong
-                  className={`mock-test-exam__metric-value ${getTimerToneClass(timeLeft)}`.trim()}
+                  className={`mock-test-exam__timer-value ${getTimerToneClass(timeLeft)}`.trim()}
                 >
                   {formatTime(timeLeft)}
                 </strong>
               </div>
-              <div className="mock-test-exam__metric">
-                <span className="mock-test-exam__metric-label">Progress</span>
-                <strong className="mock-test-exam__metric-value">
-                  {answeredCount}/{testData.totalQuestions}
-                </strong>
+
+              <button
+                type="button"
+                className="mock-test-exam__submit-trigger"
+                onClick={() => setShowConfirm(true)}
+              >
+                Submit Test
+              </button>
+            </div>
+          </div>
+
+          <div className="mock-test-exam__header-controls">
+            <div className="mock-test-exam__subjects-row">
+              <div className="mock-test-exam__subjects-heading">
+                <h2>Subjects</h2>
+                <p>Switch subjects instantly to focus on one section at a time.</p>
               </div>
-              <div className="mock-test-exam__metric">
-                <span className="mock-test-exam__metric-label">Flagged</span>
-                <strong className="mock-test-exam__metric-value">{flaggedCount}</strong>
+
+              <div className="mock-test-exam__subjects-tabs">
+                {subjectTabs.map((subject) => {
+                  const questionCount =
+                    subject === ALL_SUBJECTS
+                      ? questions.length
+                      : questions.filter((question) => question.subject === subject).length;
+
+                  return (
+                    <button
+                      key={subject}
+                      type="button"
+                      className={`mock-test-exam__subject-tab ${
+                        selectedSubject === subject
+                          ? "mock-test-exam__subject-tab--active"
+                          : ""
+                      }`.trim()}
+                      onClick={() => setSelectedSubject(subject)}
+                      aria-pressed={selectedSubject === subject}
+                    >
+                      <span>{subject === ALL_SUBJECTS ? "All Questions" : subject}</span>
+                      <small>{questionCount}</small>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            <button
-              type="button"
-              className="mock-test-exam__submit-trigger"
-              onClick={() => setShowConfirm(true)}
-            >
-              Submit Test
-            </button>
+            <div className="mock-test-exam__review-filters">
+              <div className="mock-test-exam__review-copy">
+                <h3>Review Filter</h3>
+                <p>Use this to focus on flagged, answered, or unanswered questions.</p>
+              </div>
+
+              <div className="mock-test-exam__review-chips">
+                {REVIEW_FILTERS.map((filter) => {
+                  const count =
+                    filter.value === "all"
+                      ? questions.length
+                      : filter.value === "flagged"
+                        ? flaggedCount
+                        : filter.value === "answered"
+                          ? answeredCount
+                          : unansweredCount;
+
+                  return (
+                    <button
+                      key={filter.value}
+                      type="button"
+                      className={`mock-test-exam__review-chip ${
+                        reviewFilter === filter.value
+                          ? "mock-test-exam__review-chip--active"
+                          : ""
+                      }`.trim()}
+                      onClick={() => setReviewFilter(filter.value)}
+                      aria-pressed={reviewFilter === filter.value}
+                    >
+                      <span>{filter.label}</span>
+                      <small>{count}</small>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </section>
 
-        <section className="mock-test-exam__subjects">
-          <div className="mock-test-exam__subjects-row">
-            <div className="mock-test-exam__subjects-heading">
-              <h2>Subjects</h2>
-              <p>Switch subjects instantly to focus on one section at a time.</p>
-            </div>
+        <section className="mock-test-exam__mobile-panel-nav" aria-label="Question navigation">
+          <div className="mock-test-exam__mobile-panel-row">
+            {filteredQuestions.map((question) => {
+              const answer = answersByQuestion.get(question.index);
+              const isAnswered = answer?.selectedOption !== -1;
+              const isCurrent = question.index === currentQuestion;
+              const isFlagged = flaggedQuestions.includes(question.index);
+              const questionState = isAnswered ? "answered" : "unanswered";
 
-            <div className="mock-test-exam__subjects-tabs">
-              {subjectTabs.map((subject) => {
-                const questionCount =
-                  subject === ALL_SUBJECTS
-                    ? questions.length
-                    : questions.filter((question) => question.subject === subject).length;
-
-                return (
-                  <button
-                    key={subject}
-                    type="button"
-                    className={`mock-test-exam__subject-tab ${
-                      selectedSubject === subject
-                        ? "mock-test-exam__subject-tab--active"
-                        : ""
-                    }`.trim()}
-                    onClick={() => setSelectedSubject(subject)}
-                  >
-                    <span>{subject === ALL_SUBJECTS ? "All Questions" : subject}</span>
-                    <small>{questionCount}</small>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="mock-test-exam__review-filters">
-            <div className="mock-test-exam__review-copy">
-              <h3>Review Filter</h3>
-              <p>Use this to focus on flagged, answered, or unanswered questions.</p>
-            </div>
-
-            <div className="mock-test-exam__review-chips">
-              {REVIEW_FILTERS.map((filter) => {
-                const count =
-                  filter.value === "all"
-                    ? questions.length
-                    : filter.value === "flagged"
-                      ? flaggedCount
-                      : filter.value === "answered"
-                        ? answeredCount
-                        : unansweredCount;
-
-                return (
-                  <button
-                    key={filter.value}
-                    type="button"
-                    className={`mock-test-exam__review-chip ${
-                      reviewFilter === filter.value
-                        ? "mock-test-exam__review-chip--active"
-                        : ""
-                    }`.trim()}
-                    onClick={() => setReviewFilter(filter.value)}
-                  >
-                    <span>{filter.label}</span>
-                    <small>{count}</small>
-                  </button>
-                );
-              })}
-            </div>
+              return (
+                <button
+                  key={question.index}
+                  type="button"
+                  className={`mock-test-exam__panel-button ${
+                    isCurrent ? "mock-test-exam__panel-button--current" : ""
+                  } ${isAnswered ? "mock-test-exam__panel-button--answered" : ""} ${
+                    isFlagged ? "mock-test-exam__panel-button--flagged" : ""
+                  }`.trim()}
+                  onClick={() => jumpToQuestion(question.index)}
+                  title={
+                    isFlagged
+                      ? `Question ${question.questionNumber} is marked for review`
+                      : `Question ${question.questionNumber}`
+                  }
+                  aria-label={`Question ${question.questionNumber}, ${questionState}${
+                    isFlagged ? ", marked for review" : ""
+                  }${isCurrent ? ", current question" : ""}`}
+                >
+                  {question.questionNumber}
+                  {isFlagged ? (
+                    <span className="mock-test-exam__panel-flag">
+                      <i className="fa-solid fa-flag"></i>
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
           </div>
         </section>
 
@@ -559,9 +589,7 @@ const MockTestExam = () => {
             {filteredQuestions.length ? (
               <div className="mock-test-exam__question-list">
                 {filteredQuestions.map((question) => {
-                  const questionAnswer = answers.find(
-                    (answer) => answer.questionIndex === question.index
-                  ) || {
+                  const questionAnswer = answersByQuestion.get(question.index) || {
                     questionIndex: question.index,
                     selectedOption: -1,
                   };
@@ -606,6 +634,7 @@ const MockTestExam = () => {
                               isQuestionFlagged ? "mock-test-exam__flag-toggle--active" : ""
                             }`.trim()}
                             onClick={() => toggleQuestionFlag(question.index)}
+                            aria-pressed={isQuestionFlagged}
                           >
                             <i
                               className={`${
@@ -690,21 +719,17 @@ const MockTestExam = () => {
             <div className="mock-test-exam__panel-head">
               <div>
                 <h3>Question Panel</h3>
-                <p>
-                  Click any question number to jump directly. Answered and unanswered
-                  states stay visible.
-                </p>
+                <p>{filteredQuestions.length} visible questions</p>
               </div>
             </div>
 
             <div className="mock-test-exam__panel-grid">
               {filteredQuestions.map((question) => {
-                const answer = answers.find(
-                  (entry) => entry.questionIndex === question.index
-                );
+                const answer = answersByQuestion.get(question.index);
                 const isAnswered = answer?.selectedOption !== -1;
                 const isCurrent = question.index === currentQuestion;
                 const isFlagged = flaggedQuestions.includes(question.index);
+                const questionState = isAnswered ? "answered" : "unanswered";
 
                 return (
                   <button
@@ -721,6 +746,9 @@ const MockTestExam = () => {
                         ? `Question ${question.questionNumber} is marked for review`
                         : `Question ${question.questionNumber}`
                     }
+                    aria-label={`Question ${question.questionNumber}, ${questionState}${
+                      isFlagged ? ", marked for review" : ""
+                    }${isCurrent ? ", current question" : ""}`}
                   >
                     {question.questionNumber}
                     {isFlagged ? (

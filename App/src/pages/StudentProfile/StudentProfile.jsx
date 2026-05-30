@@ -1,5 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import {
+  AlertCircle,
+  ArrowRight,
+  Building2,
+  CalendarDays,
+  CheckCircle2,
+  CreditCard,
+  GraduationCap,
+  Lock,
+  LogOut,
+  Mail,
+  MapPin,
+  PenLine,
+  Phone,
+  PlayCircle,
+  Video,
+} from 'lucide-react';
 import { authAPI, youtubeLibraryAPI } from '../../api/services';
 import Loader from '../../components/Loader/Loader';
 import LiveStreamBanner from '../../components/StudentVideoLibrary/LiveStreamBanner';
@@ -627,22 +644,22 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
     {
       label: 'Email Address',
       value: profile.email,
-      icon: 'fa-regular fa-envelope',
+      icon: Mail,
     },
     {
       label: 'Phone Number',
       value: profile.phone || 'Not provided',
-      icon: 'fa-solid fa-phone',
+      icon: Phone,
     },
     {
       label: 'College',
       value: profile.collegeName || 'Not provided',
-      icon: 'fa-solid fa-building-columns',
+      icon: Building2,
     },
     {
       label: 'Address',
       value: profile.address || 'Not provided',
-      icon: 'fa-solid fa-location-dot',
+      icon: MapPin,
     },
   ];
 
@@ -650,22 +667,22 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
     {
       label: 'Current Course',
       value: profile.course || 'Not assigned',
-      icon: 'fa-solid fa-graduation-cap',
+      icon: GraduationCap,
     },
     {
-      label: 'Access Status',
+      label: 'Payment Status',
       value: profile.accountStatus || 'Unpaid',
-      icon: isPaid ? 'fa-solid fa-circle-check' : 'fa-solid fa-lock',
+      icon: isPaid ? CheckCircle2 : Lock,
     },
     {
       label: 'Live Classes',
       value: classData.liveClasses.length,
-      icon: 'fa-solid fa-video',
+      icon: Video,
     },
     {
       label: 'Video Library',
       value: recordedLibraryCount,
-      icon: 'fa-solid fa-circle-play',
+      icon: PlayCircle,
     },
   ];
 
@@ -711,11 +728,10 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
               <div className="student-hero__identity">
                 <div className="student-avatar">{getInitials(profile.name)}</div>
                 <div className="student-hero__copy">
-                  <span className="student-hero__eyebrow">Sajha Entrance Student Workspace</span>
                   <h1 className="student-hero__title">{profile.name}</h1>
                   <div className="student-hero__meta">
                     <span className="student-meta-pill">
-                      <i className="fa-solid fa-graduation-cap"></i>
+                      <GraduationCap size={14} strokeWidth={2.2} />
                       {profile.course || 'Course not assigned'}
                     </span>
                     <span
@@ -723,17 +739,15 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
                         profile.accountStatus === 'Paid' ? 'is-paid' : 'is-unpaid'
                       }`}
                     >
-                      <i
-                        className={
-                          profile.accountStatus === 'Paid'
-                            ? 'fa-solid fa-circle-check'
-                            : 'fa-solid fa-clock'
-                        }
-                      ></i>
+                      {profile.accountStatus === 'Paid' ? (
+                        <CheckCircle2 size={14} strokeWidth={2.2} />
+                      ) : (
+                        <CreditCard size={14} strokeWidth={2.2} />
+                      )}
                       {profile.accountStatus || 'Unpaid'}
                     </span>
                     <span className="student-meta-pill">
-                      <i className="fa-regular fa-calendar"></i>
+                      <CalendarDays size={14} strokeWidth={2.2} />
                       Joined {formatJoinedDate(profile.createdAt)}
                     </span>
                   </div>
@@ -742,7 +756,7 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
 
               <div className="student-hero__actions">
                 <button className="hero-action-btn" onClick={openEditModal} aria-label="Edit Profile">
-                  <i className="fa-solid fa-pen-to-square"></i>
+                  <PenLine size={16} strokeWidth={2.2} />
                   <span className="hero-action-btn__label">Edit Profile</span>
                 </button>
               </div>
@@ -762,82 +776,34 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
             </div>
           )}
 
-          <section className="student-overview-grid">
-            <div className="student-sidebar">
-              <article className="dashboard-card">
-                <div className="dashboard-card__section">
-                  <div className="dashboard-card__header">
-                    <div>
-                      <p className="dashboard-card__eyebrow">Student Details</p>
-                      <h2 className="dashboard-card__title">Personal Details</h2>
-                    </div>
-                  </div>
-
-                  <div className="student-detail-panel">
-                    {overviewItems.map((item) => (
-                      <div className="student-detail-row" key={item.label}>
-                        <div className="student-detail-row__icon">
-                          <i className={item.icon}></i>
-                        </div>
-                        <span className="student-detail-row__label">{item.label}</span>
-                        <span className="student-detail-row__separator">:</span>
-                        <strong className="student-detail-row__value">{item.value}</strong>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="dashboard-card__section dashboard-card__section--divider">
-                  <div className="dashboard-card__header">
-                    <div>
-                      <p className="dashboard-card__eyebrow">Dashboard Snapshot</p>
-                      <h2 className="dashboard-card__title">Learning Overview</h2>
-                    </div>
-                  </div>
-
-                  <div className="student-overview-panel">
-                    {snapshotItems.map((item) => (
-                      <div className="student-overview-metric" key={item.label}>
-                        <div className="student-overview-metric__meta">
-                          <div className="student-overview-metric__icon">
-                            <i className={item.icon}></i>
-                          </div>
-                          <span className="student-overview-metric__label">{item.label}</span>
-                        </div>
-                        <strong className="student-overview-metric__value">{item.value}</strong>
-                      </div>
-                    ))}
-                  </div>
-
-                  <button className="logout-btn" onClick={handleLogout}>
-                    <i className="fa-solid fa-right-from-bracket"></i>
-                    Logout
-                  </button>
-                </div>
-              </article>
+          {!isPaid && (
+            <div className="payment-banner">
+              <div className="payment-banner__icon">
+                <AlertCircle size={20} strokeWidth={2.2} />
+              </div>
+              <div className="payment-banner__copy">
+                <h3>Unlock full class access</h3>
+                <p>
+                  Your account is currently unpaid. Complete payment to unlock class links and
+                  recorded classes for your course.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="payment-banner__cta"
+                onClick={() => navigate('/courses')}
+              >
+                Complete Payment Now
+              </button>
             </div>
+          )}
 
+          <section className="student-overview-grid">
             <div className="student-main-column">
-              {!isPaid && (
-                <div className="payment-banner">
-                  <div className="payment-banner__icon">
-                    <i className="fa-solid fa-shield-halved"></i>
-                  </div>
-                  <div className="payment-banner__copy">
-                    <h3>Unlock full class access</h3>
-                    <p>
-                      Your account is currently unpaid. Complete payment to unlock Zoom links
-                      and recorded classes for your course.
-                    </p>
-                  </div>
-                </div>
-              )}
-
               <article className="dashboard-card classes-card">
                 <div className="dashboard-card__header dashboard-card__header--classes">
                   <div>
-                    <p className="dashboard-card__eyebrow">Classroom Access</p>
-                    <h2 className="dashboard-card__title">My Classes</h2>
+                    <h2 className="dashboard-card__title">Classroom Access</h2>
                     <p className="dashboard-card__description">
                       All your live sessions and recorded lessons for {profile.course}.
                     </p>
@@ -861,16 +827,32 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
                     className={`dash-tab ${activeDashboardTab === 'live' ? 'active' : ''}`}
                     onClick={() => handleDashboardTabChange('live')}
                   >
-                    <i className="fa-solid fa-video"></i>
-                    Live Classes
+                    <span className="dash-tab__icon">
+                      <Video size={19} strokeWidth={2.2} />
+                    </span>
+                    <span className="dash-tab__copy">
+                      <strong>Live Classes</strong>
+                      <small>Join ongoing sessions</small>
+                      <span className="dash-tab__action">
+                        View <ArrowRight size={13} strokeWidth={2.4} />
+                      </span>
+                    </span>
                   </button>
                   <button
                     type="button"
                     className={`dash-tab ${activeDashboardTab === 'recorded' ? 'active' : ''}`}
                     onClick={() => handleDashboardTabChange('recorded')}
                   >
-                    <i className="fa-solid fa-circle-play"></i>
-                    Recorded Classes
+                    <span className="dash-tab__icon is-recorded">
+                      <PlayCircle size={19} strokeWidth={2.2} />
+                    </span>
+                    <span className="dash-tab__copy">
+                      <strong>Recorded Classes</strong>
+                      <small>Access past lessons</small>
+                      <span className="dash-tab__action">
+                        View <ArrowRight size={13} strokeWidth={2.4} />
+                      </span>
+                    </span>
                   </button>
                 </div>
 
@@ -991,6 +973,84 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
                     )}
                   </div>
                 )}
+              </article>
+
+              <article className="dashboard-card snapshot-card">
+                <div className="dashboard-card__header">
+                  <div>
+                    <h2 className="dashboard-card__title">Dashboard Snapshot</h2>
+                    <p className="dashboard-card__description">Learning overview</p>
+                  </div>
+                </div>
+
+                <div className="student-overview-panel">
+                  {snapshotItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <div className="student-overview-metric" key={item.label}>
+                        <div className="student-overview-metric__meta">
+                          <div className="student-overview-metric__icon">
+                            <Icon size={18} strokeWidth={2.1} />
+                          </div>
+                          <span className="student-overview-metric__label">{item.label}</span>
+                        </div>
+                        <strong className="student-overview-metric__value">{item.value}</strong>
+                      </div>
+                    );
+                  })}
+                </div>
+              </article>
+
+              {!isPaid && (
+                <article className="dashboard-card locked-content-card">
+                  <div className="locked-content-card__icon">
+                    <Lock size={24} strokeWidth={2.1} />
+                  </div>
+                  <h3>Unlock the video library</h3>
+                  <p>
+                    Complete payment to access recorded classes and course materials for your course.
+                  </p>
+                  <button
+                    type="button"
+                    className="primary-btn locked-content-card__cta"
+                    onClick={() => navigate('/courses')}
+                  >
+                    Complete Payment
+                  </button>
+                </article>
+              )}
+            </div>
+
+            <div className="student-sidebar">
+              <article className="dashboard-card student-details-card">
+                <div className="dashboard-card__header">
+                  <div>
+                    <h2 className="dashboard-card__title">Student Details</h2>
+                    <p className="dashboard-card__description">Personal details</p>
+                  </div>
+                </div>
+
+                <div className="student-detail-panel">
+                  {overviewItems.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <div className="student-detail-row" key={item.label}>
+                        <div className="student-detail-row__icon">
+                          <Icon size={16} strokeWidth={2.1} />
+                        </div>
+                        <span className="student-detail-row__content">
+                          <span className="student-detail-row__label">{item.label}</span>
+                          <strong className="student-detail-row__value">{item.value}</strong>
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <button className="logout-btn" onClick={handleLogout}>
+                  <LogOut size={16} strokeWidth={2.2} />
+                  Logout
+                </button>
               </article>
             </div>
           </section>

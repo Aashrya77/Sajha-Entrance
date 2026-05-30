@@ -88,18 +88,20 @@ const Blogs = () => {
         </h1>
 
         {/* Search Bar */}
-        <div className="row justify-content-center mb-5">
-          <div className="col-md-5">
-            <form onSubmit={handleSearch} className="d-flex shadow-sm rounded">
+        <div className="blogs-search-wrap mb-5">
+          <div className="blogs-search-shell">
+            <form onSubmit={handleSearch} className="blogs-search-form">
+              <span className="blogs-search-icon" aria-hidden="true">
+                <i className="fa-solid fa-search"></i>
+              </span>
               <input
                 type="text"
-                className="form-control me-0 border-end-0"
-                style={{ borderRadius: '8px 0 0 8px' }}
+                className="blogs-search-input"
                 placeholder="Search articles..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
-              <button type="submit" className="btn btn-primary" style={{ borderRadius: '0 8px 8px 0' }}>
+              <button type="submit" className="blogs-search-submit" aria-label="Search articles">
                 <i className="fa-solid fa-search"></i>
               </button>
             </form>

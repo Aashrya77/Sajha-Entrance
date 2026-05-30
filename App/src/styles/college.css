@@ -3,59 +3,183 @@
   margin-top: 88px;
 }
 
+.colleges {
+  background: #f8f9fb;
+}
+
+.colleges-hero {
+  background: #ffffff;
+  padding: 42px 0 36px;
+  overflow: visible;
+}
+
+.colleges-hero-content {
+  position: relative;
+  text-align: center;
+  z-index: 1;
+}
+
+.colleges-hero-title {
+  color: #061224;
+  font-size: 2.35rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 0 0 10px;
+}
+
+.colleges-hero-title span {
+  color: var(--primary-orange);
+}
+
+.colleges-hero-subtitle {
+  color: #1f3656;
+  font-size: 1rem;
+  line-height: 1.5;
+  margin: 0 auto 34px;
+  max-width: 720px;
+}
+
+.colleges-search-panel-wrap {
+  margin: 0 auto;
+  max-width: 680px;
+  width: 100%;
+}
+
+.colleges-search-panel {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.colleges-search-field {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  position: relative;
+  min-height: 58px;
+  border: 1px solid #dbe3f0;
+  border-radius: 999px;
+  background: #fbfcff;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.03);
+  padding: 0 10px 0 20px;
+  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.colleges-search-field:focus-within {
+  background: #ffffff;
+  border-color: var(--primary-orange);
+  box-shadow: 0 0 0 4px rgba(255, 116, 34, 0.12), 0 8px 20px rgba(16, 24, 40, 0.06);
+}
+
+.colleges-search-icon {
+  color: #98a2b3;
+  flex-shrink: 0;
+  font-size: 16px;
+  margin-right: 14px;
+}
+
+.colleges-search-filter-icon {
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 50%;
+  color: #667085;
+  background: #eef2f7;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.colleges-search-filter-icon:hover,
+.colleges-search-filter-icon.is-open {
+  background: rgba(255, 116, 34, 0.12);
+  color: var(--primary-orange);
+}
+
+.colleges-search-filter-icon:hover {
+  transform: translateY(-1px);
+}
+
 .searchInput {
-  background-color: rgb(244, 244, 244);
-  border-radius: 0.25rem 0rem 0rem 0.25rem;
-  padding: 0.5rem 1rem 0.5rem 0.75rem;
-  outline: 1.5px solid var(--primary-orange);
+  background: transparent;
   border: none;
-  width: 300px;
-  max-width: calc(100% - 50px);
+  color: #111827;
+  flex: 1;
+  font-size: 15px;
+  line-height: 1.5;
+  min-width: 0;
+  outline: none;
+  padding: 14px 10px 14px 0;
   box-sizing: border-box;
 }
 
 .searchInput:focus {
-  background-color: rgb(255, 246, 239);
+  background: transparent;
 }
 
 .searchInput:hover {
-  outline: 1.5px solid var(--primary-orange);
+  outline: none;
 }
 
 .searchInput::placeholder {
-  font-size: 13px;
+  color: #667085;
 }
 
-.searchButton {
-  border: none;
-  padding: 0.5rem 1rem;
-  background-color: var(--primary-orange);
-  border-radius: 0rem 0.25rem 0.25rem 0rem;
-  outline: 1.5px solid var(--primary-orange);
-  color: white;
-  transition: all .2s ease-in-out;
+.colleges-search-submit-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-.searchButton:hover {
-  background-color: var(--secondary-orange);
-  transform: scale(1.03);
+.colleges-location-filter {
+  display: none;
+  padding: 14px 16px;
+  border: 1px solid #dbe3f0;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 8px 20px rgba(16, 24, 40, 0.06);
 }
 
-.searchButton:focus-within,
-.searchButton:focus {
-  outline: 1.5px solid var(--primary-orange) !important;
+.colleges-location-filter.is-open {
+  display: block;
+}
+
+.colleges-location-options {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px 18px;
 }
 
 .locationFilter {
   display: flex;
   align-items: center;
-  margin-top: 0.75rem;
+  min-height: 28px;
+  margin-top: 0;
+}
+
+.locationFilter label {
+  color: #344054;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.25;
 }
 
 .locationFilter input[type="radio"] {
   background-color: rgb(255, 255, 255);
   border-radius: 10px;
-  box-shadow: 0 0 0 1px var(--primary-black);
+  box-shadow: 0 0 0 1px #cbd5e1;
   cursor: pointer;
   display: inline-block;
   height: 18px;
@@ -66,7 +190,7 @@
 }
 
 .locationFilter input[type="radio"]::after {
-  background-color: var(--primary-black);
+  background-color: transparent;
   border-radius: 25px;
   content: "";
   display: block;
@@ -79,6 +203,21 @@
 
 .locationFilter input[type="radio"]:checked::after {
   background-color: var(--primary-orange);
+}
+
+.locationFilter input[type="radio"]:focus-visible {
+  outline: 3px solid rgba(255, 116, 34, 0.18);
+  outline-offset: 2px;
+}
+
+.colleges-search-panel .active-filters {
+  margin-top: 0;
+}
+
+.colleges-listing-section {
+  background: #f8f9fb;
+  min-height: 400px;
+  padding: 28px 0 60px;
 }
 
 .pageButton {
@@ -96,6 +235,41 @@
 .pageButton:hover {
   background-color: var(--secondary-orange);
   transform: scale(1.03);
+}
+
+.college-load-more-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 2.5rem 0 0.75rem;
+}
+
+.college-load-more-btn {
+  min-height: 46px;
+  padding: 0.8rem 1.35rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--primary-orange);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  box-shadow: 0 10px 24px rgba(255, 116, 34, 0.22);
+  transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.college-load-more-btn:hover:not(:disabled) {
+  background: var(--secondary-orange);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(255, 116, 34, 0.28);
+}
+
+.college-load-more-btn:disabled {
+  cursor: wait;
+  opacity: 0.72;
+  box-shadow: none;
 }
 
 /* Modern College Card Styles */
@@ -615,7 +789,25 @@
 }
 
 /* Responsive Design */
+@media (max-width: 991.98px) {
+  .colleges-search-panel {
+    max-width: min(680px, 100%);
+  }
+}
+
 @media (max-width: 768px) {
+  .colleges-hero {
+    padding: 34px 0 30px;
+  }
+
+  .colleges-hero-title {
+    font-size: 2rem;
+  }
+
+  .colleges-hero-subtitle {
+    margin-bottom: 28px;
+  }
+
   .college-cover-section {
     height: 300px;
   }
@@ -656,6 +848,53 @@
 }
 
 @media (max-width: 576px) {
+  .colleges-hero {
+    padding: 28px 0 26px;
+  }
+
+  .colleges-hero-title {
+    font-size: 1.75rem;
+    line-height: 1.25;
+  }
+
+  .colleges-hero-subtitle {
+    font-size: 0.95rem;
+    margin-bottom: 24px;
+  }
+
+  .colleges-search-field {
+    min-height: 54px;
+    padding-left: 16px;
+    padding-right: 8px;
+  }
+
+  .colleges-search-icon {
+    margin-right: 10px;
+  }
+
+  .colleges-search-filter-icon {
+    width: 38px;
+    height: 38px;
+  }
+
+  .searchInput {
+    font-size: 14px;
+    padding-block: 12px;
+  }
+
+  .colleges-location-filter {
+    padding: 12px;
+  }
+
+  .active-filters {
+    padding: 10px 12px;
+  }
+
+  .filter-tag,
+  .btn-remove-filter {
+    font-size: 13px;
+  }
+
   .college-cover-section {
     height: 250px;
   }
@@ -681,22 +920,23 @@
 
 /* Active Filters Display */
 .active-filters {
-  background: #f8fafc;
-  border-radius: 8px;
+  background: #ffffff;
+  border-radius: 16px;
   padding: 12px 16px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #dbe3f0;
+  box-shadow: 0 6px 18px rgba(16, 24, 40, 0.04);
 }
 
 .filter-tag {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: var(--primary-orange);
-  color: white;
-  padding: 4px 12px;
-  border-radius: 20px;
+  background: rgba(255, 116, 34, 0.1);
+  color: var(--primary-orange);
+  padding: 6px 12px;
+  border-radius: 999px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .filter-tag i {
@@ -704,6 +944,8 @@
 }
 
 .btn-remove-filter {
+  background: transparent;
+  border: 0;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -711,9 +953,9 @@
   text-decoration: none;
   font-weight: 600;
   font-size: 14px;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: all 0.2s ease;
+  padding: 6px 10px;
+  border-radius: 999px;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .btn-remove-filter:hover {

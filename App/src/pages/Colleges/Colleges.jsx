@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { collegeAPI, courseAPI } from '../../api/services';
 import { getImageFieldUrl } from '../../utils/imageHelper';
@@ -8,28 +8,65 @@ const Colleges = () => {
   const [colleges, setColleges] = useState([]);
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [previousPage, setPreviousPage] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [nextPage, setNextPage] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [locationFilter, setLocationFilter] = useState('');
   const [noResult, setNoResult] = useState(false);
+  const [isLocationFilterOpen, setIsLocationFilterOpen] = useState(false);
+  const filterPanelRef = useRef(null);
 
   useEffect(() => {
-    fetchData();
-  }, [currentPage, locationFilter]); // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchData({ page: 1, append: false });
+  }, []); // eslint-disable-next-line react-hooks/exhaustive-deps
 
-  const fetchData = async () => {
+  useEffect(() => {
+    if (!isLocationFilterOpen) {
+      return undefined;
+    }
+
+    const handleDocumentClick = (event) => {
+      if (!filterPanelRef.current?.contains(event.target)) {
+        setIsLocationFilterOpen(false);
+      }
+    };
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        setIsLocationFilterOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleDocumentClick);
+    document.addEventListener('keydown', handleEscape);
+
+    return () => {
+      document.removeEventListener('mousedown', handleDocumentClick);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isLocationFilterOpen]);
+
+  const fetchData = async ({
+    page = 1,
+    append = false,
+    search = searchTerm,
+    location = locationFilter,
+  } = {}) => {
     try {
-      setLoading(true);
+      if (append) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
+
       const [collegesRes, coursesRes] = await Promise.all([
-        collegeAPI.getAllColleges(currentPage, searchTerm, locationFilter),
+        collegeAPI.getAllColleges(page, search, location),
         courseAPI.getAllCourses()
       ]);
       
       if (collegesRes.data.success) {
-        setColleges(collegesRes.data.data.colleges || []);
-        setPreviousPage(collegesRes.data.data.previousPage || 0);
+        const nextColleges = collegesRes.data.data.colleges || [];
+        setColleges((current) => (append ? [...current, ...nextColleges] : nextColleges));
         setNextPage(collegesRes.data.data.nextPage || 0);
         setNoResult(collegesRes.data.data.noResult || false);
       }
@@ -39,27 +76,38 @@ const Colleges = () => {
       }
       
       setLoading(false);
+      setLoadingMore(false);
     } catch (error) {
       console.error('Error fetching data:', error);
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
   const handleSearch = (e) => {
     e.preventDefault();
-    setCurrentPage(1);
-    fetchData();
+    fetchData({ page: 1, append: false });
   };
 
   const handleLocationChange = (location) => {
     setLocationFilter(location);
-    setCurrentPage(1);
+    setIsLocationFilterOpen(false);
+    fetchData({ page: 1, append: false, location });
   };
 
   const clearFilters = () => {
     setSearchTerm('');
     setLocationFilter('');
-    setCurrentPage(1);
+    setIsLocationFilterOpen(false);
+    fetchData({ page: 1, append: false, search: '', location: '' });
+  };
+
+  const handleLoadMore = () => {
+    if (!nextPage || loadingMore) {
+      return;
+    }
+
+    fetchData({ page: nextPage, append: true });
   };
 
   if (loading) {
@@ -68,33 +116,101 @@ const Colleges = () => {
 
   return (
     <div className="colleges">
-      <div className="container-fluid ">
-        <div className="row" style={{paddingTop: '4.5rem'}}>
-          {/* Left Sidebar */}
-          <div className="col-12 col-lg-4">
-            <div>
-              <h3 className="text-uppercase mb-0 text-center" style={{fontWeight: 900, color: 'var(--primary-orange)'}}>
-                Search for <span style={{color: 'var(--primary-black)'}}>a college</span>
-              </h3>
-            </div>
-            <div className="d-flex justify-content-center" style={{marginTop: '10px'}}>
-              <form onSubmit={handleSearch} className="d-flex flex-column">
-                <div>
+      <section className="colleges-hero" aria-labelledby="colleges-page-title">
+        <div className="container">
+          <div className="colleges-hero-content">
+            <h1 id="colleges-page-title" className="colleges-hero-title">
+              Find Your Perfect <span>College</span>
+            </h1>
+            <p className="colleges-hero-subtitle">
+              Explore our partnered colleges and discover the right institution for your future.
+            </p>
+
+            <div className="colleges-search-panel-wrap">
+              <form
+                onSubmit={handleSearch}
+                className="colleges-search-panel"
+                ref={filterPanelRef}
+                role="search"
+                aria-label="Search partnered colleges"
+              >
+                <div className="colleges-search-field">
+                  <i className="fa-solid fa-magnifying-glass colleges-search-icon" aria-hidden="true"></i>
                   <input
+                    type="search"
                     name="collegeName"
-                    placeholder="SEARCH FOR A COLLEGE"
+                    placeholder="Search colleges, universities, or programs..."
                     className="searchInput"
+                    aria-label="Search colleges, universities, or programs"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
-                  <button type="submit" className="searchButton">
-                    <i className="fa-solid fa-magnifying-glass"></i>
+                  <button
+                    type="button"
+                    className={`colleges-search-filter-icon ${isLocationFilterOpen ? 'is-open' : ''}`}
+                    aria-label="Filter colleges by location"
+                    aria-expanded={isLocationFilterOpen}
+                    aria-controls="college-location-options"
+                    onClick={() => setIsLocationFilterOpen((current) => !current)}
+                  >
+                    <i className="fa-solid fa-sliders" aria-hidden="true"></i>
                   </button>
+                  <button type="submit" className="colleges-search-submit-sr">
+                    Search colleges
+                  </button>
+                </div>
+
+                <div
+                  id="college-location-options"
+                  className={`colleges-location-filter ${isLocationFilterOpen ? 'is-open' : ''}`}
+                >
+                  <div className="colleges-location-options">
+                    <div className="locationFilter">
+                      <input
+                        type="radio"
+                        id="all"
+                        name="location"
+                        checked={!locationFilter}
+                        onChange={() => handleLocationChange('')}
+                      />
+                      <label htmlFor="all">All Locations</label>
+                    </div>
+                    <div className="locationFilter">
+                      <input
+                        type="radio"
+                        id="lalitpur"
+                        name="location"
+                        checked={locationFilter === 'lalitpur'}
+                        onChange={() => handleLocationChange('lalitpur')}
+                      />
+                      <label htmlFor="lalitpur">Lalitpur</label>
+                    </div>
+                    <div className="locationFilter">
+                      <input
+                        type="radio"
+                        id="bhaktapur"
+                        name="location"
+                        checked={locationFilter === 'bhaktapur'}
+                        onChange={() => handleLocationChange('bhaktapur')}
+                      />
+                      <label htmlFor="bhaktapur">Bhaktapur</label>
+                    </div>
+                    <div className="locationFilter">
+                      <input
+                        type="radio"
+                        id="kathmandu"
+                        name="location"
+                        checked={locationFilter === 'kathmandu'}
+                        onChange={() => handleLocationChange('kathmandu')}
+                      />
+                      <label htmlFor="kathmandu">Kathmandu</label>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Active Filters Display */}
                 {(searchTerm || locationFilter) && (
-                  <div className="active-filters mt-3 mb-3">
+                  <div className="active-filters">
                     <div className="d-flex align-items-center justify-content-center gap-3 flex-wrap">
                       {searchTerm && (
                         <span className="filter-tag">
@@ -112,180 +228,94 @@ const Colleges = () => {
                     </div>
                   </div>
                 )}
-
-                <h3 className="text-uppercase mb-0 mt-3" style={{fontWeight: 900, color: 'var(--primary-orange)', fontSize: '16px'}}>
-                  Location <span style={{color: 'var(--primary-black)'}}>Filter</span>
-                </h3>
-                <div className="locationFilter mt-2">
-                  <input
-                    type="radio"
-                    id="all"
-                    name="location"
-                    checked={!locationFilter}
-                    onChange={() => handleLocationChange('')}
-                  />
-                  <label htmlFor="all">All Locations</label>
-                </div>
-                <div className="locationFilter">
-                  <input
-                    type="radio"
-                    id="lalitpur"
-                    name="location"
-                    checked={locationFilter === 'lalitpur'}
-                    onChange={() => handleLocationChange('lalitpur')}
-                  />
-                  <label htmlFor="lalitpur">Lalitpur</label>
-                </div>
-                <div className="locationFilter">
-                  <input
-                    type="radio"
-                    id="bhaktapur"
-                    name="location"
-                    checked={locationFilter === 'bhaktapur'}
-                    onChange={() => handleLocationChange('bhaktapur')}
-                  />
-                  <label htmlFor="bhaktapur">Bhaktapur</label>
-                </div>
-                <div className="locationFilter">
-                  <input
-                    type="radio"
-                    id="kathmandu"
-                    name="location"
-                    checked={locationFilter === 'kathmandu'}
-                    onChange={() => handleLocationChange('kathmandu')}
-                  />
-                  <label htmlFor="kathmandu">Kathmandu</label>
-                </div>
               </form>
-            </div>
-
-            {/* Courses Sidebar - Desktop Only */}
-            <div className="row d-none d-lg-block">
-              <h3 className="text-uppercase mb-4 mt-5 text-center" style={{fontWeight: 900, color: 'var(--primary-orange)'}}>
-                SOME OF THE <span style={{color: 'var(--primary-black)'}}>COURSES</span>
-              </h3>
-              {courses.slice(0, 3).map((course) => (
-                <div key={course._id} className="col-12">
-                  <Link to={`/course/${course._id}`} className="course-card-link">
-                    <div className="course-card-modern">
-                      <div className="course-card-content">
-                        <div className="course-title-section">
-                          <h3 className="course-title">{course.fullForm || course.title}</h3>
-                        </div>
-                        <div className="course-university-section">
-                          <i className="fa-solid fa-building-columns university-icon"></i>
-                          <span className="university-name">{course.universityName || 'University Affiliation'}</span>
-                        </div>
-                        <div className="course-duration-section">
-                          <i className="fa-solid fa-clock duration-icon"></i>
-                          <span className="duration-text">{course.duration || 'Duration'}</span>
-                        </div>
-                      </div>
-                      <div className="course-card-footer">
-                        <div className="course-action">
-                          <span className="action-text">Learn More</span>
-                          <i className="fa-solid fa-arrow-right action-arrow"></i>
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                </div>
-              ))}
-              <div className="text-center mt-4">
-                <Link to="/courses" className="btn-primary">
-                  <i className="fa-solid fa-plus me-2"></i>More Courses
-                </Link>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Content - Colleges Grid */}
-          <div className="col-12 col-lg-8">
-            <div className="px-2 px-lg-0">
-              <div className="row d-flex justify-content-center">
-                <h3 className="text-uppercase mb-4 text-center mt-5 mt-lg-4" style={{fontWeight: 900, color: 'var(--primary-orange)'}}>
-                  Partnered <span style={{color: 'var(--primary-black)'}}>Colleges</span>
-                </h3>
-                
-                {noResult && (
-                  <h3 className="text-uppercase mb-0 mt-3 text-center" style={{fontWeight: 900, color: 'var(--primary-orange)', fontSize: '16px'}}>
-                    No Result <span style={{color: 'var(--primary-black)'}}>Found</span>
-                  </h3>
-                )}
-
-                <div className="row g-4 mt-0" >
-                  {colleges.map((college) => (
-                    <div key={college._id} className="col-12 col-lg-4">
-                      <Link to={`/college/${college._id}`} className="college-card-link">
-                        <div className="college-card-modern">
-                          {/* College Banner */}
-                          <div className="college-banner">
-                            {college.collegeLogo ? (
-                              <img
-                                src={getImageFieldUrl(college, 'collegeLogo', 'colleges')}
-                                alt="college-banner"
-                                className="college-banner-image"
-                              />
-                            ) : (
-                              <div className="college-banner-placeholder">
-                                <i className="fa-solid fa-building-columns college-banner-placeholder-icon"></i>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* College Content */}
-                          <div className="college-content">
-                            <div className="college-name-section">
-                              <h3 className="college-name">{college.collegeName}</h3>
-                              <i className="fa-solid fa-circle-check verified-icon"></i>
-                            </div>
-
-                            <div className="college-university-section">
-                              <i className="fa-solid fa-building-columns university-icon"></i>
-                              <span className="university-name">
-                                {college.universityName || 'University Affiliation'}
-                              </span>
-                            </div>
-
-                            <div className="college-location-section">
-                              <i className="fa-solid fa-location-dot location-icon"></i>
-                              <span className="college-location-text">{college.collegeAddress}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </Link>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Pagination */}
-              <div className="d-flex justify-content-between mt-4 mx-2">
-                <div>
-                  {previousPage !== 0 && (
-                    <button
-                      className="pageButton d-flex align-items-center justify-content-center"
-                      onClick={() => setCurrentPage(previousPage)}
-                    >
-                      <i className="fa-solid fa-angle-left"></i>
-                    </button>
-                  )}
-                </div>
-                <div>
-                  {nextPage !== 0 && (
-                    <button
-                      className="pageButton d-flex align-items-center justify-content-center"
-                      onClick={() => setCurrentPage(nextPage)}
-                    >
-                      <i className="fa-solid fa-angle-right"></i>
-                    </button>
-                  )}
-                </div>
-              </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* Right Content - Colleges Grid */}
+      <section className="colleges-listing-section" aria-label="Partnered college listings">
+        <div className="container-fluid">
+          <div className="px-2 px-lg-0">
+            <div className="row d-flex justify-content-center">
+              {noResult && (
+                <h3 className="text-uppercase mb-0 mt-3 text-center" style={{fontWeight: 900, color: 'var(--primary-orange)', fontSize: '16px'}}>
+                  No Result <span style={{color: 'var(--primary-black)'}}>Found</span>
+                </h3>
+              )}
+
+              <div className="row g-4 mt-4" >
+                {colleges.map((college) => (
+                  <div key={college._id} className="col-12 col-md-6 col-lg-4 col-xl-3">
+                    <Link to={`/college/${college._id}`} className="college-card-link">
+                      <div className="college-card-modern">
+                        {/* College Banner */}
+                        <div className="college-banner">
+                          {college.collegeLogo ? (
+                            <img
+                              src={getImageFieldUrl(college, 'collegeLogo', 'colleges')}
+                              alt="college-banner"
+                              className="college-banner-image"
+                            />
+                          ) : (
+                            <div className="college-banner-placeholder">
+                              <i className="fa-solid fa-building-columns college-banner-placeholder-icon"></i>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* College Content */}
+                        <div className="college-content">
+                          <div className="college-name-section">
+                            <h3 className="college-name">{college.collegeName}</h3>
+                            <i className="fa-solid fa-circle-check verified-icon"></i>
+                          </div>
+
+                          <div className="college-university-section">
+                            <i className="fa-solid fa-building-columns university-icon"></i>
+                            <span className="university-name">
+                              {college.universityName || 'University Affiliation'}
+                            </span>
+                          </div>
+
+                          <div className="college-location-section">
+                            <i className="fa-solid fa-location-dot location-icon"></i>
+                            <span className="college-location-text">{college.collegeAddress}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {nextPage !== 0 && (
+              <div className="college-load-more-wrap">
+                <button
+                  type="button"
+                  className="college-load-more-btn"
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                >
+                  {loadingMore ? (
+                    <>
+                      <i className="fa-solid fa-spinner fa-spin"></i>
+                      Loading...
+                    </>
+                  ) : (
+                    <>
+                      More Colleges
+                      <i className="fa-solid fa-arrow-down"></i>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
 
     </div>
   );

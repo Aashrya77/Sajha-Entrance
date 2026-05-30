@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { noticeAPI, authAPI } from './api/services';
 import { ADMIN_ROOT_PATH } from './api/config';
 
@@ -69,6 +69,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [popup, setPopup] = useState(null);
   const [cartItems, setCartItems] = useState([]);
+  const navigate = useNavigate();
 
   const addToCart = useCallback((book, quantity = 1) => {
     setCartItems(prev => {
@@ -140,16 +141,33 @@ function App() {
     }
   };
 
+  const handleStudentLogout = useCallback(async () => {
+    try {
+      if (localStorage.getItem('token')) {
+        await authAPI.logout();
+      }
+    } catch (error) {
+      console.error('Error logging out:', error);
+    } finally {
+      localStorage.removeItem('token');
+      setStudentData(null);
+      setIsAuthenticated(false);
+      navigate('/');
+    }
+  }, [navigate]);
+
   const location = useLocation();
   const authPages = ['/student/login', '/student/register', '/forgot-password'];
   const isAuthPage =
     authPages.includes(location.pathname) ||
     location.pathname.startsWith('/reset-password/');
+  const isMockTestExamPage = /^\/mocktest\/[^/]+$/.test(location.pathname);
+  const hideSiteChrome = isAuthPage || isMockTestExamPage;
 
   return (
     <div className="App">
       <ScrollToTop />
-      {!isAuthPage && <Navbar notice={notice} studentData={studentData} isAuthenticated={isAuthenticated} cartCount={cartItems.reduce((total, item) => total + item.quantity, 0)} />}
+      {!hideSiteChrome && <Navbar notice={notice} studentData={studentData} isAuthenticated={isAuthenticated} cartCount={cartItems.reduce((total, item) => total + item.quantity, 0)} onLogout={handleStudentLogout} />}
       <Routes>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/" element={<Home />} />
@@ -190,7 +208,7 @@ function App() {
         <Route path={`${ADMIN_ROOT_PATH}/*`} element={<AdminRedirect />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
-      {!isAuthPage && <Footer />}
+      {!hideSiteChrome && <Footer />}
       {popup && <Popup popup={popup} setPopup={setPopup} />}
     </div>
   );

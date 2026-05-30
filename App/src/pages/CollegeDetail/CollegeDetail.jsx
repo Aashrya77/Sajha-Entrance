@@ -1,16 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import {
+  ArrowLeft,
+  Building2,
+  CalendarDays,
+  MapPin,
+} from 'lucide-react';
 import { collegeAPI } from '../../api/services';
 import { getImageFieldUrl, getImageList } from '../../utils/imageHelper';
 import './CollegeDetail.css';
 import Loader from '../../components/Loader/Loader';
 import InquiryButton from '../../components/InquiryForm/InquiryButton';
 
+const CollegeMetaItem = ({ icon: Icon, children }) => (
+  <div className="college-profile-meta-item">
+    <Icon size={18} aria-hidden="true" />
+    <span>{children}</span>
+  </div>
+);
+
 const CollegeDetail = () => {
   const { id } = useParams();
   const [collegeData, setCollegeData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeSection, setActiveSection] = useState('admission');
+  const [activeSection, setActiveSection] = useState('programs');
 
   useEffect(() => {
     fetchCollegeDetail();
@@ -88,14 +101,14 @@ const CollegeDetail = () => {
   const chairmanImageUrl = getImageFieldUrl(college, 'chairmanImage', 'colleges');
   const hasChairmanSection = Boolean(college.chairmanName || college.chairmanMessage || chairmanImageUrl);
   const navSections = [
-    college.admissionNotice && { id: 'admission', icon: 'fa-graduation-cap', label: 'Admission' },
-    college.overview && { id: 'about', icon: 'fa-circle-info', label: 'About' },
     courses && courses.length > 0 && {
       id: 'programs',
       icon: 'fa-book',
       label: 'Programs',
       badge: courses.length,
     },
+    college.overview && { id: 'about', icon: 'fa-circle-info', label: 'About' },
+    college.admissionNotice && { id: 'admission', icon: 'fa-graduation-cap', label: 'Admission' },
     { id: 'features', icon: 'fa-star', label: 'Features' },
     college.admissionGuidelines && { id: 'guidelines', icon: 'fa-file-alt', label: 'Guidelines' },
     college.scholarshipInfo && { id: 'scholarship', icon: 'fa-money-bill', label: 'Scholarship' },
@@ -103,60 +116,56 @@ const CollegeDetail = () => {
     hasChairmanSection && { id: 'chairman', icon: 'fa-user-tie', label: 'Chairman' },
   ].filter(Boolean);
 
+  const heroStyle = coverImageUrl
+    ? { '--college-profile-cover': `url("${coverImageUrl}")` }
+    : undefined;
+
   return (
     <div className="college-profile college-detail-page">
-      <div className="college-detail-breadcrumb">
-        <Link to="/colleges" className="cd-breadcrumb-link college-detail-breadcrumb-link">
-          <i className="fa-solid fa-arrow-left me-2"></i>All Colleges
+      <header className="college-profile-hero" style={heroStyle}>
+        <Link to="/colleges" className="college-profile-back-link">
+          <ArrowLeft size={18} aria-hidden="true" />
+          All Colleges
         </Link>
-      </div>
-      {/* Cover Image Section */}
-      <div 
-        className="college-cover-section"
-        style={coverImageUrl ? {
-          backgroundImage: `url(${coverImageUrl})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        } : {}}
-      >
-        <div className="college-cover-placeholder" style={coverImageUrl ? {background: 'rgba(0,0,0,0.3)'} : {}}>
-          <div className="college-logo-circle">
+      </header>
+
+      <section className="college-profile-summary" aria-label="College profile summary">
+        <article className="college-profile-info-card">
+          <div className="college-profile-logo-card" aria-hidden={!logoImageUrl}>
             {logoImageUrl ? (
               <img
                 src={logoImageUrl}
                 alt={`${college.collegeName} logo`}
-                className="college-logo-image"
+                className="college-profile-logo-image"
               />
             ) : (
-              <div className="college-logo-placeholder">
-                <i className="fa-solid fa-building-columns college-placeholder-icon"></i>
+              <div className="college-profile-logo-placeholder">
+                <Building2 size={52} aria-hidden="true" />
               </div>
             )}
           </div>
-          <div className="college-info-header">
-            <div className="college-name-row">
+
+          <div className="college-profile-info-body">
+            <div className="college-profile-details">
               <h1 className="college-profile-name">{college.collegeName}</h1>
-              <i className="fa-solid fa-circle-check verified-badge"></i>
-            </div>
-            <div className="college-details-row">
-              <div className="detail-item">
-                <i className="fa-solid fa-map-marker-alt detail-icon"></i>
-                <span className="detail-text">{college.collegeAddress}</span>
+
+              <div className="college-profile-meta">
+                {college.collegeAddress && (
+                  <CollegeMetaItem icon={MapPin}>{college.collegeAddress}</CollegeMetaItem>
+                )}
+                {college.universityName && (
+                  <CollegeMetaItem icon={Building2}>{college.universityName}</CollegeMetaItem>
+                )}
+                {college.establishedYear && (
+                  <CollegeMetaItem icon={CalendarDays}>
+                    Established {college.establishedYear}
+                  </CollegeMetaItem>
+                )}
               </div>
-              <div className="detail-item">
-                <i className="fa-solid fa-building-columns detail-icon"></i>
-                <span className="detail-text">{college.universityName || 'Affiliated University'}</span>
-              </div>
-              {college.establishedYear && (
-                <div className="detail-item">
-                  <i className="fa-solid fa-calendar detail-icon"></i>
-                  <span className="detail-text">Established {college.establishedYear}</span>
-                </div>
-              )}
             </div>
           </div>
-        </div>
-      </div>
+        </article>
+      </section>
 
       {navSections.length > 0 && (
         <div className="college-mobile-nav d-lg-none">
@@ -208,34 +217,6 @@ const CollegeDetail = () => {
             {/* Main Content */}
             <div className="col-12 col-lg-7">
               <div className="college-main-content">
-                {/* Admission Notice Bar */}
-                {college.admissionNotice && (
-                  <div className="college-admission-notice" id="admission" data-nav-section>
-                    <div className="college-admission-text-section">
-                      <span className="college-admission-text">{college.admissionNotice}</span>
-                    </div>
-                    <div className="college-admission-action-row">
-                      <Link to="/contact" className="college-btn-apply">Apply Now</Link>
-                      {college.admissionCloseDate && (
-                        <span className="college-admission-deadline">
-                          <i className="fa-solid fa-clock"></i>
-                          Closes: {formatDate(college.admissionCloseDate)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* About Section */}
-                {college.overview && (
-                  <div className="college-section" id="about" data-nav-section>
-                    <div className="college-section-header">
-                      <h2 className="college-section-title">About</h2>
-                    </div>
-                    <div className="college-overview-content" dangerouslySetInnerHTML={{ __html: college.overview }} />
-                  </div>
-                )}
-
                 {/* Offered Programs Section */}
                 {courses && courses.length > 0 && (
                   <div className="college-section" id="programs" data-nav-section>
@@ -264,6 +245,34 @@ const CollegeDetail = () => {
                           </div>
                         </Link>
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* About Section */}
+                {college.overview && (
+                  <div className="college-section" id="about" data-nav-section>
+                    <div className="college-section-header">
+                      <h2 className="college-section-title">About</h2>
+                    </div>
+                    <div className="college-overview-content" dangerouslySetInnerHTML={{ __html: college.overview }} />
+                  </div>
+                )}
+
+                {/* Admission Notice Bar */}
+                {college.admissionNotice && (
+                  <div className="college-admission-notice" id="admission" data-nav-section>
+                    <div className="college-admission-text-section">
+                      <span className="college-admission-text">{college.admissionNotice}</span>
+                    </div>
+                    <div className="college-admission-action-row">
+                      <Link to="/contact" className="college-btn-apply">Apply Now</Link>
+                      {college.admissionCloseDate && (
+                        <span className="college-admission-deadline">
+                          <i className="fa-solid fa-clock"></i>
+                          Closes: {formatDate(college.admissionCloseDate)}
+                        </span>
+                      )}
                     </div>
                   </div>
                 )}

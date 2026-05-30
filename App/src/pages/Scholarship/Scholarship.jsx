@@ -17,32 +17,32 @@ import '../../styles/scholarship.css';
 const CATEGORY_META = {
   all: {
     label: 'All Categories',
-    color: '#1f3c68',
+    color: '#ff7422',
     icon: Award,
   },
   merit: {
     label: 'Merit Scholarship',
-    color: '#1f6feb',
+    color: '#ff7422',
     icon: Award,
   },
   need: {
     label: 'Need-Based Aid',
-    color: '#cf5f22',
+    color: '#ff7422',
     icon: Banknote,
   },
   research: {
     label: 'Research Grant',
-    color: '#0f766e',
+    color: '#ff7422',
     icon: Microscope,
   },
   international: {
     label: 'International',
-    color: '#7c3aed',
+    color: '#ff7422',
     icon: Globe2,
   },
   institutional: {
     label: 'Institutional',
-    color: '#475569',
+    color: '#ff7422',
     icon: Building2,
   },
 };

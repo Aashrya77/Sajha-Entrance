@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import ProfileDropdown from './ProfileDropdown';
 
-const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
+const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0, onLogout }) => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
@@ -203,17 +204,11 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
               </Link>
 
               {isAuthenticated && studentData ? (
-                <Link
-                  to="/student/profile"
-                  className="navbar-mobile-quick-link navbar-mobile-quick-link--primary navbar-mobile-quick-link--profile text-decoration-none"
-                  aria-label={`Profile for ${studentDisplayName}`}
-                  title={studentDisplayName}
-                >
-                  <i className="fa-solid fa-user"></i>
-                  <span className="navbar-mobile-quick-link__label navbar-mobile-quick-link__label--name">
-                    {studentDisplayName}
-                  </span>
-                </Link>
+                <ProfileDropdown
+                  username={studentDisplayName}
+                  onLogout={onLogout}
+                  variant="mobile"
+                />
               ) : (
                 <Link
                   to="/student/login"
@@ -310,15 +305,7 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
                 )}
               </Link>
               {isAuthenticated && studentData ? (
-                <Link
-                  to="/student/profile"
-                  className="navbar-profile-icon-link text-decoration-none"
-                  aria-label={`Profile for ${studentDisplayName}`}
-                  title={studentDisplayName}
-                >
-                  <i className="fa-solid fa-user"></i>
-                  <span className="navbar-profile-name">{studentDisplayName}</span>
-                </Link>
+                <ProfileDropdown username={studentDisplayName} onLogout={onLogout} />
               ) : (
                 <>
                   <Link to="/student/login" className="btn" style={{border: '1.5px solid #ff6b35', color: '#ff6b35', backgroundColor: 'transparent', fontWeight: 600, fontSize: '13px', padding: '6px 16px', borderRadius: '5px', textDecoration: 'none', transition: 'all 0.2s ease'}}>
@@ -343,14 +330,19 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0 }) => {
       {!hideNoticeBar && (
         <div className="notice-bar" style={{backgroundColor: '#ff6b35', color: '#fff', padding: '8px 0', position: 'fixed', top: '76px', left: 0, right: 0, zIndex: 1029}}>
           <div className="container d-flex align-items-center justify-content-center">
-            <span className="badge" style={{backgroundColor: '#333', color: '#fff', fontSize: '11px', fontWeight: 600, padding: '4px 10px', marginRight: '12px', borderRadius: '4px'}}>NOTICE</span>
-            <div className="notice-text" style={{fontSize: '14px', fontWeight: 500, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis'}}>
+            <span className="notice-bar__badge">NOTICE</span>
+            <div className="notice-text notice-bar__message" style={{fontSize: '14px', fontWeight: 500, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis'}}>
               {notice?.url ? (
-                <a href={notice.url} style={{color: '#fff', textDecoration: 'none'}}>
+                <a
+                  href={notice.url}
+                  className="notice-bar__message-link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   {notice.title || 'Hello this is Sajha Entrance'}
                 </a>
               ) : (
-                <span>{notice?.title || 'Hello this is Sajha Entrance'}</span>
+                <span className="notice-bar__message-text">{notice?.title || 'Hello this is Sajha Entrance'}</span>
               )}
             </div>
           </div>

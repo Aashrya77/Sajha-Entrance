@@ -357,11 +357,88 @@
 }
 
 /* Search Bar */
-.blogs .form-control {
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 12px 16px;
-  transition: all 0.3s ease;
+.blogs-search-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 8px 16px 4px;
+}
+
+.blogs-search-shell {
+  width: min(680px, 100%);
+}
+
+.blogs-search-form {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 58px;
+  padding: 0 12px 0 18px;
+  border: 1px solid #ccd6e4;
+  border-radius: 14px;
+  background: #fbfcff;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.blogs-search-form:focus-within {
+  border-color: rgba(255, 116, 34, 0.55);
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(255, 116, 34, 0.1), 0 10px 28px rgba(15, 23, 42, 0.08);
+}
+
+.blogs-search-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  color: #8a97aa;
+  font-size: 18px;
+}
+
+.blogs-search-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 56px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #0b2341;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.blogs-search-input::placeholder {
+  color: #61708a;
+  opacity: 1;
+}
+
+.blogs-search-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 12px;
+  background: rgba(255, 116, 34, 0.1);
+  color: var(--primary-orange);
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.blogs-search-submit:hover,
+.blogs-search-submit:focus-visible {
+  background: var(--primary-orange);
+  color: #ffffff;
+  box-shadow: 0 8px 18px rgba(255, 116, 34, 0.24);
+  transform: translateY(-1px);
+}
+
+.blogs-search-submit:focus-visible {
+  outline: 3px solid rgba(255, 116, 34, 0.22);
+  outline-offset: 2px;
 }
 
 /* Pagination */

@@ -48,7 +48,7 @@ const CollegeDetail = async (req, res) => {
 const GetColleges = async (req, res) => {
   try {
     const collegesLength = (await College.find().exec()).length;
-    const limit = 9;
+    const limit = 10;
     const page = parseInt(req.query.page) || 1;
     const startIndex = (page - 1) * limit;
     const endIndex = page * limit;

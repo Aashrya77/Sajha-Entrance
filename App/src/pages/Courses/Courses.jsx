@@ -64,22 +64,18 @@ const Courses = () => {
         <div className="courses-hero-overlay"></div>
         <div className="container position-relative">
           <div className="courses-hero-content text-center">
-            <span className="courses-hero-badge">
-              <i className="fa-solid fa-graduation-cap me-2"></i>
-              Explore Programs
-            </span>
             <h1 className="courses-hero-title">
               Find Your Perfect <span>Course</span>
             </h1>
             <p className="courses-hero-subtitle">
-              Choose from our wide range of entrance preparation courses and start your journey towards academic excellence.
+              Explore our wide range of courses and find the one that fits your career goals
             </p>
             <div className="courses-search-wrapper">
               <div className="courses-search-box">
                 <i className="fa-solid fa-magnifying-glass courses-search-icon"></i>
                 <input
                   type="text"
-                  placeholder="Search courses by name, university..."
+                  placeholder="Search courses, programs, or fields..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="courses-search-input"
