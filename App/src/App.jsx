@@ -35,6 +35,7 @@ import MockTestResult from './pages/MockTestResult/MockTestResult';
 import MockTestResults from './pages/MockTestResults/MockTestResults';
 import ForgotPasswordForm from './components/FormDesign/ForgotPasswordForm';
 import Popup from './components/Popup/Popup';
+import Loader from './components/Loader/Loader';
 import BookList from './components/Books/BookList';
 import BookDetail from './components/Books/BookDetail';
 import Cart from './components/Books/Cart';
@@ -43,6 +44,15 @@ import PaymentSuccess from './pages/PaymentSuccess/PaymentSuccess';
 import PaymentFailure from './pages/PaymentFailure/PaymentFailure';
 import TermsConditions from './pages/Legal/TermsConditions';
 import PrivacyPolicy from './pages/Legal/PrivacyPolicy';
+
+const PastQuestions = React.lazy(() => import('./pages/PastQuestions/PastQuestions'));
+const PastQuestionDetail = React.lazy(() => import('./pages/PastQuestions/PastQuestionDetail'));
+
+const PageLoader = () => (
+  <div className="container mt-5 pt-5 d-flex justify-content-center">
+    <Loader />
+  </div>
+);
 
 // ScrollToTop component to reset scroll position on route change
 const ScrollToTop = () => {
@@ -182,6 +192,22 @@ function App() {
         <Route path="/mocktest/:id" element={<MockTestExam />} />
         <Route path="/mocktest-result/:attemptId" element={<MockTestResult />} />
         <Route path="/mocktest-results" element={<MockTestResults />} />
+        <Route
+          path="/past-questions"
+          element={
+            <React.Suspense fallback={<PageLoader />}>
+              <PastQuestions />
+            </React.Suspense>
+          }
+        />
+        <Route
+          path="/past-questions/:slug"
+          element={
+            <React.Suspense fallback={<PageLoader />}>
+              <PastQuestionDetail />
+            </React.Suspense>
+          }
+        />
         <Route path="/blogs" element={<Blogs />} />
         <Route path="/blog/:id" element={<BlogDetail />} />
         <Route path="/contact" element={<Contact />} />

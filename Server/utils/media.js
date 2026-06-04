@@ -16,6 +16,7 @@ export const MEDIA_TYPES = Object.freeze({
   college: "college",
   university: "university",
   mocktest: "mocktest",
+  questionBank: "question-bank",
 });
 
 export const legacyMediaDirectories = Object.freeze({
@@ -48,6 +49,10 @@ export const legacyMediaDirectories = Object.freeze({
     path.join(publicDirectory, "mocktest"),
     path.join(publicDirectory, "uploads", "mocktest"),
   ],
+  [MEDIA_TYPES.questionBank]: [
+    path.join(publicDirectory, "question-bank"),
+    path.join(publicDirectory, "uploads", "question-bank"),
+  ],
 });
 
 export const mediaFieldMaps = Object.freeze({
@@ -74,6 +79,9 @@ export const mediaFieldMaps = Object.freeze({
     universityCover: MEDIA_TYPES.university,
     chancellorImage: MEDIA_TYPES.university,
     gallery: MEDIA_TYPES.university,
+  },
+  questionBank: {
+    thumbnailUrl: MEDIA_TYPES.questionBank,
   },
 });
 

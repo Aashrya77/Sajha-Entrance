@@ -28,6 +28,9 @@ const mediaFolderMap = {
   colleges: "college",
   university: "university",
   universities: "university",
+  questionBank: "question-bank",
+  questionbank: "question-bank",
+  "question-bank": "question-bank",
 };
 
 export const getImageUrl = (imagePath, folder = "") => {

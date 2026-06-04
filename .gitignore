@@ -7,4 +7,5 @@ Server/.env
 Server/*.log
 Server/*.err
 Server/*.txt
+Server/storage/
 echo Server/.adminjs/bundle.js

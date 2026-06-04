@@ -88,6 +88,7 @@ import MockTestCourseAdminResource from "./resources/mock-test-course.resource.j
 import MockTestSubjectAdminResource from "./resources/mock-test-subject.resource.js";
 import MockQuestionAdminResource from "./resources/mock-question.resource.js";
 import MockTestAdminResource from "./resources/mock-test.resource.js";
+import QuestionBankAdminResource from "./resources/question-bank.resource.js";
 import {
   CreateAdminResultExam,
   DeleteResultExamSet,
@@ -126,6 +127,14 @@ import {
   UpdateAdminMockTestStatus,
   UpdateMockQuestion,
 } from "../controllers/AdminMockTest.js";
+import {
+  CreateAdminQuestionBank,
+  DeleteAdminQuestionBank,
+  GetAdminQuestionBank,
+  QuestionBankUploadMiddleware,
+  ServeAdminQuestionBankAsset,
+  UpdateAdminQuestionBank,
+} from "../controllers/QuestionBank.js";
 
 
 // Helper function to extract YouTube video ID from URL
@@ -2122,6 +2131,7 @@ const startAdminPanel = async () => {
     MockTestSubjectAdminResource,
     MockQuestionAdminResource,
     MockTestAdminResource,
+    QuestionBankAdminResource,
     {
       resource: MockTestAttemptModel,
       options: {
@@ -2368,6 +2378,38 @@ const startAdminPanel = async () => {
     "/api/students/export",
     requireAdminPermission("students", "view"),
     exportStudentsWorkbook
+  );
+
+  adminRouter.get(
+    "/api/question-bank/assets/*",
+    requireAdminPermission("question_bank", "view"),
+    ServeAdminQuestionBankAsset
+  );
+
+  adminRouter.get(
+    "/api/question-bank",
+    requireAdminPermission("question_bank", "view"),
+    GetAdminQuestionBank
+  );
+
+  adminRouter.post(
+    "/api/question-bank",
+    requireAdminPermission("question_bank", "add"),
+    QuestionBankUploadMiddleware,
+    CreateAdminQuestionBank
+  );
+
+  adminRouter.put(
+    "/api/question-bank/:id",
+    requireAdminPermission("question_bank", "edit"),
+    QuestionBankUploadMiddleware,
+    UpdateAdminQuestionBank
+  );
+
+  adminRouter.delete(
+    "/api/question-bank/:id",
+    requireAdminPermission("question_bank", "delete"),
+    DeleteAdminQuestionBank
   );
 
   adminRouter.get(

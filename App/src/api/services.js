@@ -124,6 +124,22 @@ export const mockTestAPI = {
   getAttemptResult: (attemptId) => API.get(`/mocktest-attempt/${attemptId}`),
 };
 
+// Question Bank API
+export const questionBankAPI = {
+  getAllQuestions: (params = {}) => {
+    const query = new URLSearchParams();
+    if (params.search) query.append('search', params.search);
+    if (params.exam) query.append('exam', params.exam);
+    if (params.subject) query.append('subject', params.subject);
+    if (params.type) query.append('type', params.type);
+    if (params.year) query.append('year', params.year);
+    if (params.page) query.append('page', params.page);
+    if (params.limit) query.append('limit', params.limit);
+    return API.get(`/question-bank?${query.toString()}`);
+  },
+  getQuestionBySlug: (slug) => API.get(`/question-bank/${slug}`),
+};
+
 // Book Payment API
 export const bookPaymentAPI = {
   initiatePayment: (data) => API.post('/book-payment/initiate', data),
