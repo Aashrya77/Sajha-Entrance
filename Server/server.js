@@ -34,6 +34,7 @@ import { resolvePublicBackendUrl } from "./utils/publicUrl.js";
 import { backfillLegacyResultExams } from "./services/resultService.js";
 import { syncMockTestIndexes } from "./services/mockTestIndexService.js";
 import { refreshYouTubeLibrarySchedule } from "./services/youtubeLibraryScheduler.js";
+import { startZoomRecordingAutoSync } from "./services/zoomRecordingScheduler.js";
 
 dotenv.config();
 
@@ -245,6 +246,12 @@ const initializeStartupTasks = async () => {
     await refreshYouTubeLibrarySchedule();
   } catch (error) {
     logger.error("YouTube library scheduler init error:", error.message);
+  }
+
+  try {
+    startZoomRecordingAutoSync();
+  } catch (error) {
+    logger.error("Zoom recording scheduler init error:", error.message);
   }
 };
 

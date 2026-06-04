@@ -1092,7 +1092,6 @@ export default function Dashboard() {
           ["Universities", counts.universities, "Higher education destinations tracked"],
           ["Blogs", counts.blogs, "Content pieces ready for students"],
           ["Notices", counts.notices, "Announcement items in the system"],
-          ["Recorded Classes", counts.recordedClasses, "On-demand learning assets currently stored"],
           ["Upcoming Classes", counts.onlineClasses, "Scheduled live sessions on the platform"],
           ["Contacts", counts.contacts, "Lead submissions from the public site"],
           ["Newsletters", counts.newsletters, "Subscribed email records in the CRM"],
