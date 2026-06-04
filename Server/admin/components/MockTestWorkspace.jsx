@@ -23,12 +23,22 @@ const surfaceStyle = {
 
 const inputStyle = {
   width: "100%",
+  boxSizing: "border-box",
   marginTop: "8px",
   borderRadius: "14px",
   border: "1px solid #d1d5db",
   padding: "12px 14px",
   background: "#fff",
   fontSize: "14px",
+};
+
+const fieldLabelStyle = {
+  display: "block",
+  marginBottom: "6px",
+};
+
+const fieldBoxStyle = {
+  minWidth: 0,
 };
 
 const fileInputStyle = {
@@ -1298,22 +1308,22 @@ export default function MockTestWorkspace() {
         <Box
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-            gap: "16px",
+            gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+            gap: "24px 16px",
           }}
         >
-          <Box>
-            <Label>Mock Test Title</Label>
+          <Box style={fieldBoxStyle}>
+            <Label style={fieldLabelStyle}>Mock Test Title</Label>
             <input
               type="text"
               value={form.title}
               onChange={(event) => updateForm({ title: event.target.value })}
-              style={inputStyle}
+              style={{ ...inputStyle, marginTop: 0 }}
             />
           </Box>
 
-          <Box>
-            <Label>Course</Label>
+          <Box style={fieldBoxStyle}>
+            <Label style={fieldLabelStyle}>Course</Label>
             <select
               value={form.courseRef}
               onChange={(event) => {
@@ -1326,7 +1336,7 @@ export default function MockTestWorkspace() {
                 setActiveSubjectId("");
                 resetQuestionForm();
               }}
-              style={inputStyle}
+              style={{ ...inputStyle, marginTop: 0 }}
             >
               <option value="">Select course</option>
               {(workspace.courses || []).map((course) => (
@@ -1337,12 +1347,12 @@ export default function MockTestWorkspace() {
             </select>
           </Box>
 
-          <Box>
-            <Label>Status</Label>
+          <Box style={fieldBoxStyle}>
+            <Label style={fieldLabelStyle}>Status</Label>
             <select
               value={form.status}
               onChange={(event) => updateForm({ status: event.target.value })}
-              style={inputStyle}
+              style={{ ...inputStyle, marginTop: 0 }}
             >
               <option value="draft">Draft</option>
               <option value="scheduled">Scheduled</option>
@@ -1352,76 +1362,72 @@ export default function MockTestWorkspace() {
             </select>
           </Box>
 
-          <Box>
-            <Label>Duration (minutes)</Label>
+          <Box style={fieldBoxStyle}>
+            <Label style={fieldLabelStyle}>Duration (minutes)</Label>
             <input
               type="number"
               min="1"
               step="1"
               value={form.duration}
               onChange={(event) => updateForm({ duration: Number(event.target.value) })}
-              style={inputStyle}
+              style={{ ...inputStyle, marginTop: 0 }}
             />
           </Box>
 
-          <Box>
-            <Label>Start Time</Label>
+          <Box style={fieldBoxStyle}>
+            <Label style={fieldLabelStyle}>Start Time</Label>
             <input
               type="datetime-local"
               value={form.startAt}
               onChange={(event) => updateForm({ startAt: event.target.value })}
-              style={inputStyle}
+              style={{ ...inputStyle, marginTop: 0 }}
             />
           </Box>
 
-          <Box>
-            <Label>End Time</Label>
+          <Box style={fieldBoxStyle}>
+            <Label style={fieldLabelStyle}>End Time</Label>
             <input
               type="datetime-local"
               value={form.endAt}
               onChange={(event) => updateForm({ endAt: event.target.value })}
-              style={inputStyle}
+              style={{ ...inputStyle, marginTop: 0 }}
             />
           </Box>
 
-          <Box>
-            <Label>Pass Marks</Label>
+          <Box style={fieldBoxStyle}>
+            <Label style={fieldLabelStyle}>Pass Marks</Label>
             <input
               type="number"
               min="0"
               step="1"
               value={form.passMarks}
               onChange={(event) => updateForm({ passMarks: Number(event.target.value) })}
-              style={inputStyle}
+              style={{ ...inputStyle, marginTop: 0 }}
             />
           </Box>
 
-          <Box>
-            <Label>Auto-calculated Total Marks</Label>
-            <Box style={{ ...inputStyle, color: "#334155", fontWeight: 700 }}>
+          <Box style={fieldBoxStyle}>
+            <Label style={fieldLabelStyle}>Auto-calculated Total Marks</Label>
+            <Box style={{ ...inputStyle, marginTop: 0, color: "#334155", fontWeight: 700 }}>
               {selectedQuestionSummary.totalMarks}
             </Box>
           </Box>
         </Box>
 
         <Box>
-          <Label>Description</Label>
-          <Box style={{ marginTop: "8px" }}>
-            <RichTextEditor
-              value={form.description}
-              onChange={(value) => updateForm({ description: value })}
-            />
-          </Box>
+          <Label style={fieldLabelStyle}>Description</Label>
+          <RichTextEditor
+            value={form.description}
+            onChange={(value) => updateForm({ description: value })}
+          />
         </Box>
 
         <Box>
-          <Label>Instructions</Label>
-          <Box style={{ marginTop: "8px" }}>
-            <RichTextEditor
-              value={form.instructions}
-              onChange={(value) => updateForm({ instructions: value })}
-            />
-          </Box>
+          <Label style={fieldLabelStyle}>Instructions</Label>
+          <RichTextEditor
+            value={form.instructions}
+            onChange={(value) => updateForm({ instructions: value })}
+          />
         </Box>
       </Box>
 

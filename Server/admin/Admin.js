@@ -35,6 +35,7 @@ import {
   YOUTUBE_LIBRARY_COURSE_OPTIONS,
 } from "../constants/youtubeLibrary.js";
 import { formatOnlineClassCourseLabel } from "../utils/onlineClassCourses.js";
+import { getActiveUsersSnapshot } from "../utils/activeUsers.js";
 import { buildAdminSessionConfig } from "./utils/admin-session.js";
 import { refreshYouTubeLibrarySchedule } from "../services/youtubeLibraryScheduler.js";
 import {
@@ -219,6 +220,74 @@ const mergeResourceOptions = (resourceConfig, optionAdditions = {}) => {
     },
   };
 };
+
+const getOrderFilterDirection = (query = {}, filterName = "") => {
+  const flatValue = query[`filters.${filterName}`];
+  const nestedValue = query.filters?.[filterName];
+  const value = Array.isArray(flatValue || nestedValue)
+    ? (flatValue || nestedValue)[0]
+    : flatValue || nestedValue;
+
+  return ["asc", "desc"].includes(value) ? value : "";
+};
+
+const removeOrderFilter = (query = {}, filterName = "") => {
+  const nextQuery = { ...query };
+
+  delete nextQuery[`filters.${filterName}`];
+
+  if (nextQuery.filters && typeof nextQuery.filters === "object") {
+    const nextFilters = { ...nextQuery.filters };
+    delete nextFilters[filterName];
+
+    if (Object.keys(nextFilters).length) {
+      nextQuery.filters = nextFilters;
+    } else {
+      delete nextQuery.filters;
+    }
+  }
+
+  return nextQuery;
+};
+
+const buildOrderFilterSortHook =
+  ({ filterName, sortField }) =>
+  (request) => {
+    const direction = getOrderFilterDirection(request.query, filterName);
+
+    if (!direction) {
+      return request;
+    }
+
+    return {
+      ...request,
+      query: {
+        ...removeOrderFilter(request.query, filterName),
+        sortBy: sortField,
+        direction,
+      },
+    };
+  };
+
+const ORDER_FILTER_AVAILABLE_VALUES = [
+  { value: "desc", label: "Descending (Latest First)" },
+  { value: "asc", label: "Ascending (Oldest First)" },
+];
+
+const STUDENT_REGISTRATION_ORDER_FILTER = "registrationOrder";
+const STUDENT_REGISTRATION_ORDER_SORT_FIELD = "createdAt";
+const MOCK_TEST_ATTEMPT_ORDER_FILTER = "attemptOrder";
+const MOCK_TEST_ATTEMPT_ORDER_SORT_FIELD = "completedAt";
+
+const applyStudentRegistrationOrderSort = buildOrderFilterSortHook({
+  filterName: STUDENT_REGISTRATION_ORDER_FILTER,
+  sortField: STUDENT_REGISTRATION_ORDER_SORT_FIELD,
+});
+
+const applyMockTestAttemptOrderSort = buildOrderFilterSortHook({
+  filterName: MOCK_TEST_ATTEMPT_ORDER_FILTER,
+  sortField: MOCK_TEST_ATTEMPT_ORDER_SORT_FIELD,
+});
 
 const normalizeAdminInputString = (value = "") => String(value || "").trim();
 const YOUTUBE_SETTINGS_RESOURCE_ID = "YouTubeChannelConfig";
@@ -1844,10 +1913,26 @@ const startAdminPanel = async () => {
     resource: Student,
     options: {
       navigation: { name: "Students", icon: "User" },
+      sort: {
+        sortBy: STUDENT_REGISTRATION_ORDER_SORT_FIELD,
+        direction: "desc",
+      },
       listProperties: ["studentId", "name", "email", "course", "accountStatus", "createdAt"],
       showProperties: ["studentId", "name", "email", "phone", "address", "collegeName", "course", "accountStatus", "createdAt"],
       editProperties: ["name", "email", "password", "phone", "address", "collegeName", "course", "accountStatus"],
+      filterProperties: [
+        STUDENT_REGISTRATION_ORDER_FILTER,
+        "studentId",
+        "name",
+        "email",
+        "course",
+        "accountStatus",
+        "createdAt",
+      ],
       actions: {
+        list: {
+          before: [applyStudentRegistrationOrderSort],
+        },
         downloadExcel: {
           actionType: "resource",
           icon: "Download",
@@ -1866,6 +1951,13 @@ const startAdminPanel = async () => {
         phone: { label: "Phone" },
         address: { label: "Address" },
         collegeName: { label: "College Name" },
+        [STUDENT_REGISTRATION_ORDER_FILTER]: {
+          label: "Registration Order",
+          type: "string",
+          position: -20,
+          isVisible: { list: false, show: false, edit: false, filter: true },
+          availableValues: ORDER_FILTER_AVAILABLE_VALUES,
+        },
         course: {
           label: "Course",
           availableValues: STUDENT_COURSE_AVAILABLE_VALUES,
@@ -1980,7 +2072,6 @@ const startAdminPanel = async () => {
         contactsCount,
         newslettersCount,
         onlineClassesCount,
-        recordedClassesCount,
         noticesCount,
         resultsCount,
         universitiesCount,
@@ -2008,7 +2099,6 @@ const startAdminPanel = async () => {
         ContactModel.countDocuments(),
         NewsletterModel.countDocuments(),
         OnlineClass.countDocuments(),
-        RecordedClass.countDocuments(),
         Notice.countDocuments(),
         StudentResult.countDocuments(),
         UniversityModel.countDocuments(),
@@ -2072,7 +2162,6 @@ const startAdminPanel = async () => {
           contacts: contactsCount,
           newsletters: newslettersCount,
           onlineClasses: onlineClassesCount,
-          recordedClasses: recordedClassesCount,
           notices: noticesCount,
           results: resultsCount,
           universities: universitiesCount,
@@ -2104,6 +2193,7 @@ const startAdminPanel = async () => {
         })),
         notifications,
         unreadNotifications,
+        liveActiveUsers: getActiveUsersSnapshot(),
       };
     } catch (error) {
       logger.error("Dashboard handler error:", error);
@@ -2137,10 +2227,32 @@ const startAdminPanel = async () => {
       options: {
         id: "MockTestAttempt",
         navigation: mockTestNavigation,
+        sort: {
+          sortBy: MOCK_TEST_ATTEMPT_ORDER_SORT_FIELD,
+          direction: "desc",
+        },
+        filterProperties: [
+          MOCK_TEST_ATTEMPT_ORDER_FILTER,
+          "student",
+          "mockTest",
+          "completedAt",
+          "totalScore",
+          "percentage",
+        ],
         actions: {
+          list: {
+            before: [applyMockTestAttemptOrderSort],
+          },
           search: buildMockTestAttemptSearchAction(),
         },
         properties: {
+          [MOCK_TEST_ATTEMPT_ORDER_FILTER]: {
+            label: "Attempt Order",
+            type: "string",
+            position: -20,
+            isVisible: { list: false, show: false, edit: false, filter: true },
+            availableValues: ORDER_FILTER_AVAILABLE_VALUES,
+          },
           student: {
             type: "reference",
             custom: {
@@ -2162,11 +2274,16 @@ const startAdminPanel = async () => {
     }),
     mergeResourceOptions(ContactModel, {
       navigation: inquiriesNavigation,
+      sort: {
+        sortBy: "submittedAt",
+        direction: "desc",
+      },
     }),
     PopupAdminResource,
     studentResource,
     onlineClassResource,
-    recordedClassResource,
+    // Temporarily hidden from the Classes tab.
+    // recordedClassResource,
     youtubeChannelConfigResource,
     youtubePlaylistResource,
     youtubeVideoResource,
@@ -2410,6 +2527,17 @@ const startAdminPanel = async () => {
     "/api/question-bank/:id",
     requireAdminPermission("question_bank", "delete"),
     DeleteAdminQuestionBank
+  );
+
+  adminRouter.get(
+    "/api/live-users",
+    requireAdminPermission("dashboard", "view"),
+    (_req, res) => {
+      res.json({
+        success: true,
+        data: getActiveUsersSnapshot(),
+      });
+    }
   );
 
   adminRouter.get(
