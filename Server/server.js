@@ -89,6 +89,14 @@ app.use(
 
 app.use(cookieParser());
 
+// ================= MAINTENANCE MODE =================
+app.use((req, res, next) => {
+  if (process.env.MAINTENANCE_MODE === "true") {
+    return res.sendFile(path.join(publicDirectory, "maintenance.html"));
+  }
+  next();
+});
+
 // ================= STATIC FILES =================
 app.use(express.static(publicDirectory, staticFileOptions));
 
