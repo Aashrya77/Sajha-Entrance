@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { noticeAPI, authAPI, activityAPI } from './api/services';
 import { ADMIN_ROOT_PATH } from './api/config';
+import config from './config';
 
 // Import components
 import Navbar from './components/Navbar/Navbar';
@@ -144,23 +145,14 @@ function App() {
     fetchNotice();
     // Check authentication
     checkAuth();
-    // Check maintenance mode
+    // Check maintenance mode from config
     checkMaintenanceMode();
   }, []);
 
-  const checkMaintenanceMode = async () => {
-    try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/health`);
-      if (response.ok) {
-        const data = await response.json();
-        setMaintenanceMode(data.data?.maintenanceMode === true);
-      }
-    } catch (error) {
-      console.log('Unable to check maintenance mode');
-      setMaintenanceMode(false);
-    } finally {
-      setIsCheckingMaintenance(false);
-    }
+  const checkMaintenanceMode = () => {
+    // Use maintenanceMode from config file directly
+    setMaintenanceMode(config.maintenanceMode === true);
+    setIsCheckingMaintenance(false);
   };
 
   const sendPresenceHeartbeat = useCallback(() => {

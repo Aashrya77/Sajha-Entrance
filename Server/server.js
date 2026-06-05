@@ -5,7 +5,7 @@ import cors from "cors";
 import fs from "fs";
 import path from "path";
 
-import config from "../App/config.js";
+import config from "./config/appConfig.js";
 import connectDB from "./db/connectDB.js";
 import CourseRoutes from "./routes/Course.js";
 import CollegeRoutes from "./routes/College.js";
