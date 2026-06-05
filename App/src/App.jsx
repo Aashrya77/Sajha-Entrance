@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
-import { noticeAPI, authAPI } from './api/services';
+import { noticeAPI, authAPI, activityAPI } from './api/services';
 import { ADMIN_ROOT_PATH } from './api/config';
 
 // Import components
@@ -35,6 +35,7 @@ import MockTestResult from './pages/MockTestResult/MockTestResult';
 import MockTestResults from './pages/MockTestResults/MockTestResults';
 import ForgotPasswordForm from './components/FormDesign/ForgotPasswordForm';
 import Popup from './components/Popup/Popup';
+import Loader from './components/Loader/Loader';
 import BookList from './components/Books/BookList';
 import BookDetail from './components/Books/BookDetail';
 import Cart from './components/Books/Cart';
@@ -43,6 +44,15 @@ import PaymentSuccess from './pages/PaymentSuccess/PaymentSuccess';
 import PaymentFailure from './pages/PaymentFailure/PaymentFailure';
 import TermsConditions from './pages/Legal/TermsConditions';
 import PrivacyPolicy from './pages/Legal/PrivacyPolicy';
+
+const PastQuestions = React.lazy(() => import('./pages/PastQuestions/PastQuestions'));
+const PastQuestionDetail = React.lazy(() => import('./pages/PastQuestions/PastQuestionDetail'));
+
+const PageLoader = () => (
+  <div className="container mt-5 pt-5 d-flex justify-content-center">
+    <Loader />
+  </div>
+);
 
 // ScrollToTop component to reset scroll position on route change
 const ScrollToTop = () => {
@@ -63,6 +73,26 @@ const ScrollToTop = () => {
   
   return null;
 };
+
+const PRESENCE_CLIENT_ID_KEY = 'sajha_presence_client_id';
+const PRESENCE_HEARTBEAT_INTERVAL_MS = 30000;
+
+const getPresenceClientId = () => {
+  const existingClientId = localStorage.getItem(PRESENCE_CLIENT_ID_KEY);
+
+  if (existingClientId) {
+    return existingClientId;
+  }
+
+  const generatedClientId =
+    typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+  localStorage.setItem(PRESENCE_CLIENT_ID_KEY, generatedClientId);
+  return generatedClientId;
+};
+
 function App() {
   const [notice, setNotice] = useState(null);
   const [studentData, setStudentData] = useState(null);
@@ -70,6 +100,7 @@ function App() {
   const [popup, setPopup] = useState(null);
   const [cartItems, setCartItems] = useState([]);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const addToCart = useCallback((book, quantity = 1) => {
     setCartItems(prev => {
@@ -111,6 +142,39 @@ function App() {
     // Check authentication
     checkAuth();
   }, []);
+
+  const sendPresenceHeartbeat = useCallback(() => {
+    activityAPI
+      .sendHeartbeat({
+        clientId: getPresenceClientId(),
+        path: `${location.pathname}${location.search || ''}`,
+        title: document.title,
+      })
+      .catch(() => {});
+  }, [location.pathname, location.search]);
+
+  useEffect(() => {
+    sendPresenceHeartbeat();
+
+    const intervalId = window.setInterval(
+      sendPresenceHeartbeat,
+      PRESENCE_HEARTBEAT_INTERVAL_MS
+    );
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        sendPresenceHeartbeat();
+      }
+    };
+
+    window.addEventListener('focus', sendPresenceHeartbeat);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener('focus', sendPresenceHeartbeat);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [sendPresenceHeartbeat]);
 
   const fetchNotice = async () => {
     try {
@@ -156,7 +220,6 @@ function App() {
     }
   }, [navigate]);
 
-  const location = useLocation();
   const authPages = ['/student/login', '/student/register', '/forgot-password'];
   const isAuthPage =
     authPages.includes(location.pathname) ||
@@ -182,6 +245,22 @@ function App() {
         <Route path="/mocktest/:id" element={<MockTestExam />} />
         <Route path="/mocktest-result/:attemptId" element={<MockTestResult />} />
         <Route path="/mocktest-results" element={<MockTestResults />} />
+        <Route
+          path="/past-questions"
+          element={
+            <React.Suspense fallback={<PageLoader />}>
+              <PastQuestions />
+            </React.Suspense>
+          }
+        />
+        <Route
+          path="/past-questions/:slug"
+          element={
+            <React.Suspense fallback={<PageLoader />}>
+              <PastQuestionDetail />
+            </React.Suspense>
+          }
+        />
         <Route path="/blogs" element={<Blogs />} />
         <Route path="/blog/:id" element={<BlogDetail />} />
         <Route path="/contact" element={<Contact />} />

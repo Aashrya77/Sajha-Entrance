@@ -13,6 +13,7 @@ const logoRelativeFile = path.join("img", "adminlogo.png");
 const logoSourceFile = path.join(appPublicDirectory, logoRelativeFile);
 const publicMountPath = buildAdminPath("/brand-assets");
 const fallbackLogoUrl = buildAdminPath("/brand-logo.svg");
+const adminStyleVersion = "admin-topbar-border-v1";
 const resolvedLogoUrl = fs.existsSync(logoSourceFile)
   ? `${publicMountPath}/${logoRelativeFile.replace(/\\/g, "/")}`
   : fallbackLogoUrl;
@@ -25,8 +26,8 @@ const adminBrandAssets = {
   logoUrl: resolvedLogoUrl,
   fallbackLogoUrl,
   faviconUrl: buildAdminPath("/favicon.svg"),
-  themeStylesheetUrl: buildAdminPath("/admin-theme.css"),
-  dashboardStylesheetUrl: buildAdminPath("/Dashboard.css"),
+  themeStylesheetUrl: `${buildAdminPath("/admin-theme.css")}?v=${adminStyleVersion}`,
+  dashboardStylesheetUrl: `${buildAdminPath("/Dashboard.css")}?v=${adminStyleVersion}`,
 };
 
 const adminBranding = {

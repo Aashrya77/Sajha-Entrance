@@ -8,13 +8,6 @@ import { adminBrandMeta, dashboardTheme, getToneStyles } from "../config/theme.j
 
 const h = new ViewHelpers();
 
-const shell = {
-  borderRadius: dashboardTheme.radius.lg,
-  border: `1px solid ${dashboardTheme.borderSoft}`,
-  background: "rgba(255, 255, 255, 0.78)",
-  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.78)",
-};
-
 export default function TopBar({ toggleSidebar }) {
   const session = useSelector((state) => state.session);
   const paths = useSelector((state) => state.paths);
@@ -183,9 +176,13 @@ export default function TopBar({ toggleSidebar }) {
 
         <Box
           display={["none", "none", "block", "block", "block"]}
+          className="sajha-admin-topbar__version"
           style={{
-            ...shell,
-            padding: "10px 12px",
+            padding: 0,
+            border: 0,
+            background: "transparent",
+            boxShadow: "none",
+            minWidth: 0,
           }}
         >
           <Version versions={versions} />

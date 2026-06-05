@@ -23,7 +23,8 @@ const slugifyFilename = (filename) =>
 
 const formatUploadFilename = (filename) => {
   const { name, ext } = path.parse(filename);
-  return `${Date.now()}-${slugifyFilename(name) || "image"}${ext.toLowerCase()}`;
+  const uniqueSuffix = Math.random().toString(36).slice(2, 8);
+  return `${Date.now()}-${uniqueSuffix}-${slugifyFilename(name) || "image"}${ext.toLowerCase()}`;
 };
 
 const toArray = (value) => {
@@ -204,6 +205,7 @@ const createImageUpload = ({
   label = "Image",
   entityName,
   storageFolder,
+  bucketPath,
   publicBaseUrl,
   mimeTypes = DEFAULT_IMAGE_MIME_TYPES,
   maxSize = DEFAULT_MAX_IMAGE_SIZE,
@@ -214,7 +216,7 @@ const createImageUpload = ({
 }) => {
   const fields = buildUploadFieldMap({ keyProperty, propertyBase });
   const provider = new UploadProvider({
-    bucket: path.join(mediaRootDirectory, storageFolder),
+    bucket: bucketPath || path.join(mediaRootDirectory, storageFolder),
     baseUrl: publicBaseUrl,
   });
 
@@ -249,6 +251,15 @@ const createImageUpload = ({
         entityName: entityName || label.toLowerCase(),
         storageFolder,
         uploadPath: uploadPathLabel || `/public/media/${storageFolder}`,
+        multiple,
+        mimeTypes,
+        maxSize,
+        fileProperty: fields.fileProperty,
+        filePathProperty: fields.filePathProperty,
+        filesToDeleteProperty: fields.filesToDeleteProperty,
+        keyProperty: fields.keyProperty,
+        mimeTypeProperty: fields.mimeTypeProperty,
+        filenameProperty: fields.filenameProperty,
         orderProperty: multiple ? fields.orderProperty : undefined,
       },
     },

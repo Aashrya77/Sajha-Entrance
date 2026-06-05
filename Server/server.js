@@ -19,6 +19,8 @@ import BlogUploadRoutes from "./routes/BlogUpload.js";
 import BookPaymentRoutes from "./routes/BookPayment.js";
 import InquiryRoutes from "./routes/Inquiry.js";
 import YouTubeLibraryRoutes from "./routes/YouTubeLibrary.js";
+import QuestionBankRoutes from "./routes/QuestionBank.js";
+import ActivityRoutes from "./routes/Activity.js";
 
 import { adminBrandAssets } from "./admin/config/branding.js";
 import { ADMIN_ROOT_PATH } from "./admin/config/paths.js";
@@ -33,6 +35,7 @@ import { resolvePublicBackendUrl } from "./utils/publicUrl.js";
 import { backfillLegacyResultExams } from "./services/resultService.js";
 import { syncMockTestIndexes } from "./services/mockTestIndexService.js";
 import { refreshYouTubeLibrarySchedule } from "./services/youtubeLibraryScheduler.js";
+import { startZoomRecordingAutoSync } from "./services/zoomRecordingScheduler.js";
 
 dotenv.config();
 
@@ -203,7 +206,9 @@ const registerApiRoutes = (router) => {
   router.use("/api", BlogUploadRoutes);
   router.use("/api", BookPaymentRoutes);
   router.use("/api", InquiryRoutes);
+  router.use("/api", ActivityRoutes);
   router.use("/api/youtube-library", YouTubeLibraryRoutes);
+  router.use("/api", QuestionBankRoutes);
 
   router.use("/api/*", (_req, res) => {
     res.status(404).json({ error: "API endpoint not found" });
@@ -243,6 +248,12 @@ const initializeStartupTasks = async () => {
     await refreshYouTubeLibrarySchedule();
   } catch (error) {
     logger.error("YouTube library scheduler init error:", error.message);
+  }
+
+  try {
+    startZoomRecordingAutoSync();
+  } catch (error) {
+    logger.error("Zoom recording scheduler init error:", error.message);
   }
 };
 

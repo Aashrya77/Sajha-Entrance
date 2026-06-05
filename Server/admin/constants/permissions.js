@@ -128,6 +128,7 @@ export const ADMIN_PERMISSION_RESOURCES = [
   createPermissionResource("mock_test_subjects", "Mock Test Subjects"),
   createPermissionResource("mock_tests", "Mock Tests"),
   createPermissionResource("mock_test_attempts", "Mock Test Attempts"),
+  createPermissionResource("question_bank", "Question Bank"),
   createPermissionResource("courses", "Courses"),
   createPermissionResource("newsletters", "Newsletters"),
   createPermissionResource("contacts", "Contacts"),
@@ -213,6 +214,9 @@ export const ADMIN_RESOURCE_ACCESS = {
   },
   MockTestAttempt: {
     permissionResource: "mock_test_attempts",
+  },
+  QuestionBank: {
+    permissionResource: "question_bank",
   },
   Course: {
     permissionResource: "courses",

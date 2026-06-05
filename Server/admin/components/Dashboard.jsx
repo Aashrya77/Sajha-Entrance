@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { ApiClient } from "adminjs";
 import StudentsPerCourseChart from "./StudentsPerCourseChart";
+import { buildAdminPath } from "../config/paths.js";
 import {
   adminBrandMeta,
   dashboardTheme,
@@ -18,6 +19,7 @@ const compactNumberFormatter = new Intl.NumberFormat("en-US", {
   notation: "compact",
   maximumFractionDigits: 1,
 });
+const LIVE_USERS_REFRESH_MS = 10000;
 
 const fmtNum = (value) => numberFormatter.format(value || 0);
 const fmtMoney = (value) => `Rs. ${numberFormatter.format(Math.round(value || 0))}`;
@@ -42,6 +44,45 @@ const fmtDate = (value) =>
         minute: "2-digit",
       })
     : "Not available";
+const fmtDuration = (seconds = 0) => {
+  const safeSeconds = Math.max(0, Number(seconds) || 0);
+
+  if (safeSeconds < 60) {
+    return `${safeSeconds}s`;
+  }
+
+  const minutes = Math.floor(safeSeconds / 60);
+  if (minutes < 60) {
+    return `${minutes}m`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+  return `${hours}h ${minutes % 60}m`;
+};
+const fmtRelativeTime = (value) => {
+  const timestamp = value ? new Date(value).getTime() : 0;
+
+  if (!timestamp || Number.isNaN(timestamp)) {
+    return "Not available";
+  }
+
+  const seconds = Math.max(0, Math.round((Date.now() - timestamp) / 1000));
+
+  if (seconds < 5) {
+    return "Just now";
+  }
+
+  if (seconds < 60) {
+    return `${seconds}s ago`;
+  }
+
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) {
+    return `${minutes}m ago`;
+  }
+
+  return fmtDate(value);
+};
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 const getTrendSnapshot = (data, valueKey) => {
   const points = Array.isArray(data)
@@ -489,9 +530,98 @@ const Notices = ({ items }) => {
   );
 };
 
+const LiveActiveUsers = ({ data, loading, error }) => {
+  const users = Array.isArray(data?.users) ? data.users : [];
+  const activeWindowSeconds = data?.activeWindowSeconds || 120;
+
+  return (
+    <div className="dashboard-live-users">
+      <div className="dashboard-live-users__summary">
+        <div className="dashboard-live-users__headline">
+          <span
+            className={cx(
+              "dashboard-live-users__dot",
+              data?.count ? "dashboard-live-users__dot--active" : ""
+            )}
+          />
+          <div>
+            <div className="dashboard-live-users__eyebrow">Active now</div>
+            <div className="dashboard-live-users__count">{fmtNum(data?.count)}</div>
+          </div>
+        </div>
+
+        <div className="dashboard-live-users__summary-grid">
+          <div className="dashboard-live-users__stat">
+            <span>Students</span>
+            <strong>{fmtNum(data?.studentsCount)}</strong>
+          </div>
+          <div className="dashboard-live-users__stat">
+            <span>Visitors</span>
+            <strong>{fmtNum(data?.visitorsCount)}</strong>
+          </div>
+          <div className="dashboard-live-users__stat">
+            <span>Window</span>
+            <strong>{fmtDuration(activeWindowSeconds)}</strong>
+          </div>
+          <div className="dashboard-live-users__stat">
+            <span>Updated</span>
+            <strong>{loading ? "Refreshing" : fmtRelativeTime(data?.generatedAt)}</strong>
+          </div>
+        </div>
+      </div>
+
+      {error ? <div className="dashboard-live-users__error">{error}</div> : null}
+
+      {users.length ? (
+        <div className="dashboard-live-users__list">
+          {users.slice(0, 8).map((user) => {
+            const isStudent = user.type === "student";
+
+            return (
+              <div key={user.id} className="dashboard-live-users__row">
+                <div
+                  className={cx(
+                    "dashboard-live-users__avatar",
+                    isStudent ? "dashboard-tone-success" : "dashboard-tone-info"
+                  )}
+                >
+                  {isStudent ? "S" : "V"}
+                </div>
+
+                <div className="dashboard-live-users__main">
+                  <div className="dashboard-live-users__name">
+                    {isStudent ? user.label || "Student" : "Guest visitor"}
+                  </div>
+                  <div className="dashboard-live-users__meta">
+                    {isStudent && user.email ? user.email : user.pageTitle || "Browsing site"}
+                  </div>
+                  <div className="dashboard-live-users__path">{user.pagePath || "/"}</div>
+                </div>
+
+                <div className="dashboard-live-users__side">
+                  <Pill tone={isStudent ? "success" : "info"}>
+                    {isStudent ? "Student" : "Visitor"}
+                  </Pill>
+                  <span>{fmtRelativeTime(user.lastSeenAt)}</span>
+                  <span>{fmtDuration(user.activeForSeconds)} active</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      ) : (
+        <Empty label="No active users in the last few minutes." />
+      )}
+    </div>
+  );
+};
+
 export default function Dashboard() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [liveUsers, setLiveUsers] = useState(null);
+  const [liveUsersLoading, setLiveUsersLoading] = useState(false);
+  const [liveUsersError, setLiveUsersError] = useState("");
 
   useEffect(() => {
     let mounted = true;
@@ -507,6 +637,52 @@ export default function Dashboard() {
 
     return () => {
       mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const fetchLiveUsers = async () => {
+      if (!mounted) {
+        return;
+      }
+
+      setLiveUsersLoading(true);
+
+      try {
+        const response = await fetch(buildAdminPath("/api/live-users"), {
+          credentials: "same-origin",
+          cache: "no-store",
+        });
+
+        if (!response.ok) {
+          throw new Error("Unable to load live users.");
+        }
+
+        const payload = await response.json();
+
+        if (mounted) {
+          setLiveUsers(payload?.data || payload);
+          setLiveUsersError("");
+        }
+      } catch (_error) {
+        if (mounted) {
+          setLiveUsersError("Live users are unavailable right now.");
+        }
+      } finally {
+        if (mounted) {
+          setLiveUsersLoading(false);
+        }
+      }
+    };
+
+    fetchLiveUsers();
+    const intervalId = window.setInterval(fetchLiveUsers, LIVE_USERS_REFRESH_MS);
+
+    return () => {
+      mounted = false;
+      window.clearInterval(intervalId);
     };
   }, []);
 
@@ -538,6 +714,7 @@ export default function Dashboard() {
     notifications = [],
     unreadNotifications = 0,
     upcomingClasses = [],
+    liveActiveUsers = null,
   } = data;
 
   const revenuePalette = getRevenuePalette(growth.revenue);
@@ -550,6 +727,15 @@ export default function Dashboard() {
   const activeAccessPercentage = counts.adminUsers
     ? ((counts.activeAdminUsers || 0) / counts.adminUsers) * 100
     : 0;
+  const liveUsersData = liveUsers ||
+    liveActiveUsers || {
+      count: 0,
+      studentsCount: 0,
+      visitorsCount: 0,
+      users: [],
+      activeWindowSeconds: 120,
+      generatedAt: null,
+    };
 
   return (
     <div className="dashboard-root">
@@ -562,6 +748,9 @@ export default function Dashboard() {
                 {unreadNotifications} unread notifications
               </Pill>
               <Pill tone="success">{counts.activeAdminUsers || 0} active team members</Pill>
+              <Pill tone={liveUsersData.count ? "success" : "neutral"}>
+                {fmtNum(liveUsersData.count)} live users
+              </Pill>
             </div>
 
             <h1 className="dashboard-hero__title">
@@ -586,6 +775,14 @@ export default function Dashboard() {
               value={fmtNum(counts.paidStudents)}
               tone="success"
               detail="Students with completed payment status"
+            />
+            <HeroStat
+              label="Live Users"
+              value={fmtNum(liveUsersData.count)}
+              tone={liveUsersData.count ? "success" : "neutral"}
+              detail={`${fmtNum(liveUsersData.studentsCount)} students, ${fmtNum(
+                liveUsersData.visitorsCount
+              )} visitors online now`}
             />
             <HeroStat
               label="Admin Team"
@@ -796,6 +993,25 @@ export default function Dashboard() {
 
       <div className="dashboard-grid dashboard-grid--operations">
         <Panel
+          title="Live active users"
+          detail={`Current site presence from users seen in the last ${fmtDuration(
+            liveUsersData.activeWindowSeconds
+          )}.`}
+          action={
+            <Pill tone={liveUsersData.count ? "success" : "neutral"}>
+              {liveUsersLoading ? "Refreshing" : "Live"}
+            </Pill>
+          }
+          className="dashboard-panel--live-users"
+        >
+          <LiveActiveUsers
+            data={liveUsersData}
+            loading={liveUsersLoading}
+            error={liveUsersError}
+          />
+        </Panel>
+
+        <Panel
           title="Notifications"
           detail="Recent admin alerts and items that still need attention."
           action={
@@ -876,7 +1092,6 @@ export default function Dashboard() {
           ["Universities", counts.universities, "Higher education destinations tracked"],
           ["Blogs", counts.blogs, "Content pieces ready for students"],
           ["Notices", counts.notices, "Announcement items in the system"],
-          ["Recorded Classes", counts.recordedClasses, "On-demand learning assets currently stored"],
           ["Upcoming Classes", counts.onlineClasses, "Scheduled live sessions on the platform"],
           ["Contacts", counts.contacts, "Lead submissions from the public site"],
           ["Newsletters", counts.newsletters, "Subscribed email records in the CRM"],

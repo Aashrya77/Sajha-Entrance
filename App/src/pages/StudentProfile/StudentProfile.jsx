@@ -17,10 +17,10 @@ import {
   PlayCircle,
   Video,
 } from 'lucide-react';
-import { authAPI, youtubeLibraryAPI } from '../../api/services';
+import { authAPI, youtubeLibraryAPI, zoomRecordingAPI } from '../../api/services';
 import Loader from '../../components/Loader/Loader';
 import LiveStreamBanner from '../../components/StudentVideoLibrary/LiveStreamBanner';
-import VideoLibrarySection from '../../components/StudentVideoLibrary/VideoLibrarySection';
+import ZoomRecordedClasses from '../../components/ZoomRecordedClasses/ZoomRecordedClasses';
 import {
   canSwitchStudentCourse,
   NEB_PREPARATION_COURSE,
@@ -213,6 +213,7 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
   const [youtubeLive, setYoutubeLive] = useState(createYouTubeLiveState);
   const [videoLibrarySearch, setVideoLibrarySearch] = useState('');
   const [videoLibrarySubject, setVideoLibrarySubject] = useState('');
+  const [zoomRecordingCount, setZoomRecordingCount] = useState(0);
   const normalizedProfilePath = normalizeStudentProfilePath(location.pathname);
   const [lastLibraryView, setLastLibraryView] = useState(
     getLibraryViewFromPath(normalizedProfilePath)
@@ -315,6 +316,40 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
     videoLibrary.config?.liveStatusRefreshMinutes,
     youtubeLive.stream?.refreshIntervalMinutes,
   ]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    if (!isPaid) {
+      setZoomRecordingCount(0);
+      return undefined;
+    }
+
+    zoomRecordingAPI
+      .getRecordings({ page: 1, limit: 1 })
+      .then((response) => {
+        if (!isMounted) {
+          return;
+        }
+
+        setZoomRecordingCount(Number(response.data?.data?.total || 0));
+      })
+      .catch((error) => {
+        if (error.response?.status === 401) {
+          localStorage.removeItem('token');
+          navigate('/student/login');
+          return;
+        }
+
+        if (isMounted) {
+          setZoomRecordingCount(0);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isPaid, navigate]);
 
   const fetchDashboardData = async () => {
     try {
@@ -636,8 +671,7 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
     );
   }
 
-  const recordedLibraryCount =
-    (videoLibrary.counts?.playlists || 0) + (videoLibrary.counts?.videos || 0);
+  const recordedLibraryCount = zoomRecordingCount;
   const activeDashboardTab = getDashboardTabFromPath(normalizedProfilePath);
   const activeLibraryView = getLibraryViewFromPath(normalizedProfilePath);
   const overviewItems = [
@@ -680,7 +714,7 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
       icon: Video,
     },
     {
-      label: 'Video Library',
+      label: 'Recorded Classes',
       value: recordedLibraryCount,
       icon: PlayCircle,
     },
@@ -707,14 +741,14 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
   const shouldShowRecordedEmptyState = !shouldShowVideoLibrary;
   const recordedEmptyState = isPaid
     ? {
-        title: 'No video library content yet',
+        title: 'No Zoom recordings yet',
         description:
-          'Your auto-synced classroom library will appear here after lessons are published to YouTube.',
+          'Your auto-synced Zoom classroom recordings will appear here after lessons are synced.',
       }
     : {
         title: 'Unlock the video library',
         description:
-          'Complete payment to access synced recorded videos and playlists for your course.',
+          'Complete payment to access synced Zoom recorded classes for your course.',
       };
   const shouldShowYouTubeLive = isPaid && (youtubeLive.loading || youtubeLive.stream?.isLive);
   const hasManualLiveClasses = classData.liveClasses.length > 0;
@@ -938,38 +972,18 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
 
                 {activeDashboardTab === 'recorded' && (
                   <div className="class-list">
-                    {shouldShowRecordedEmptyState ? (
+                    {!isPaid ? (
                       <div className="empty-state">
                         <i className="fa-solid fa-film"></i>
                         <h3>{recordedEmptyState.title}</h3>
                         <p>{recordedEmptyState.description}</p>
                       </div>
                     ) : (
-                      shouldShowVideoLibrary && (
-                        <VideoLibrarySection
-                          loading={videoLibrary.loading}
-                          loadingMore={videoLibrary.loadingMore}
-                          error={videoLibrary.error}
-                          search={videoLibrarySearch}
-                          subject={videoLibrarySubject}
-                          subjects={videoLibrary.subjects}
-                          playlists={videoLibrary.playlists}
-                          videos={videoLibrary.videos}
-                          counts={videoLibrary.counts}
-                          pagination={videoLibrary.pagination}
-                          config={videoLibrary.config}
-                          activeView={activeLibraryView}
-                          onSearchChange={setVideoLibrarySearch}
-                          onSubjectChange={setVideoLibrarySubject}
-                          onViewChange={(nextView) => {
-                            setLastLibraryView(nextView);
-                            navigate(LIBRARY_VIEW_ROUTES[nextView] || LIBRARY_VIEW_ROUTES.videos);
-                          }}
-                          onLoadMore={handleVideoLibraryLoadMore}
-                          onWatchVideo={handleVideoLibraryVideoOpen}
-                          onRetry={handleVideoLibraryRetry}
-                        />
-                      )
+                      <ZoomRecordedClasses
+                        isPaid={isPaid}
+                        allowSync={isPaid}
+                        onCountChange={setZoomRecordingCount}
+                      />
                     )}
                   </div>
                 )}
@@ -1006,9 +1020,9 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
                   <div className="locked-content-card__icon">
                     <Lock size={24} strokeWidth={2.1} />
                   </div>
-                  <h3>Unlock the video library</h3>
+                  <h3>Unlock recorded classes</h3>
                   <p>
-                    Complete payment to access recorded classes and course materials for your course.
+                    Complete payment to access Zoom recordings and course materials for your course.
                   </p>
                   <button
                     type="button"

@@ -11,6 +11,7 @@ const surfaceStyle = {
 
 const inputStyle = {
   width: "100%",
+  boxSizing: "border-box",
   marginTop: "8px",
   borderRadius: "14px",
   border: "1px solid #d1d5db",
@@ -510,7 +511,7 @@ export default function MockTestScheduler() {
           <Box
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
               gap: "16px",
             }}
           >

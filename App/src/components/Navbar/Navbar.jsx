@@ -83,6 +83,7 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0, onLogout 
     const path = location.pathname;
     if (path === '/') return 'Home';
     if (path.includes('/mocktest')) return 'MockTest';
+    if (path.includes('/past-questions')) return 'PastQuestions';
     if (path.includes('/university')) return 'University';
     if (path.includes('/college')) return 'College';
     if (path.includes('/course')) return 'Course';
@@ -105,6 +106,7 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0, onLogout 
     { to: '/', label: 'HOME', group: 'Home' },
     { to: '/colleges', label: 'COLLEGES', group: 'College' },
     { to: '/mocktests', label: 'MOCK TEST', group: 'MockTest' },
+    { to: '/past-questions', label: 'PAST QUESTIONS', group: 'PastQuestions' },
     { to: '/courses', label: 'COURSES', group: 'Course' },
     { to: '/books', label: 'BOOKS', group: 'Books' },
   ];
@@ -255,7 +257,7 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0, onLogout 
                 >
                   MORE
                 </button>
-                <ul className={`dropdown-menu${isMoreOpen ? ' show' : ''}`}>
+                <ul className={`dropdown-menu navbar-more-menu${isMoreOpen ? ' show' : ''}`}>
                   {moreLinks.map((link) => (
                     <li key={link.to}>
                       <Link

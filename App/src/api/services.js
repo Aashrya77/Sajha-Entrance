@@ -1,4 +1,4 @@
-import API from './config';
+import API, { baseURL } from './config';
 
 // Home API
 export const homeAPI = {
@@ -98,6 +98,24 @@ export const youtubeLibraryAPI = {
   },
 };
 
+export const zoomRecordingAPI = {
+  getRecordings: (params = {}) => {
+    const query = new URLSearchParams();
+    if (params.search) query.append('search', params.search);
+    if (params.category) query.append('category', params.category);
+    if (params.page) query.append('page', params.page);
+    if (params.limit) query.append('limit', params.limit);
+    return API.get(`/student/zoom-recordings?${query.toString()}`);
+  },
+  getCategories: () => API.get('/student/zoom-recordings/categories'),
+  getSyncStatus: () => API.get('/student/zoom-recordings/sync/status'),
+  sync: () => API.post('/student/zoom-recordings/sync'),
+  streamUrl: (recordingId) =>
+    `${baseURL}/student/zoom-recordings/${encodeURIComponent(recordingId)}/stream`,
+  thumbnailUrl: (recordingId) =>
+    `${baseURL}/student/zoom-recordings/${encodeURIComponent(recordingId)}/thumbnail`,
+};
+
 // Notice API
 export const noticeAPI = {
   getNotice: () => API.get('/notice'),
@@ -122,6 +140,22 @@ export const mockTestAPI = {
   submitMockTest: (id, data) => API.post(`/mocktest/${id}/submit`, data),
   getMyAttempts: () => API.get('/mocktest-attempts'),
   getAttemptResult: (attemptId) => API.get(`/mocktest-attempt/${attemptId}`),
+};
+
+// Question Bank API
+export const questionBankAPI = {
+  getAllQuestions: (params = {}) => {
+    const query = new URLSearchParams();
+    if (params.search) query.append('search', params.search);
+    if (params.exam) query.append('exam', params.exam);
+    if (params.subject) query.append('subject', params.subject);
+    if (params.type) query.append('type', params.type);
+    if (params.year) query.append('year', params.year);
+    if (params.page) query.append('page', params.page);
+    if (params.limit) query.append('limit', params.limit);
+    return API.get(`/question-bank?${query.toString()}`);
+  },
+  getQuestionBySlug: (slug) => API.get(`/question-bank/${slug}`),
 };
 
 // Book Payment API
@@ -153,4 +187,8 @@ export const resultAPI = {
 // Inquiry API
 export const inquiryAPI = {
   submitInquiry: (data) => API.post('/inquiry', data),
+};
+
+export const activityAPI = {
+  sendHeartbeat: (data) => API.post('/activity/heartbeat', data),
 };
