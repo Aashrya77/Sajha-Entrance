@@ -1,6 +1,12 @@
+:root {
+  --primary-orange: #ff7422;
+  --secondary-orange: #ff7422;
+  --primary-black: #232323;
+}
+
 .maintenance-container {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-family: 'Roboto', sans-serif;
+  background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
   min-height: 100vh;
   display: flex;
   justify-content: center;
@@ -12,10 +18,11 @@
   text-align: center;
   background: white;
   padding: 60px 40px;
-  border-radius: 20px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(35, 35, 35, 0.15);
   max-width: 600px;
   animation: slideUp 0.6s ease-out;
+  border-top: 4px solid var(--primary-orange);
 }
 
 @keyframes slideUp {
@@ -29,10 +36,15 @@
   }
 }
 
-.maintenance-icon {
-  font-size: 48px;
-  margin-bottom: 20px;
+.maintenance-logo-section {
+  margin-bottom: 30px;
   animation: float 3s ease-in-out infinite;
+}
+
+.maintenance-logo {
+  max-width: 120px;
+  height: auto;
+  object-fit: contain;
 }
 
 @keyframes float {
@@ -40,22 +52,23 @@
     transform: translateY(0px);
   }
   50% {
-    transform: translateY(-20px);
+    transform: translateY(-15px);
   }
 }
 
 .maintenance-title {
-  color: #333;
+  color: var(--primary-black);
   font-size: 36px;
   margin-bottom: 15px;
   font-weight: 700;
+  line-height: 1.2;
 }
 
 .maintenance-subtitle {
-  color: #667eea;
+  color: var(--primary-orange);
   font-size: 18px;
   margin-bottom: 30px;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .maintenance-message {
@@ -63,13 +76,14 @@
   font-size: 16px;
   line-height: 1.6;
   margin-bottom: 20px;
+  font-weight: 400;
 }
 
 .maintenance-loader {
   width: 50px;
   height: 50px;
-  border: 5px solid #f3f3f3;
-  border-top: 5px solid #667eea;
+  border: 5px solid #f0f0f0;
+  border-top: 5px solid var(--primary-orange);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 20px auto;
@@ -92,55 +106,67 @@
 }
 
 .timer-box {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--primary-orange) 0%, #e96f28 100%);
   color: white;
-  padding: 15px 20px;
+  padding: 20px 25px;
   border-radius: 10px;
-  min-width: 70px;
-  font-weight: bold;
+  min-width: 80px;
+  font-weight: 600;
   font-size: 18px;
+  box-shadow: 0 4px 15px rgba(255, 116, 52, 0.3);
+  transition: transform 0.3s ease;
+}
+
+.timer-box:hover {
+  transform: translateY(-5px);
 }
 
 .timer-value {
-  font-size: 24px;
-  margin-bottom: 5px;
+  font-size: 28px;
+  margin-bottom: 8px;
+  font-weight: 700;
 }
 
 .timer-label {
-  font-size: 12px;
+  font-size: 11px;
   text-transform: uppercase;
-  opacity: 0.8;
+  opacity: 0.9;
+  letter-spacing: 1px;
 }
 
 .contact-section {
-  background: #f5f5f5;
-  padding: 25px;
+  background: #f9f9f9;
+  padding: 28px;
   border-radius: 10px;
   margin-top: 30px;
+  border-left: 4px solid var(--primary-orange);
 }
 
 .contact-section h3 {
-  color: #333;
-  margin-bottom: 10px;
-  font-size: 16px;
+  color: var(--primary-black);
+  margin-bottom: 15px;
+  font-size: 18px;
+  font-weight: 600;
 }
 
 .contact-section p {
-  color: #666;
+  color: #555;
   font-size: 14px;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  font-weight: 400;
 }
 
 .contact-note {
   font-size: 13px;
   margin-top: 15px;
   opacity: 0.7;
+  font-style: italic;
 }
 
 .social-links {
   display: flex;
   justify-content: center;
-  gap: 15px;
+  gap: 12px;
   margin-top: 30px;
 }
 
@@ -150,16 +176,18 @@
   justify-content: center;
   width: 45px;
   height: 45px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, var(--primary-orange) 0%, #e96f28 100%);
   color: white;
   border-radius: 50%;
   text-decoration: none;
-  transition: transform 0.3s ease;
+  transition: all 0.3s ease;
   font-size: 20px;
+  box-shadow: 0 4px 12px rgba(255, 116, 52, 0.25);
 }
 
 .social-links a:hover {
-  transform: scale(1.1);
+  transform: scale(1.15) translateY(-3px);
+  box-shadow: 0 6px 20px rgba(255, 116, 52, 0.35);
 }
 
 @media (max-width: 600px) {
@@ -171,8 +199,8 @@
     font-size: 28px;
   }
 
-  .maintenance-icon {
-    font-size: 40px;
+  .maintenance-logo {
+    max-width: 100px;
   }
 
   .maintenance-timer {
@@ -180,12 +208,24 @@
   }
 
   .timer-box {
-    min-width: 60px;
-    padding: 12px 15px;
+    min-width: 65px;
+    padding: 15px 18px;
     font-size: 16px;
   }
 
   .timer-value {
-    font-size: 20px;
+    font-size: 24px;
+  }
+
+  .contact-section {
+    padding: 20px;
+  }
+
+  .maintenance-subtitle {
+    font-size: 16px;
+  }
+
+  .maintenance-message {
+    font-size: 14px;
   }
 }

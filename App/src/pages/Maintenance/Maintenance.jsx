@@ -40,7 +40,9 @@ const Maintenance = () => {
   return (
     <div className="maintenance-container">
       <div className="maintenance-content">
-        <div className="maintenance-icon">🔧</div>
+        <div className="maintenance-logo-section">
+          <img src="/img/logo-main.png" alt="Sajha Logo" className="maintenance-logo" />
+        </div>
         
         <h1 className="maintenance-title">We'll Be Right Back!</h1>
         <p className="maintenance-subtitle">Our website is currently under maintenance</p>
