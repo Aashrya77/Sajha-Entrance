@@ -5,6 +5,7 @@ import cors from "cors";
 import fs from "fs";
 import path from "path";
 
+import config from "../App/config.js";
 import connectDB from "./db/connectDB.js";
 import CourseRoutes from "./routes/Course.js";
 import CollegeRoutes from "./routes/College.js";
@@ -91,7 +92,7 @@ app.use(cookieParser());
 
 // ================= MAINTENANCE MODE =================
 app.use((req, res, next) => {
-  if (process.env.MAINTENANCE_MODE === "true") {
+  if (config.maintenanceMode === true) {
     return res.sendFile(path.join(publicDirectory, "maintenance.html"));
   }
   next();
@@ -193,7 +194,7 @@ const registerApiRoutes = (router) => {
         status: "ok",
         timestamp: new Date().toISOString(),
         uptimeSeconds: Math.round(process.uptime()),
-        maintenanceMode: process.env.MAINTENANCE_MODE === "true",
+        maintenanceMode: config.maintenanceMode,
         adminStatus: runtimeState.adminStatus,
         startupStatus: runtimeState.startupStatus,
         backendUrl: resolvePublicBackendUrl(_req),
