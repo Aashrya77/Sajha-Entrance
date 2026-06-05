@@ -193,6 +193,7 @@ const registerApiRoutes = (router) => {
         status: "ok",
         timestamp: new Date().toISOString(),
         uptimeSeconds: Math.round(process.uptime()),
+        maintenanceMode: process.env.MAINTENANCE_MODE === "true",
         adminStatus: runtimeState.adminStatus,
         startupStatus: runtimeState.startupStatus,
         backendUrl: resolvePublicBackendUrl(_req),

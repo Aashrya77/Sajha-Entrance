@@ -6,6 +6,7 @@ import { ADMIN_ROOT_PATH } from './api/config';
 // Import components
 import Navbar from './components/Navbar/Navbar';
 import Footer from './components/Footer/Footer';
+import Maintenance from './pages/Maintenance/Maintenance';
 import Home from './pages/Home/Home';
 import Dashboard from './pages/Home/Dashboard';
 import About from './pages/About/About';
@@ -99,6 +100,8 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [popup, setPopup] = useState(null);
   const [cartItems, setCartItems] = useState([]);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+  const [isCheckingMaintenance, setIsCheckingMaintenance] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -141,7 +144,24 @@ function App() {
     fetchNotice();
     // Check authentication
     checkAuth();
+    // Check maintenance mode
+    checkMaintenanceMode();
   }, []);
+
+  const checkMaintenanceMode = async () => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/health`);
+      if (response.ok) {
+        const data = await response.json();
+        setMaintenanceMode(data.data?.maintenanceMode === true);
+      }
+    } catch (error) {
+      console.log('Unable to check maintenance mode');
+      setMaintenanceMode(false);
+    } finally {
+      setIsCheckingMaintenance(false);
+    }
+  };
 
   const sendPresenceHeartbeat = useCallback(() => {
     activityAPI
@@ -226,6 +246,22 @@ function App() {
     location.pathname.startsWith('/reset-password/');
   const isMockTestExamPage = /^\/mocktest\/[^/]+$/.test(location.pathname);
   const hideSiteChrome = isAuthPage || isMockTestExamPage;
+
+  // Show maintenance page if in maintenance mode
+  if (maintenanceMode) {
+    return <Maintenance />;
+  }
+
+  // Show loader while checking maintenance mode
+  if (isCheckingMaintenance) {
+    return (
+      <div className="App">
+        <div className="container mt-5 pt-5 d-flex justify-content-center">
+          <Loader />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="App">
