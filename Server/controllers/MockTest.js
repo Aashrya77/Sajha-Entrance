@@ -243,6 +243,8 @@ const GetMockTestForExam = async (req, res) => {
 
 // Submit mock test answers and get instant result.
 const SubmitMockTest = async (req, res) => {
+  
+ console.log("SUBMIT MOCK TEST HIT");
   try {
     const { id } = req.params;
     const { answers, timeTaken } = req.body;
@@ -475,3 +477,4 @@ export {
   GetMyAttempts,
   SubmitMockTest,
 };
+

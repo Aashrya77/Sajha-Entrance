@@ -3,11 +3,13 @@ import OnlineClass from "../models/OnlineClass.js";
 import RecordedClass from "../models/RecordedClass.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import admin from "../config/firebaseAdmin.js";
 import { getClassStatus } from "./Class.js";
 import { MailHandler } from "./MailHandler.js";
 import { resolveRecordedClassMedia } from "../utils/youtube.js";
 import { resolvePublicFrontendUrl } from "../utils/publicUrl.js";
 import { getCourseRegexMatchers } from "../utils/courseAccess.js";
+
 import {
   buildOnlineClassCourseQuery,
   formatOnlineClassCourseLabel,
@@ -467,4 +469,57 @@ export const getClasses = async (req, res) => {
 export const logout = (req, res) => {
   res.clearCookie("studentToken");
   res.json({ success: true, message: "Logged out successfully." });
+};
+
+//FIREBASE LOGIN
+export const firebaseLogin = async (req, res) => {
+  try {
+    const { firebaseToken } = req.body;
+
+    if (!firebaseToken) {
+      return res.status(400).json({
+        success: false,
+        error: "Firebase token required",
+      });
+    }
+
+    const decoded =
+      await admin.auth().verifyIdToken(firebaseToken);
+
+    let student = await Student.findOne({
+      email: decoded.email,
+    });
+
+    if (!student) {
+      student = await createStudentWithRetry({
+        name: decoded.name || "Student",
+        email: decoded.email,
+        password: Math.random().toString(36),
+        course: "NEB Preparation",
+      });
+    }
+
+    const token = generateToken(
+      student._id,
+      student.studentId,
+      student.email,
+    );
+
+    return res.json({
+      success: true,
+      token,
+      data: {
+        id: student._id,
+        studentId: student.studentId,
+        name: student.name,
+        email: student.email,
+      },
+    });
+
+  } catch (error) {
+    return res.status(401).json({
+      success: false,
+      error: error.message,
+    });
+  }
 };

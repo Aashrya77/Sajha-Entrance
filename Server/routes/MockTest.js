@@ -1,28 +1,28 @@
-import express from "express";
-import {
-  GetMockTests,
-  GetMockTestForExam,
-  SubmitMockTest,
-  GetMyAttempts,
-  GetAttemptResult,
-} from "../controllers/MockTest.js";
-import { authenticateToken } from "../middleware/auth.js";
+  import express from "express";
+  import { authenticateAny } from "../middleware/auth_combined.js";
+  import {
+    GetMockTests,
+    GetMockTestForExam,
+    SubmitMockTest,
+    GetMyAttempts,
+    GetAttemptResult,
+  } from "../controllers/MockTest.js";
 
-const Router = express.Router();
+  const Router = express.Router();
 
-// Public - list all mock tests
-Router.get("/mocktests", GetMockTests);
+  // Public - list all mock tests
+  Router.get("/mocktests", GetMockTests);
 
-// Public - get test for exam (questions without answers)
-Router.get("/mocktest/:id", GetMockTestForExam);
+  // Public - get test for exam (questions without answers)
+  Router.get("/mocktest/:id", GetMockTestForExam);
 
-// Protected - submit test answers
-Router.post("/mocktest/:id/submit", authenticateToken, SubmitMockTest);
+  // Protected - submit test answers
+  Router.post("/mocktest/:id/submit", authenticateAny, SubmitMockTest);
 
-// Protected - get my attempts
-Router.get("/mocktest-attempts", authenticateToken, GetMyAttempts);
+  // Protected - get my attempts
+  Router.get("/mocktest-attempts", authenticateAny, GetMyAttempts);
 
-// Protected - get specific attempt result
-Router.get("/mocktest-attempt/:attemptId", authenticateToken, GetAttemptResult);
+  // Protected - get specific attempt result
+  Router.get("/mocktest-attempt/:attemptId", authenticateAny, GetAttemptResult);
 
-export default Router;
+  export default Router;

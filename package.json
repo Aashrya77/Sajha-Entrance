@@ -23,5 +23,8 @@
   "homepage": "https://github.com/nimeshpokhrel/sajha-web#readme",
   "devDependencies": {
     "concurrently": "^7.6.0"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.10.0"
   }
 }

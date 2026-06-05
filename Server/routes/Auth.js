@@ -2,6 +2,7 @@ import express from "express";
 import {
   register,
   login,
+  firebaseLogin,
   forgotPassword,
   resetPassword,
   validateResetToken,
@@ -18,6 +19,7 @@ const Router = express.Router();
 // Public routes
 Router.post("/register", register);
 Router.post("/login", login);
+Router.post("/firebase-login", firebaseLogin);
 Router.post("/forgot-password", forgotPassword);
 Router.get("/reset-password/:token", validateResetToken);
 Router.post("/reset-password/:token", resetPassword);
