@@ -4,9 +4,6 @@
  */
 
 const config = {
-  // Maintenance Mode - Set to true to enable maintenance page
-  maintenanceMode: false,
-
   // Server Configuration
   server: {
     port: process.env.PORT || 5000,

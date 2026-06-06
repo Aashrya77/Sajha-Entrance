@@ -4,9 +4,6 @@
  */
 
 const config = {
-  // Maintenance Mode - Set to true to enable maintenance page
-  maintenanceMode: true,
-
   // Server Configuration
   server: {
     port: process.env.REACT_APP_PORT || 5000,

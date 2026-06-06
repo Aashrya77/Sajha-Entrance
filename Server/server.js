@@ -90,14 +90,6 @@ app.use(
 
 app.use(cookieParser());
 
-// ================= MAINTENANCE MODE =================
-app.use((req, res, next) => {
-  if (config.maintenanceMode === true) {
-    return res.sendFile(path.join(publicDirectory, "maintenance.html"));
-  }
-  next();
-});
-
 // ================= STATIC FILES =================
 app.use(express.static(publicDirectory, staticFileOptions));
 
@@ -194,7 +186,6 @@ const registerApiRoutes = (router) => {
         status: "ok",
         timestamp: new Date().toISOString(),
         uptimeSeconds: Math.round(process.uptime()),
-        maintenanceMode: config.maintenanceMode,
         adminStatus: runtimeState.adminStatus,
         startupStatus: runtimeState.startupStatus,
         backendUrl: resolvePublicBackendUrl(_req),

@@ -101,8 +101,6 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [popup, setPopup] = useState(null);
   const [cartItems, setCartItems] = useState([]);
-  const [maintenanceMode, setMaintenanceMode] = useState(false);
-  const [isCheckingMaintenance, setIsCheckingMaintenance] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -145,15 +143,7 @@ function App() {
     fetchNotice();
     // Check authentication
     checkAuth();
-    // Check maintenance mode from config
-    checkMaintenanceMode();
   }, []);
-
-  const checkMaintenanceMode = () => {
-    // Use maintenanceMode from config file directly
-    setMaintenanceMode(config.maintenanceMode === true);
-    setIsCheckingMaintenance(false);
-  };
 
   const sendPresenceHeartbeat = useCallback(() => {
     activityAPI
@@ -238,22 +228,6 @@ function App() {
     location.pathname.startsWith('/reset-password/');
   const isMockTestExamPage = /^\/mocktest\/[^/]+$/.test(location.pathname);
   const hideSiteChrome = isAuthPage || isMockTestExamPage;
-
-  // Show maintenance page if in maintenance mode
-  if (maintenanceMode) {
-    return <Maintenance />;
-  }
-
-  // Show loader while checking maintenance mode
-  if (isCheckingMaintenance) {
-    return (
-      <div className="App">
-        <div className="container mt-5 pt-5 d-flex justify-content-center">
-          <Loader />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="App">
