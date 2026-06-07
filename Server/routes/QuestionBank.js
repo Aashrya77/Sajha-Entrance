@@ -1,4 +1,5 @@
 import express from "express";
+import { isAuthenticated } from "../middleware/auth.js";
 import {
   DownloadQuestionBankImage,
   DownloadQuestionBankPdf,
@@ -15,6 +16,6 @@ Router.get("/question-bank/:slug/preview/pdf", PreviewQuestionBankPdf);
 Router.get("/question-bank/:slug/preview/image/:index", PreviewQuestionBankImage);
 Router.get("/question-bank/:slug/download/pdf", DownloadQuestionBankPdf);
 Router.get("/question-bank/:slug/download/image/:index", DownloadQuestionBankImage);
-Router.get("/question-bank/:slug", GetQuestionBankDetail);
+Router.get("/question-bank/:slug", isAuthenticated, GetQuestionBankDetail);
 
 export default Router;

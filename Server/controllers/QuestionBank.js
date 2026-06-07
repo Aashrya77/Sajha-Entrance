@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import crypto from "crypto";
 import multer from "multer";
 import mongoose from "mongoose";
 
@@ -10,7 +11,6 @@ import {
   QUESTION_BANK_IMAGE_MIME_TYPES,
   QUESTION_BANK_PDF_MIME_TYPES,
   QUESTION_BANK_RESOURCE_TYPES,
-  QUESTION_BANK_SUBJECTS,
   QUESTION_BANK_TYPES,
 } from "../constants/questionBank.js";
 import QuestionBankModel from "../models/QuestionBank.js";
@@ -28,8 +28,11 @@ import {
   mediaRootDirectory,
 } from "../utils/media.js";
 import { slugifyText } from "../utils/slug.js";
+import QuestionBankViewModel from "../models/QuestionBankView.js";
 
 const THUMBNAIL_FOLDER = path.join(mediaRootDirectory, MEDIA_TYPES.questionBank);
+const QUESTION_VIEWER_COOKIE = "sajha_question_viewer_id";
+const QUESTION_VIEWER_HEADER = "x-question-viewer-id";
 const ALL_UPLOAD_MIME_TYPES = new Set([
   ...QUESTION_BANK_IMAGE_MIME_TYPES,
   ...QUESTION_BANK_PDF_MIME_TYPES,
@@ -105,6 +108,49 @@ const parseArrayField = (value) => {
 
 const escapeRegex = (value = "") =>
   String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const normalizeViewerId = (value = "") =>
+  String(value || "")
+    .trim()
+    .replace(/[^a-zA-Z0-9._:-]/g, "")
+    .slice(0, 128);
+
+const createAnonymousViewerId = () => crypto.randomUUID();
+
+const hashValue = (value = "") =>
+  value
+    ? crypto.createHash("sha256").update(String(value)).digest("hex")
+    : "";
+
+const resolveQuestionViewer = (req, res) => {
+  const studentId = req.student?.id || req.student?._id || "";
+
+  if (studentId && mongoose.Types.ObjectId.isValid(studentId)) {
+    return {
+      viewerKey: `student:${studentId}`,
+      viewerType: "student",
+      student: studentId,
+    };
+  }
+
+  const requestViewerId =
+    normalizeViewerId(req.cookies?.[QUESTION_VIEWER_COOKIE]) ||
+    normalizeViewerId(req.get(QUESTION_VIEWER_HEADER)) ||
+    createAnonymousViewerId();
+
+  res.cookie(QUESTION_VIEWER_COOKIE, requestViewerId, {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 365 * 24 * 60 * 60 * 1000,
+  });
+
+  return {
+    viewerKey: `anonymous:${requestViewerId}`,
+    viewerType: "anonymous",
+    student: null,
+  };
+};
 
 const normalizeOptionValue = (value, allowedValues, fallback = "") => {
   const normalized = String(value || "").trim();
@@ -246,7 +292,6 @@ const serializeQuestionBank = (question = {}, { includeResources = true } = {}) 
     slug: plainQuestion.slug,
     description: plainQuestion.description || "",
     exam: plainQuestion.exam,
-    subject: plainQuestion.subject,
     questionType: plainQuestion.questionType,
     year: plainQuestion.year,
     thumbnailUrl: plainQuestion.thumbnailUrl
@@ -279,7 +324,6 @@ const buildQuestionBankQuery = (queryParams = {}, includeDrafts = false) => {
   const query = includeDrafts ? {} : { isPublished: true };
   const search = String(queryParams.search || "").trim();
   const exam = String(queryParams.exam || "").trim();
-  const subject = String(queryParams.subject || "").trim();
   const questionType = String(queryParams.type || queryParams.questionType || "").trim();
   const year = String(queryParams.year || "").trim();
 
@@ -287,7 +331,6 @@ const buildQuestionBankQuery = (queryParams = {}, includeDrafts = false) => {
     const regex = new RegExp(escapeRegex(search), "i");
     query.$or = [
       { title: regex },
-      { subject: regex },
       { exam: regex },
       { year: regex },
     ];
@@ -295,10 +338,6 @@ const buildQuestionBankQuery = (queryParams = {}, includeDrafts = false) => {
 
   if (QUESTION_BANK_EXAMS.includes(exam)) {
     query.exam = exam;
-  }
-
-  if (QUESTION_BANK_SUBJECTS.includes(subject)) {
-    query.subject = subject;
   }
 
   if (QUESTION_BANK_TYPES.includes(questionType)) {
@@ -317,7 +356,6 @@ const getQuestionBankFiltersPayload = async () => {
 
   return {
     exams: QUESTION_BANK_EXAMS,
-    subjects: QUESTION_BANK_SUBJECTS,
     questionTypes: QUESTION_BANK_TYPES,
     resourceTypes: QUESTION_BANK_RESOURCE_TYPES,
     years: years
@@ -359,8 +397,6 @@ const GetQuestionBank = async (req, res) => {
     const [
       questions,
       totalQuestions,
-      latestQuestions,
-      mostViewedQuestions,
       popularExamCategories,
       filters,
     ] = await Promise.all([
@@ -370,14 +406,6 @@ const GetQuestionBank = async (req, res) => {
         .limit(limit)
         .lean(),
       QuestionBankModel.countDocuments(query),
-      QuestionBankModel.find({ isPublished: true })
-        .sort({ createdAt: -1 })
-        .limit(6)
-        .lean(),
-      QuestionBankModel.find({ isPublished: true })
-        .sort({ viewsCount: -1, createdAt: -1 })
-        .limit(6)
-        .lean(),
       getPopularExamCategories(),
       getQuestionBankFiltersPayload(),
     ]);
@@ -386,8 +414,6 @@ const GetQuestionBank = async (req, res) => {
       success: true,
       data: {
         questions: questions.map((question) => serializeQuestionBank(question)),
-        latestQuestions: latestQuestions.map((question) => serializeQuestionBank(question)),
-        mostViewedQuestions: mostViewedQuestions.map((question) => serializeQuestionBank(question)),
         popularExamCategories,
         filters,
         totalQuestions,
@@ -407,11 +433,7 @@ const GetQuestionBankDetail = async (req, res) => {
       return res.status(404).json({ success: false, error: "Question not found." });
     }
 
-    const question = await QuestionBankModel.findOneAndUpdate(
-      { slug, isPublished: true },
-      { $inc: { viewsCount: 1 } },
-      { new: true }
-    )
+    const question = await QuestionBankModel.findOne({ slug, isPublished: true })
       .lean()
       .exec();
 
@@ -419,10 +441,58 @@ const GetQuestionBankDetail = async (req, res) => {
       return res.status(404).json({ success: false, error: "Question not found." });
     }
 
+    const viewer = resolveQuestionViewer(req, res);
+    let viewsCount = Number(question.viewsCount || 0);
+
+    try {
+      const viewedAt = new Date();
+      const viewResult = await QuestionBankViewModel.updateOne(
+        {
+          question: question._id,
+          viewerKey: viewer.viewerKey,
+        },
+        {
+          $set: {
+            lastViewedAt: viewedAt,
+          },
+          $setOnInsert: {
+            question: question._id,
+            student: viewer.student,
+            viewerKey: viewer.viewerKey,
+            viewerType: viewer.viewerType,
+            ipHash: hashValue(req.ip || req.headers["x-forwarded-for"] || ""),
+            userAgent: String(req.get("user-agent") || "").slice(0, 500),
+          },
+        },
+        { upsert: true, setDefaultsOnInsert: true }
+      );
+
+      if (Number(viewResult?.upsertedCount || 0) > 0) {
+        const updatedQuestion = await QuestionBankModel.findByIdAndUpdate(
+          question._id,
+          { $inc: { viewsCount: 1 } },
+          { new: true }
+        )
+          .select("viewsCount")
+          .lean();
+
+        viewsCount = Number(updatedQuestion?.viewsCount || viewsCount + 1);
+      }
+    } catch (viewError) {
+      if (viewError?.code === 11000) {
+        await QuestionBankViewModel.updateOne(
+          { question: question._id, viewerKey: viewer.viewerKey },
+          { $set: { lastViewedAt: new Date() } }
+        );
+      } else {
+        throw viewError;
+      }
+    }
+
     const relatedQuestions = await QuestionBankModel.find({
       _id: { $ne: question._id },
       isPublished: true,
-      $or: [{ exam: question.exam }, { subject: question.subject }],
+      exam: question.exam,
     })
       .sort({ displayOrder: 1, viewsCount: -1, createdAt: -1 })
       .limit(6)
@@ -431,7 +501,7 @@ const GetQuestionBankDetail = async (req, res) => {
     return res.json({
       success: true,
       data: {
-        question: serializeQuestionBank(question),
+        question: serializeQuestionBank({ ...question, viewsCount }),
         relatedQuestions: relatedQuestions.map((entry) => serializeQuestionBank(entry)),
       },
     });
@@ -588,11 +658,6 @@ const buildAdminQuestionBankPayload = async (req, existingQuestion = null) => {
       QUESTION_BANK_EXAMS,
       existingQuestion?.exam || ""
     ),
-    subject: normalizeOptionValue(
-      readField(payload.subject),
-      QUESTION_BANK_SUBJECTS,
-      existingQuestion?.subject || ""
-    ),
     questionType: normalizeOptionValue(
       readField(payload.questionType),
       QUESTION_BANK_TYPES,
@@ -677,7 +742,7 @@ const buildAdminQuestionBankPayload = async (req, existingQuestion = null) => {
 const validateAdminQuestionBankPayload = (payload = {}) => {
   const errors = {};
 
-  ["title", "exam", "subject", "questionType", "year", "resourceType"].forEach((fieldName) => {
+  ["title", "exam", "questionType", "year", "resourceType"].forEach((fieldName) => {
     if (!payload[fieldName]) {
       errors[fieldName] = `${fieldName} is required.`;
     }
@@ -798,6 +863,7 @@ const DeleteAdminQuestionBank = async (req, res) => {
       deleteQuestionBankThumbnailFile(question.thumbnailUrl),
       deleteQuestionBankResourceFile(question.pdfUrl),
       ...(question.imageUrls || []).map(deleteQuestionBankResourceFile),
+      QuestionBankViewModel.deleteMany({ question: question._id }),
     ]);
 
     return res.json({

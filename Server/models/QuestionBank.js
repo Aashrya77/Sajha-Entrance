@@ -2,7 +2,6 @@ import mongoose from "mongoose";
 import {
   QUESTION_BANK_EXAMS,
   QUESTION_BANK_RESOURCE_TYPES,
-  QUESTION_BANK_SUBJECTS,
   QUESTION_BANK_TYPES,
 } from "../constants/questionBank.js";
 import { slugifyText } from "../utils/slug.js";
@@ -32,12 +31,6 @@ const QuestionBankSchema = new Schema(
     exam: {
       type: String,
       enum: QUESTION_BANK_EXAMS,
-      required: true,
-      index: true,
-    },
-    subject: {
-      type: String,
-      enum: QUESTION_BANK_SUBJECTS,
       required: true,
       index: true,
     },
@@ -158,14 +151,8 @@ QuestionBankSchema.pre("validate", function normalizeQuestionBank(next) {
   next();
 });
 
-QuestionBankSchema.index({
-  title: "text",
-  exam: "text",
-  subject: "text",
-  year: "text",
-});
 QuestionBankSchema.index({ isPublished: 1, displayOrder: 1, createdAt: -1 });
-QuestionBankSchema.index({ exam: 1, subject: 1, questionType: 1, year: -1 });
+QuestionBankSchema.index({ exam: 1, questionType: 1, year: -1 });
 QuestionBankSchema.index({ viewsCount: -1, createdAt: -1 });
 
 const QuestionBankModel = mongoose.model("QuestionBank", QuestionBankSchema);

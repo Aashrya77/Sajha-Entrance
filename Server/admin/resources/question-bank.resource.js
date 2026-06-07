@@ -8,7 +8,6 @@ import {
   QUESTION_BANK_IMAGE_MIME_TYPES,
   QUESTION_BANK_PDF_MIME_TYPES,
   QUESTION_BANK_RESOURCE_TYPES,
-  QUESTION_BANK_SUBJECTS,
   QUESTION_BANK_TYPES,
   toAdminAvailableValues,
 } from "../../constants/questionBank.js";
@@ -175,7 +174,6 @@ const QuestionBankAdminResource = {
       thumbnailUpload.fields.fileProperty,
       "title",
       "exam",
-      "subject",
       "questionType",
       "year",
       "resourceType",
@@ -187,7 +185,6 @@ const QuestionBankAdminResource = {
       "title",
       "slug",
       "exam",
-      "subject",
       "questionType",
       "year",
       "description",
@@ -205,7 +202,6 @@ const QuestionBankAdminResource = {
       "slug",
       "description",
       "exam",
-      "subject",
       "questionType",
       "year",
       "resourceType",
@@ -225,7 +221,6 @@ const QuestionBankAdminResource = {
     filterProperties: [
       "title",
       "exam",
-      "subject",
       "questionType",
       "year",
       "resourceType",
@@ -255,10 +250,6 @@ const QuestionBankAdminResource = {
       exam: {
         label: "Exam",
         availableValues: toAdminAvailableValues(QUESTION_BANK_EXAMS),
-      },
-      subject: {
-        label: "Subject",
-        availableValues: toAdminAvailableValues(QUESTION_BANK_SUBJECTS),
       },
       questionType: {
         label: "Question Type",

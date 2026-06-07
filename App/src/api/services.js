@@ -1,5 +1,45 @@
 import API, { baseURL } from './config';
 
+const QUESTION_VIEWER_STORAGE_KEY = 'sajha_question_viewer_id';
+
+const createQuestionViewerId = () => {
+  const browserCrypto = typeof window !== 'undefined' ? window.crypto : null;
+  if (browserCrypto && typeof browserCrypto.randomUUID === 'function') {
+    return browserCrypto.randomUUID();
+  }
+
+  return `viewer-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+};
+
+const getQuestionViewerId = () => {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+
+  try {
+    const storage = window.localStorage;
+    if (!storage) {
+      return '';
+    }
+
+    const existingId = storage.getItem(QUESTION_VIEWER_STORAGE_KEY);
+    if (existingId) {
+      return existingId;
+    }
+
+    const nextId = createQuestionViewerId();
+    storage.setItem(QUESTION_VIEWER_STORAGE_KEY, nextId);
+    return nextId;
+  } catch (_error) {
+    return '';
+  }
+};
+
+const getQuestionViewerHeaders = () => {
+  const viewerId = getQuestionViewerId();
+  return viewerId ? { 'x-question-viewer-id': viewerId } : {};
+};
+
 // Home API
 export const homeAPI = {
   getHomeData: () => API.get('/home'),
@@ -148,14 +188,16 @@ export const questionBankAPI = {
     const query = new URLSearchParams();
     if (params.search) query.append('search', params.search);
     if (params.exam) query.append('exam', params.exam);
-    if (params.subject) query.append('subject', params.subject);
     if (params.type) query.append('type', params.type);
     if (params.year) query.append('year', params.year);
     if (params.page) query.append('page', params.page);
     if (params.limit) query.append('limit', params.limit);
     return API.get(`/question-bank?${query.toString()}`);
   },
-  getQuestionBySlug: (slug) => API.get(`/question-bank/${slug}`),
+  getQuestionBySlug: (slug) =>
+    API.get(`/question-bank/${slug}`, {
+      headers: getQuestionViewerHeaders(),
+    }),
 };
 
 // Book Payment API

@@ -157,6 +157,7 @@ const DownloadButton = ({ href }) => {
 const PdfPreview = ({ question }) => {
   const previewRef = useRef(null);
   const pageShellRef = useRef(null);
+  const pageRefs = useRef([]);
   const measuredWidth = useMeasuredWidth(pageShellRef, 860);
   const { isFullscreen, toggleFullscreen } = useFullscreen(previewRef);
   const [totalPages, setTotalPages] = useState(Number(question.pageCount || 0));
@@ -165,17 +166,56 @@ const PdfPreview = ({ question }) => {
   const [loadError, setLoadError] = useState("");
 
   const fileUrl = resolveResourceUrl(question.pdfUrl);
-  const pageWidth = Math.min(Math.max(measuredWidth - 40, 300), isFullscreen ? 1180 : 920);
+  const pageWidth = Math.min(Math.max(measuredWidth - 64, 300), isFullscreen ? 1180 : 940);
+  const pageNumbers = useMemo(
+    () => Array.from({ length: Math.max(totalPages, 0) }, (_, index) => index + 1),
+    [totalPages]
+  );
 
   useEffect(() => {
     setPageNumber(1);
     setLoadError("");
     setTotalPages(Number(question.pageCount || 0));
+    pageRefs.current = [];
   }, [question.slug, question.pageCount]);
 
   const setSafePage = (nextPage) => {
     const knownTotalPages = totalPages || 1;
-    setPageNumber(clamp(nextPage, 1, knownTotalPages));
+    const safePage = clamp(nextPage, 1, knownTotalPages);
+    setPageNumber(safePage);
+    window.requestAnimationFrame(() => {
+      pageRefs.current[safePage - 1]?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  };
+
+  const updateActivePageFromScroll = () => {
+    const shell = pageShellRef.current;
+    if (!shell || !pageRefs.current.length) {
+      return;
+    }
+
+    const shellTop = shell.getBoundingClientRect().top;
+    let closestPage = pageNumber;
+    let closestDistance = Number.POSITIVE_INFINITY;
+
+    pageRefs.current.forEach((element, index) => {
+      if (!element) {
+        return;
+      }
+
+      const distance = Math.abs(element.getBoundingClientRect().top - shellTop - 16);
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestPage = index + 1;
+      }
+    });
+
+    setPageNumber((currentPage) =>
+      currentPage === closestPage ? currentPage : closestPage
+    );
   };
 
   if (!fileUrl) {
@@ -203,7 +243,7 @@ const PdfPreview = ({ question }) => {
           </span>
           <PreviewToolbarButton
             aria-label="Next PDF page"
-            disabled={Boolean(totalPages) && pageNumber >= totalPages}
+            disabled={!totalPages || pageNumber >= totalPages}
             onClick={() => setSafePage(pageNumber + 1)}
           >
             <i className="fa-solid fa-chevron-right" aria-hidden="true"></i>
@@ -239,7 +279,11 @@ const PdfPreview = ({ question }) => {
         </div>
       </div>
 
-      <div ref={pageShellRef} className="resource-preview__canvas-shell">
+      <div
+        ref={pageShellRef}
+        className="resource-preview__canvas-shell"
+        onScroll={updateActivePageFromScroll}
+      >
         {loadError ? (
           <div className="resource-preview__state resource-preview__state--error">
             <i className="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
@@ -270,14 +314,29 @@ const PdfPreview = ({ question }) => {
               setLoadError(error?.message || "The PDF preview failed to load.");
             }}
           >
-            <Page
-              pageNumber={pageNumber}
-              width={pageWidth}
-              scale={zoom}
-              renderAnnotationLayer
-              renderTextLayer
-              loading={<div className="resource-preview__page-skeleton" />}
-            />
+            <div className="resource-preview__pdf-stack">
+              {pageNumbers.map((page) => (
+                <figure
+                  key={page}
+                  ref={(element) => {
+                    pageRefs.current[page - 1] = element;
+                  }}
+                  className={`resource-preview__pdf-page${
+                    pageNumber === page ? " resource-preview__pdf-page--active" : ""
+                  }`}
+                >
+                  <Page
+                    pageNumber={page}
+                    width={pageWidth}
+                    scale={zoom}
+                    renderAnnotationLayer
+                    renderTextLayer
+                    loading={<div className="resource-preview__page-skeleton" />}
+                  />
+                  <figcaption>Page {page}</figcaption>
+                </figure>
+              ))}
+            </div>
           </Document>
         )}
       </div>
@@ -420,7 +479,7 @@ const QuestionCard = ({ question }) => (
     <div className="question-card__body">
       <div className="question-card__meta-row">
         <span>{question.exam}</span>
-        <span>{question.subject}</span>
+        {question.year ? <span>{question.year}</span> : null}
       </div>
       <h3 className="question-card__title">{question.title}</h3>
       <div className="question-card__footer">
@@ -559,7 +618,6 @@ const PastQuestionDetail = () => {
 
             <div className="past-question-detail__meta-grid">
               <DetailMetaItem icon="fa-graduation-cap" label="Exam" value={question.exam} />
-              <DetailMetaItem icon="fa-book" label="Subject" value={question.subject} />
               <DetailMetaItem icon="fa-calendar-days" label="Year" value={question.year} />
               <DetailMetaItem
                 icon="fa-cloud-arrow-up"

@@ -10,20 +10,6 @@ const QUESTION_BANK_EXAMS = [
   "Other",
 ];
 
-const QUESTION_BANK_SUBJECTS = [
-  "Physics",
-  "Chemistry",
-  "Biology",
-  "Mathematics",
-  "English",
-  "Computer Science",
-  "Accountancy",
-  "Economics",
-  "Business Studies",
-  "General Knowledge",
-  "Others",
-];
-
 const QUESTION_BANK_TYPES = [
   "Model Question",
   "Past Question",
@@ -49,7 +35,6 @@ export {
   QUESTION_BANK_IMAGE_MIME_TYPES,
   QUESTION_BANK_PDF_MIME_TYPES,
   QUESTION_BANK_RESOURCE_TYPES,
-  QUESTION_BANK_SUBJECTS,
   QUESTION_BANK_TYPES,
   toAdminAvailableValues,
 };

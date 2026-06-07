@@ -16,20 +16,6 @@ const DEFAULT_EXAMS = [
   "Other",
 ];
 
-const DEFAULT_SUBJECTS = [
-  "Physics",
-  "Chemistry",
-  "Biology",
-  "Mathematics",
-  "English",
-  "Computer Science",
-  "Accountancy",
-  "Economics",
-  "Business Studies",
-  "General Knowledge",
-  "Others",
-];
-
 const DEFAULT_TYPES = [
   "Model Question",
   "Past Question",
@@ -44,7 +30,6 @@ const FALLBACK_THUMBNAIL = "/img/exam.png";
 const emptyFilters = {
   search: "",
   exam: "",
-  subject: "",
   type: "",
   year: "",
 };
@@ -57,7 +42,6 @@ const formatNumber = (value = 0) =>
 
 const mergeFilterOptions = (filters = {}) => ({
   exams: filters.exams?.length ? filters.exams : DEFAULT_EXAMS,
-  subjects: filters.subjects?.length ? filters.subjects : DEFAULT_SUBJECTS,
   questionTypes: filters.questionTypes?.length
     ? filters.questionTypes
     : DEFAULT_TYPES,
@@ -110,7 +94,6 @@ const QuestionCard = ({ question, compact = false }) => (
     <div className="question-card__body">
       <div className="question-card__meta-row">
         <span>{question.exam || "Entrance"}</span>
-        <span>{question.subject || "General"}</span>
         {question.year ? <span>{question.year}</span> : null}
       </div>
       <h3 className="question-card__title">{question.title}</h3>
@@ -140,34 +123,10 @@ const QuestionSkeletonGrid = () => (
   </div>
 );
 
-const QuestionSection = ({ title, icon, questions = [] }) => {
-  if (!questions.length) {
-    return null;
-  }
-
-  return (
-    <section className="past-questions-page__collection">
-      <div className="past-questions-page__section-head">
-        <h2>
-          <i className={`fa-solid ${icon}`} aria-hidden="true"></i>
-          {title}
-        </h2>
-      </div>
-      <div className="past-questions-page__rail">
-        {questions.map((question) => (
-          <QuestionCard key={question.id || question.slug} question={question} compact />
-        ))}
-      </div>
-    </section>
-  );
-};
-
 const PastQuestions = () => {
   const [filters, setFilters] = useState(emptyFilters);
   const [filterOptions, setFilterOptions] = useState(mergeFilterOptions());
   const [questions, setQuestions] = useState([]);
-  const [latestQuestions, setLatestQuestions] = useState([]);
-  const [mostViewedQuestions, setMostViewedQuestions] = useState([]);
   const [popularExamCategories, setPopularExamCategories] = useState([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -199,14 +158,6 @@ const PastQuestions = () => {
 
         const payload = response.data?.data || {};
         setQuestions(Array.isArray(payload.questions) ? payload.questions : []);
-        setLatestQuestions(
-          Array.isArray(payload.latestQuestions) ? payload.latestQuestions : []
-        );
-        setMostViewedQuestions(
-          Array.isArray(payload.mostViewedQuestions)
-            ? payload.mostViewedQuestions
-            : []
-        );
         setPopularExamCategories(
           Array.isArray(payload.popularExamCategories)
             ? payload.popularExamCategories
@@ -259,25 +210,25 @@ const PastQuestions = () => {
         <div className="container">
           <div className="past-questions-page__hero-inner">
             <div>
-              <span className="past-questions-page__eyebrow">
-                <i className="fa-solid fa-book-open" aria-hidden="true"></i>
-                Past Questions
-              </span>
+            
               <h1>Past Questions &amp; Model Questions</h1>
               <p>Access Entrance, Board and Model Question Collections</p>
             </div>
             <div className="past-questions-page__stats" aria-label="Question bank summary">
               <span>
+                <i className="fa-solid fa-layer-group" aria-hidden="true"></i>
                 <strong>{formatNumber(totalQuestions)}</strong>
-                Resources
+                <small>Resources</small>
               </span>
               <span>
+                <i className="fa-regular fa-file-lines" aria-hidden="true"></i>
                 <strong>{filterOptions.exams.length}</strong>
-                Exams
+                <small>Exams</small>
               </span>
               <span>
-                <strong>{filterOptions.subjects.length}</strong>
-                Subjects
+                <i className="fa-solid fa-list" aria-hidden="true"></i>
+                <strong>{filterOptions.questionTypes.length}</strong>
+                <small>Types</small>
               </span>
             </div>
           </div>
@@ -296,7 +247,7 @@ const PastQuestions = () => {
                 type="search"
                 value={filters.search}
                 onChange={(event) => updateFilter("search", event.target.value)}
-                placeholder="Search title, subject, exam, or year"
+                placeholder="Search title, exam, or year"
               />
             </label>
 
@@ -310,21 +261,6 @@ const PastQuestions = () => {
                 {filterOptions.exams.map((exam) => (
                   <option key={exam} value={exam}>
                     {exam}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            <label className="past-questions-page__select-wrap">
-              <span>Subject</span>
-              <select
-                value={filters.subject}
-                onChange={(event) => updateFilter("subject", event.target.value)}
-              >
-                <option value="">All Subjects</option>
-                {filterOptions.subjects.map((subject) => (
-                  <option key={subject} value={subject}>
-                    {subject}
                   </option>
                 ))}
               </select>
@@ -456,21 +392,11 @@ const PastQuestions = () => {
             <div className="past-questions-page__state">
               <i className="fa-solid fa-folder-open" aria-hidden="true"></i>
               <h3>No Questions Available</h3>
-              <p>Try another exam, subject, type, or year.</p>
+              <p>Try another exam, type, or year.</p>
             </div>
           )}
         </section>
 
-        <QuestionSection
-          title="Latest Questions"
-          icon="fa-clock"
-          questions={latestQuestions}
-        />
-        <QuestionSection
-          title="Most Viewed Questions"
-          icon="fa-chart-line"
-          questions={mostViewedQuestions}
-        />
       </div>
     </main>
   );
