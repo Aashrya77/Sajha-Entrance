@@ -5,7 +5,7 @@
 
 const config = {
   // Maintenance Mode - Set to true to enable maintenance page
-  maintenanceMode: true,
+  maintenanceMode: false,
 
   // Server Configuration
   server: {
