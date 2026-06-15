@@ -16,7 +16,7 @@ const parseLimit = (value) => {
     return 24;
   }
 
-  return Math.max(1, Math.min(parsed, 60));
+  return Math.max(1, Math.min(parsed, 200));
 };
 
 const escapeRegExp = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
