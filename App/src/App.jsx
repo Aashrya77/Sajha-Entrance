@@ -26,6 +26,7 @@ import Scholarship from './pages/Scholarship/Scholarship';
 import StudentLogin from './pages/StudentLogin/StudentLogin';
 import StudentRegister from './pages/StudentRegister/StudentRegister';
 import StudentProfile from './pages/StudentProfile/StudentProfile';
+import StudentRecordedClassesPage from './pages/StudentRecordedClasses/StudentRecordedClasses';
 import AdminRedirect from './pages/AdminRedirect/AdminRedirect';
 import NotFound from './pages/NotFound/NotFound';
 import Results from './pages/Results/Results';
@@ -279,6 +280,7 @@ function App() {
         <Route path="/cart" element={<Cart cartItems={cartItems} removeFromCart={removeFromCart} updateQuantity={updateQuantity} clearCart={clearCart} />} />
         <Route path="/student/login" element={<StudentLogin setStudentData={setStudentData} setIsAuthenticated={setIsAuthenticated} />} />
         <Route path="/student/register" element={<StudentRegister />} />
+        <Route path="/student/recorded-classes" element={<StudentRecordedClassesPage />} />
         <Route path="/student/profile/*" element={<StudentProfile studentData={studentData} setStudentData={setStudentData} setIsAuthenticated={setIsAuthenticated} />} />
         <Route path="/forgot-password" element={<ForgotPasswordForm />} />
         <Route path="/reset-password/:token" element={<ForgotPasswordForm />} />

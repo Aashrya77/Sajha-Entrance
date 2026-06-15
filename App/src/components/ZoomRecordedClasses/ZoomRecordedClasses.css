@@ -137,6 +137,25 @@
   padding: 1.1rem;
 }
 
+.zoom-recordings__footer {
+  display: flex;
+  justify-content: center;
+  padding: 0 1.1rem 1.1rem;
+}
+
+.zoom-recording-primary-btn--ghost {
+  min-width: 180px;
+  border: 1px solid #fed7aa;
+  background: #ffffff;
+  color: #c64f11;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.07);
+}
+
+.zoom-recording-primary-btn--ghost:hover {
+  background: #fff7ed;
+  color: #ff5a00;
+}
+
 .zoom-recordings__error {
   margin-bottom: 1rem;
   padding: 0.9rem 1rem;

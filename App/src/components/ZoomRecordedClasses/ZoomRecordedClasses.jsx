@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   AlertCircle,
   CalendarDays,
@@ -14,6 +14,7 @@ import {
   Video,
   X,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { zoomRecordingAPI } from '../../api/services';
 import './ZoomRecordedClasses.css';
 
@@ -234,42 +235,48 @@ const RecordingPlayer = ({ recording, onClose }) => {
   );
 };
 
-const ZoomRecordedClasses = ({ isPaid, onCountChange, allowSync = true }) => {
+const ZoomRecordedClasses = ({ isPaid, onCountChange, allowSync = true, pageSize = 24 }) => {
+  const navigate = useNavigate();
+  const PAGE_SIZE = pageSize;
+
   const [recordings, setRecordings] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [search, setSearch] = useState('');
   const [selectedRecording, setSelectedRecording] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState('');
   const [syncNotice, setSyncNotice] = useState(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
 
-  const queryParams = useMemo(
-    () => ({
-      category: selectedCategory,
-      search: search.trim(),
-      page: 1,
-      limit: 24,
-    }),
-    [search, selectedCategory]
-  );
-
-  const loadRecordings = async ({ silent = false } = {}) => {
+  const loadRecordings = async ({ pageNumber = 1, append = false, silent = false } = {}) => {
     if (!isPaid) {
       setRecordings([]);
       setCategories([]);
+      setHasMore(false);
       onCountChange?.(0);
       return;
     }
 
     if (!silent) {
       setLoading(true);
+    } else if (append) {
+      setLoadingMore(true);
     }
 
     setError('');
 
     try {
+      const queryParams = {
+        category: selectedCategory,
+        search: search.trim(),
+        page: pageNumber,
+        limit: PAGE_SIZE,
+      };
+
       const [recordingResponse, categoryResponse] = await Promise.all([
         zoomRecordingAPI.getRecordings(queryParams),
         zoomRecordingAPI.getCategories(),
@@ -283,9 +290,13 @@ const ZoomRecordedClasses = ({ isPaid, onCountChange, allowSync = true }) => {
         (sum, category) => sum + Number(category.count || 0),
         0
       );
+      const totalPages = Number(recordingData.pages || 1);
 
-      setRecordings(nextRecordings);
+      setRecordings((previousRecordings) =>
+        append ? [...previousRecordings, ...nextRecordings] : nextRecordings
+      );
       setCategories(nextCategories);
+      setHasMore(pageNumber < totalPages);
       onCountChange?.(totalCategoryCount || Number(recordingData.total || nextRecordings.length || 0));
     } catch (loadError) {
       const message =
@@ -295,17 +306,27 @@ const ZoomRecordedClasses = ({ isPaid, onCountChange, allowSync = true }) => {
     } finally {
       if (!silent) {
         setLoading(false);
+      } else if (append) {
+        setLoadingMore(false);
       }
     }
   };
 
   useEffect(() => {
+    if (!isPaid) {
+      setRecordings([]);
+      setCategories([]);
+      setHasMore(false);
+      onCountChange?.(0);
+      return undefined;
+    }
+
     const timeoutId = window.setTimeout(() => {
-      loadRecordings();
+      loadRecordings({ pageNumber: page, append: page > 1 });
     }, 250);
 
     return () => window.clearTimeout(timeoutId);
-  }, [queryParams, isPaid]);
+  }, [page, selectedCategory, search, isPaid]);
 
   useEffect(() => {
     if (!syncNotice || syncNotice.persist) {
@@ -318,6 +339,24 @@ const ZoomRecordedClasses = ({ isPaid, onCountChange, allowSync = true }) => {
 
     return () => window.clearTimeout(timer);
   }, [syncNotice]);
+
+  const handleLoadMore = () => {
+    if (!hasMore) {
+      return;
+    }
+
+    navigate('/student/recorded-classes');
+  };
+
+  const handleSearchChange = (event) => {
+    setSearch(event.target.value);
+    setPage(1);
+  };
+
+  const handleCategoryChange = (value) => {
+    setSelectedCategory(value);
+    setPage(1);
+  };
 
   const handleSync = async () => {
     setSyncing(true);
@@ -368,7 +407,7 @@ const ZoomRecordedClasses = ({ isPaid, onCountChange, allowSync = true }) => {
           <input
             type="search"
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={handleSearchChange}
             placeholder="Search classes"
           />
         </label>
@@ -388,7 +427,7 @@ const ZoomRecordedClasses = ({ isPaid, onCountChange, allowSync = true }) => {
         <CategoryFilter
           categories={categories}
           selectedCategory={selectedCategory}
-          onSelect={setSelectedCategory}
+          onSelect={handleCategoryChange}
         />
       </div>
 
@@ -415,6 +454,19 @@ const ZoomRecordedClasses = ({ isPaid, onCountChange, allowSync = true }) => {
           <EmptyState onSync={handleSync} syncing={syncing} allowSync={allowSync} />
         )}
       </div>
+
+      {hasMore && (
+        <div className="zoom-recordings__footer">
+          <button
+            type="button"
+            className="zoom-recording-primary-btn zoom-recording-primary-btn--ghost"
+            onClick={handleLoadMore}
+            disabled={loadingMore}
+          >
+            {loadingMore ? 'Loading more...' : 'Show more'}
+          </button>
+        </div>
+      )}
 
       {syncNotice && (
         <div className="zoom-recording-toast" role="status" aria-live="polite">
