@@ -4,6 +4,9 @@ import './index.css';
 import './styles/main.css';
 import App from './App';
 import { BrowserRouter } from 'react-router-dom';
+import { loadGoogleAnalytics } from './analytics';
+
+loadGoogleAnalytics();
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

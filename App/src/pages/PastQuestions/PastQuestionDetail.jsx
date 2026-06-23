@@ -1,24 +1,32 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Document, Page, pdfjs } from "react-pdf";
+import workerSrc from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { questionBankAPI } from "../../api/services";
 import { resolveBackendPath } from "../../api/config";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 import "./PastQuestions.css";
 
-pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-  "pdfjs-dist/build/pdf.worker.min.mjs",
-  import.meta.url
-).toString();
+pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
 
 const FALLBACK_THUMBNAIL = "/img/exam.png";
 const MIN_ZOOM = 0.75;
 const MAX_ZOOM = 2.25;
 const ZOOM_STEP = 0.15;
 
-const resolveResourceUrl = (value = "") =>
-  value ? resolveBackendPath(value) : "";
+const resolveResourceUrl = (value = "") => {
+  if (!value) {
+    return "";
+  }
+
+  const normalizedValue = String(value || "").trim();
+  if (/^(?:https?:)?\/\//i.test(normalizedValue)) {
+    return normalizedValue;
+  }
+
+  return resolveBackendPath(normalizedValue);
+};
 
 const formatNumber = (value = 0) =>
   Number(value || 0).toLocaleString("en-US");
@@ -165,7 +173,12 @@ const PdfPreview = ({ question }) => {
   const [zoom, setZoom] = useState(1);
   const [loadError, setLoadError] = useState("");
 
-  const fileUrl = resolveResourceUrl(question.pdfUrl);
+  const fileUrl = resolveResourceUrl(question.pdfUrl || question.downloadUrl);
+  const downloadUrl = question.allowDownload
+    ? resolveResourceUrl(question.downloadUrl)
+    : "";
+  const [pdfSource, setPdfSource] = useState(fileUrl);
+  const [hasTriedDownloadFallback, setHasTriedDownloadFallback] = useState(false);
   const pageWidth = Math.min(Math.max(measuredWidth - 64, 300), isFullscreen ? 1180 : 940);
   const pageNumbers = useMemo(
     () => Array.from({ length: Math.max(totalPages, 0) }, (_, index) => index + 1),
@@ -176,8 +189,10 @@ const PdfPreview = ({ question }) => {
     setPageNumber(1);
     setLoadError("");
     setTotalPages(Number(question.pageCount || 0));
+    setHasTriedDownloadFallback(false);
+    setPdfSource(fileUrl);
     pageRefs.current = [];
-  }, [question.slug, question.pageCount]);
+  }, [question.slug, question.pageCount, fileUrl]);
 
   const setSafePage = (nextPage) => {
     const knownTotalPages = totalPages || 1;
@@ -292,7 +307,7 @@ const PdfPreview = ({ question }) => {
           </div>
         ) : (
           <Document
-            file={fileUrl}
+            file={pdfSource}
             loading={
               <div className="resource-preview__loading">
                 <span />
@@ -311,7 +326,13 @@ const PdfPreview = ({ question }) => {
               setPageNumber((currentPage) => clamp(currentPage, 1, numPages));
             }}
             onLoadError={(error) => {
-              setLoadError(error?.message || "The PDF preview failed to load.");
+              const message = error?.message || "The PDF preview failed to load.";
+              if (!hasTriedDownloadFallback && downloadUrl && downloadUrl !== pdfSource) {
+                setHasTriedDownloadFallback(true);
+                setPdfSource(downloadUrl);
+                return;
+              }
+              setLoadError(message);
             }}
           >
             <div className="resource-preview__pdf-stack">

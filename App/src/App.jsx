@@ -3,6 +3,7 @@ import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { noticeAPI, authAPI, activityAPI } from './api/services';
 import { ADMIN_ROOT_PATH } from './api/config';
 import config from './config';
+import { trackPageView, isAnalyticsEnabled } from './analytics';
 
 // Import components
 import Navbar from './components/Navbar/Navbar';
@@ -178,6 +179,13 @@ function App() {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [sendPresenceHeartbeat]);
+
+  useEffect(() => {
+    if (!isAnalyticsEnabled()) {
+      return;
+    }
+    trackPageView(location.pathname + location.search);
+  }, [location.pathname, location.search]);
 
   const fetchNotice = async () => {
     try {
