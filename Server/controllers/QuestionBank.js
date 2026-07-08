@@ -24,6 +24,7 @@ import {
 } from "../utils/questionBankFiles.js";
 import {
   MEDIA_TYPES,
+  findLegacyMediaFile,
   getMediaPublicPath,
   mediaRootDirectory,
 } from "../utils/media.js";
@@ -510,19 +511,57 @@ const GetQuestionBankDetail = async (req, res) => {
   }
 };
 
+const deriveQuestionBankKeyFromUrl = (value = "") => {
+  const normalizedValue = String(value || "").trim();
+  if (!normalizedValue) {
+    return "";
+  }
+
+  const stripped = normalizedValue.replace(/^[a-z]+:\/\//i, "");
+  const withoutQuery = stripped.split(/[?#]/)[0];
+  const assetMatch = withoutQuery.match(/(?:\/api\/question-bank\/assets\/|\/sajha-admin\/api\/question-bank\/assets\/|\/media\/question-bank\/)(.+)$/i);
+  const fallbackSegment = assetMatch ? assetMatch[1] : withoutQuery;
+  const lastSegmentMatch = String(fallbackSegment).match(/([^\/\\]+)$/);
+
+  return lastSegmentMatch
+    ? normalizeStorageKey(decodeURIComponent(lastSegmentMatch[1]))
+    : normalizeStorageKey(fallbackSegment);
+};
+
 const sendQuestionBankAsset = async (res, key = "", { download = false } = {}) => {
   const normalizedKey = normalizeStorageKey(key);
-  const filePath = resolveQuestionBankStoragePath(normalizedKey);
+  const derivedKey = deriveQuestionBankKeyFromUrl(normalizedKey);
+  const candidateKey = derivedKey || normalizedKey;
+  const candidateFilename = path.basename(candidateKey);
+  let filePath = resolveQuestionBankStoragePath(normalizedKey);
+
+  if (!filePath || !fs.existsSync(filePath)) {
+    filePath = resolveQuestionBankStoragePath(candidateKey);
+  }
+
+  if ((!filePath || !fs.existsSync(filePath)) && candidateFilename) {
+    const publicMediaPath = path.join(mediaRootDirectory, MEDIA_TYPES.questionBank, candidateFilename);
+    if (fs.existsSync(publicMediaPath)) {
+      filePath = publicMediaPath;
+    }
+  }
+
+  if ((!filePath || !fs.existsSync(filePath)) && candidateFilename) {
+    const legacyFilePath = await findLegacyMediaFile(MEDIA_TYPES.questionBank, candidateFilename);
+    if (legacyFilePath) {
+      filePath = legacyFilePath;
+    }
+  }
 
   if (!filePath || !fs.existsSync(filePath)) {
     return res.status(404).json({ success: false, error: "Resource file not found." });
   }
 
-  const filename = path.basename(normalizedKey).replace(/"/g, "");
+  const filename = candidateFilename.replace(/"/g, "");
   const disposition = download ? "attachment" : "inline";
 
   res.setHeader("Cache-Control", "private, no-store, max-age=0");
-  res.setHeader("Content-Type", getQuestionBankResourceMimeType(normalizedKey));
+  res.setHeader("Content-Type", getQuestionBankResourceMimeType(candidateKey));
   res.setHeader("Content-Disposition", `${disposition}; filename="${filename}"`);
 
   return res.sendFile(filePath);

@@ -149,12 +149,16 @@ const DownloadButton = ({ href }) => {
     return null;
   }
 
+  const resolvedHref = resolveResourceUrl(href);
+  const isSameOrigin = typeof window !== "undefined" && resolvedHref.startsWith(window.location.origin);
+
   return (
     <a
-      href={resolveResourceUrl(href)}
+      href={resolvedHref}
       className="resource-preview__download"
       target="_blank"
       rel="noopener noreferrer"
+      {...(isSameOrigin ? { download: true } : {})}
     >
       <i className="fa-solid fa-download" aria-hidden="true"></i>
       Download
