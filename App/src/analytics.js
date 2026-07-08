@@ -17,7 +17,7 @@ export const loadGoogleAnalytics = () => {
   script2.innerHTML = `window.dataLayer = window.dataLayer || [];
 function gtag(){dataLayer.push(arguments);}
 gtag('js', new Date());
-gtag('config', '${GA_MEASUREMENT_ID}', { page_path: window.location.pathname });`;
+gtag('config', '${GA_MEASUREMENT_ID}', { send_page_view: false, page_path: window.location.pathname });`;
 
   document.head.appendChild(script1);
   document.head.appendChild(script2);
@@ -29,7 +29,7 @@ export const trackPageView = (path) => {
   }
 
   try {
-    window.gtag("config", GA_MEASUREMENT_ID, { page_path: path });
+    window.gtag("event", "page_view", { page_path: path });
   } catch (_error) {
     // ignore analytics errors
   }
