@@ -189,20 +189,63 @@ const formatExamOptionLabel = (exam) => {
 const summarizeFetchError = async (response) => {
   try {
     const data = await response.json();
-    return data.error || "Request failed.";
+    if (response.status === 401) {
+      return data.error || "Your admin session has expired. Please log in again.";
+    }
+
+    if (response.status === 403) {
+      return data.error || "You do not have permission to manage results.";
+    }
+
+    return data.error || data.message || "Unable to load result management data. Please try again.";
   } catch (error) {
-    return "Request failed.";
+    if (response.status === 401) {
+      return "Your admin session has expired. Please log in again.";
+    }
+
+    if (response.status === 403) {
+      return "You do not have permission to manage results.";
+    }
+
+    return "Unable to load result management data. Please try again.";
   }
 };
 
+let hasRedirectedToAdminLogin = false;
+
+const redirectToAdminLogin = () => {
+  if (hasRedirectedToAdminLogin || typeof window === "undefined") {
+    return;
+  }
+
+  hasRedirectedToAdminLogin = true;
+  const returnTo = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  window.setTimeout(() => {
+    window.location.assign(
+      `${buildAdminPath("/login")}?redirectTo=${encodeURIComponent(returnTo)}`
+    );
+  }, 0);
+};
+
 const fetchJson = async (url, options = {}) => {
+  const headers = {
+    Accept: "application/json",
+    ...(options.headers || {}),
+  };
+
   const response = await fetch(url, {
-    credentials: "same-origin",
     ...options,
+    credentials: "include",
+    headers,
   });
 
   if (!response.ok) {
-    throw new Error(await summarizeFetchError(response));
+    const message = await summarizeFetchError(response);
+    if (response.status === 401) {
+      redirectToAdminLogin();
+    }
+
+    throw new Error(message);
   }
 
   const data = await response.json();
@@ -549,11 +592,19 @@ export default function BulkUploadResults() {
       const response = await fetch(buildAdminPath("/api/results/bulk-upload/preview"), {
         method: "POST",
         body: formData,
-        credentials: "same-origin",
+        credentials: "include",
+        headers: {
+          Accept: "application/json",
+        },
       });
 
       if (!response.ok) {
-        throw new Error(await summarizeFetchError(response));
+        const message = await summarizeFetchError(response);
+        if (response.status === 401) {
+          redirectToAdminLogin();
+        }
+
+        throw new Error(message);
       }
 
       const data = await response.json();
@@ -606,11 +657,19 @@ export default function BulkUploadResults() {
       const response = await fetch(buildAdminPath("/api/results/bulk-upload/import"), {
         method: "POST",
         body: formData,
-        credentials: "same-origin",
+        credentials: "include",
+        headers: {
+          Accept: "application/json",
+        },
       });
 
       if (!response.ok) {
-        throw new Error(await summarizeFetchError(response));
+        const message = await summarizeFetchError(response);
+        if (response.status === 401) {
+          redirectToAdminLogin();
+        }
+
+        throw new Error(message);
       }
 
       const data = await response.json();

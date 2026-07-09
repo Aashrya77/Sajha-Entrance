@@ -17,6 +17,7 @@ import QuestionBankModel from "../models/QuestionBank.js";
 import {
   deleteQuestionBankResourceFile,
   detectPdfPageCountFromKey,
+  findQuestionBankStorageFile,
   getQuestionBankResourceMimeType,
   normalizeStorageKey,
   resolveQuestionBankStoragePath,
@@ -528,7 +529,17 @@ const deriveQuestionBankKeyFromUrl = (value = "") => {
     : normalizeStorageKey(fallbackSegment);
 };
 
-const sendQuestionBankAsset = async (res, key = "", { download = false } = {}) => {
+const sendQuestionBankAsset = async (
+  res,
+  key = "",
+  {
+    download = false,
+    fallbackFilenames = [],
+    fallbackSize = null,
+    extensions = [],
+    allowSingleMatchFallback = false,
+  } = {}
+) => {
   const normalizedKey = normalizeStorageKey(key);
   const derivedKey = deriveQuestionBankKeyFromUrl(normalizedKey);
   const candidateKey = derivedKey || normalizedKey;
@@ -554,14 +565,32 @@ const sendQuestionBankAsset = async (res, key = "", { download = false } = {}) =
   }
 
   if (!filePath || !fs.existsSync(filePath)) {
+    const fallbackFilePath = await findQuestionBankStorageFile(
+      [
+        candidateFilename,
+        ...fallbackFilenames,
+      ],
+      {
+        extensions,
+        size: fallbackSize,
+        allowSingleMatchFallback,
+      }
+    );
+
+    if (fallbackFilePath) {
+      filePath = fallbackFilePath;
+    }
+  }
+
+  if (!filePath || !fs.existsSync(filePath)) {
     return res.status(404).json({ success: false, error: "Resource file not found." });
   }
 
-  const filename = candidateFilename.replace(/"/g, "");
+  const filename = path.basename(filePath || candidateFilename).replace(/"/g, "");
   const disposition = download ? "attachment" : "inline";
 
   res.setHeader("Cache-Control", "private, no-store, max-age=0");
-  res.setHeader("Content-Type", getQuestionBankResourceMimeType(candidateKey));
+  res.setHeader("Content-Type", getQuestionBankResourceMimeType(filename || candidateKey));
   res.setHeader("Content-Disposition", `${disposition}; filename="${filename}"`);
 
   return res.sendFile(filePath);
@@ -592,7 +621,13 @@ const serveQuestionResource = async (req, res, { resourceKind, download = false 
         return res.status(404).json({ success: false, error: "PDF resource not found." });
       }
 
-      return sendQuestionBankAsset(res, question.pdfUrl, { download });
+      return sendQuestionBankAsset(res, question.pdfUrl, {
+        download,
+        fallbackFilenames: [question.pdfFilename],
+        fallbackSize: question.pdfSize,
+        extensions: [".pdf"],
+        allowSingleMatchFallback: true,
+      });
     }
 
     const imageIndex = parseInteger(req.params.index, -1);
@@ -603,7 +638,12 @@ const serveQuestionResource = async (req, res, { resourceKind, download = false 
       return res.status(404).json({ success: false, error: "Image resource not found." });
     }
 
-    return sendQuestionBankAsset(res, imageKey, { download });
+    return sendQuestionBankAsset(res, imageKey, {
+      download,
+      fallbackFilenames: [question.resourceImagesFilename?.[imageIndex]],
+      fallbackSize: question.resourceImagesSize?.[imageIndex],
+      extensions: [".jpg", ".jpeg", ".png", ".webp"],
+    });
   } catch (error) {
     return res.status(500).json({ success: false, error: error.message });
   }

@@ -29,6 +29,8 @@ import Dashboard from '../admin/components/Dashboard'
 AdminJS.UserComponents.Dashboard = Dashboard
 import BulkUploadResults from '../admin/components/BulkUploadResults'
 AdminJS.UserComponents.BulkUploadResults = BulkUploadResults
+import ResultRankingPreview from '../admin/components/ResultRankingPreview'
+AdminJS.UserComponents.ResultRankingPreview = ResultRankingPreview
 import MockQuestionStudio from '../admin/components/MockQuestionStudio'
 AdminJS.UserComponents.MockQuestionStudio = MockQuestionStudio
 import MockTestWorkspace from '../admin/components/MockTestWorkspace'

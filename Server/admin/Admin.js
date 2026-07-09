@@ -94,6 +94,7 @@ import {
   CreateAdminResultExam,
   DeleteResultExamSet,
   DownloadResultTemplate,
+  GetAdminResultRankingPreview,
   GetAdminResultCourses,
   GetAdminResultExams,
   ImportBulkUploadResults,
@@ -1658,6 +1659,12 @@ const startAdminPanel = async () => {
           label: "Bulk Upload Workspace",
           component: Components.BulkUploadResults,
         },
+        rankingPreview: {
+          actionType: "resource",
+          icon: "Trophy",
+          label: "Result Ranking Preview",
+          component: Components.ResultRankingPreview,
+        },
         delete: {
           guard:
             "This will remove the exam and all imported results under it. Do you want to continue?",
@@ -2550,6 +2557,12 @@ const startAdminPanel = async () => {
     "/api/result-exams",
     requireAdminPermission("results", "view"),
     GetAdminResultExams
+  );
+
+  adminRouter.get(
+    "/api/results/ranking-preview",
+    requireAdminPermission("results", "view"),
+    GetAdminResultRankingPreview
   );
 
   adminRouter.post(

@@ -104,11 +104,12 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0, onLogout 
   const hideNoticeBar = location.pathname.startsWith('/mocktest/');
   const primaryLinks = [
     { to: '/', label: 'HOME', group: 'Home' },
-    { to: '/colleges', label: 'COLLEGES', group: 'College' },
+    
     { to: '/mocktests', label: 'MOCK TEST', group: 'MockTest' },
     { to: '/past-questions', label: 'PAST QUESTIONS', group: 'PastQuestions' },
+    { to: '/results', label: 'RESULTS', group: 'Results' },
+    { to: '/colleges', label: 'COLLEGES', group: 'College' },
     { to: '/courses', label: 'COURSES', group: 'Course' },
-    { to: '/books', label: 'BOOKS', group: 'Books' },
   ];
   const moreLinks = [
     { to: '/admission', label: 'ADMISSION', group: 'Admission' },
@@ -118,7 +119,7 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0, onLogout 
     { to: '/about', label: 'ABOUT', group: 'About' },
     { to: '/blogs', label: 'BLOGS', group: 'Blogs' },
     { to: '/services', label: 'SERVICES', group: 'Services' },
-    { to: '/results', label: 'RESULTS', group: 'Results' },
+    { to: '/books', label: 'BOOKS', group: 'Books' },
     {to: '/universities', label: 'UNIVERSITIES', group: 'University' },
     { to: '/contact', label: 'CONTACT', group: 'Contact' },
   ];

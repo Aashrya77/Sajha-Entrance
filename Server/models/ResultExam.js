@@ -100,7 +100,7 @@ const ResultExamSchema = new mongoose.Schema({
 
 ResultExamSchema.index({ course: 1, examDate: -1, status: 1 });
 ResultExamSchema.index({ course: 1, publishDate: -1, status: 1 });
-ResultExamSchema.index({ course: 1, title: 1, examDate: 1 }, { unique: true });
+ResultExamSchema.index({ course: 1, title: 1, examDate: 1 });
 
 ResultExamSchema.pre("save", function updateTimestamps(next) {
   this.updatedAt = new Date();

@@ -67,6 +67,10 @@ const Components = {
     "BulkUploadResults",
     path.join(__dirname, "./components/BulkUploadResults")
   ),
+  ResultRankingPreview: componentLoader.add(
+    "ResultRankingPreview",
+    path.join(__dirname, "./components/ResultRankingPreview")
+  ),
   MockQuestionStudio: componentLoader.add(
     "MockQuestionStudio",
     path.join(__dirname, "./components/MockQuestionStudio")

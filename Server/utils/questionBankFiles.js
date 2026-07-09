@@ -117,6 +117,104 @@ const getQuestionBankResourceMimeType = (key = "") =>
   RESOURCE_MIME_TYPES_BY_EXTENSION[path.extname(key).toLowerCase()] ||
   "application/octet-stream";
 
+const buildSearchFilenameVariants = (value = "") => {
+  const filename = path.basename(String(value || "").replace(/\\/g, "/"));
+  if (!filename) {
+    return [];
+  }
+
+  const parsed = path.parse(filename);
+  const extension = parsed.ext.toLowerCase();
+  const slugifiedName = slugifyFilename(parsed.name);
+
+  return [
+    filename,
+    filename.toLowerCase(),
+    slugifiedName ? `${slugifiedName}${extension}` : "",
+  ].filter(Boolean);
+};
+
+const findQuestionBankStorageFile = async (
+  values = [],
+  { extensions = [], size = null, allowSingleMatchFallback = false } = {}
+) => {
+  const filenames = new Set(
+    values
+      .flat()
+      .flatMap(buildSearchFilenameVariants)
+      .map((filename) => filename.toLowerCase())
+      .filter(Boolean)
+  );
+
+  const allowedExtensions = new Set(
+    extensions
+      .map((extension) => String(extension || "").toLowerCase())
+      .filter(Boolean)
+  );
+  const expectedSize = Number(size || 0);
+
+  if (!fs.existsSync(questionBankStorageDirectory)) {
+    return null;
+  }
+
+  const matchesFilename = (filename = "") => {
+    const lowerFilename = filename.toLowerCase();
+    return Array.from(filenames).some(
+      (candidate) =>
+        lowerFilename === candidate || lowerFilename.endsWith(`-${candidate}`)
+    );
+  };
+
+  const matchesExtension = (filename = "") =>
+    !allowedExtensions.size ||
+    allowedExtensions.has(path.extname(filename).toLowerCase());
+
+  const extensionMatches = [];
+
+  const searchDirectory = async (directory) => {
+    const entries = await fs.promises.readdir(directory, { withFileTypes: true });
+
+    for (const entry of entries) {
+      const fullPath = path.join(directory, entry.name);
+
+      if (entry.isFile() && matchesExtension(entry.name)) {
+        extensionMatches.push(fullPath);
+
+        if (filenames.size && matchesFilename(entry.name)) {
+          return fullPath;
+        }
+
+        if (expectedSize > 0) {
+          const stats = await fs.promises.stat(fullPath);
+          if (stats.size === expectedSize) {
+            return fullPath;
+          }
+        }
+      }
+
+      if (entry.isDirectory()) {
+        const nestedMatch = await searchDirectory(fullPath);
+        if (nestedMatch) {
+          return nestedMatch;
+        }
+      }
+    }
+
+    return null;
+  };
+
+  const directMatch = await searchDirectory(questionBankStorageDirectory);
+  if (directMatch) {
+    return directMatch;
+  }
+
+  if (allowSingleMatchFallback && extensionMatches.length === 1) {
+    return extensionMatches[0];
+  }
+
+  return null;
+};
+
 const detectPdfPageCountFromKey = async (key = "") => {
   const filePath = resolveQuestionBankStoragePath(key);
   if (!filePath || !fs.existsSync(filePath)) {
@@ -138,6 +236,7 @@ export {
   buildQuestionBankUploadKey,
   deleteQuestionBankResourceFile,
   detectPdfPageCountFromKey,
+  findQuestionBankStorageFile,
   getQuestionBankResourceMimeType,
   normalizeStorageKey,
   questionBankStorageDirectory,

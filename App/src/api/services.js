@@ -1,4 +1,4 @@
-import API, { baseURL } from './config';
+import API, { baseURL, publicAPI } from './config';
 
 const QUESTION_VIEWER_STORAGE_KEY = 'sajha_question_viewer_id';
 
@@ -208,22 +208,27 @@ export const bookPaymentAPI = {
 
 // Result API
 export const resultAPI = {
-  getCourses: () => API.get("/results/courses"),
-  getPublishedExams: (course) =>
-    API.get(`/results/exams?course=${encodeURIComponent(course)}`),
-  searchResult: (course, symbolNumber, examId = "") => {
-    const params = new URLSearchParams();
-    params.append("course", course);
-    params.append("symbolNumber", symbolNumber);
-    if (examId) params.append("examId", examId);
-    return API.get(`/results?${params.toString()}`);
-  },
-  getTopResults: (course = "", examId = "") => {
-    const params = new URLSearchParams();
-    if (course) params.append("course", course);
-    if (examId) params.append("examId", examId);
-    return API.get(`/results/top?${params.toString()}`);
-  },
+  getCourses: (config = {}) => publicAPI.get('/results/courses', config),
+  getMockTests: (courseId, config = {}) =>
+    publicAPI.get(`/results/mock-tests?courseId=${encodeURIComponent(courseId)}`, config),
+  getMockTestDates: (courseId, mockTestId, config = {}) =>
+    publicAPI.get(
+      `/results/mock-test-dates?courseId=${encodeURIComponent(
+        courseId
+      )}&mockTestId=${encodeURIComponent(mockTestId)}`,
+      config
+    ),
+  searchResult: ({ courseId, mockTestId, sessionId, rollNumber }, config = {}) =>
+    publicAPI.post(
+      '/results/search',
+      {
+        courseId,
+        mockTestId,
+        sessionId,
+        rollNumber,
+      },
+      config
+    ),
 };
 
 // Inquiry API

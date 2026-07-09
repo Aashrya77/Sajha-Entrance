@@ -14,6 +14,19 @@ export const backendBaseUrl = baseURL.endsWith('/api')
   ? baseURL.slice(0, -4) || '/'
   : baseURL;
 
+const resolvePublicApiBaseUrl = (value = '') => {
+  const normalizedValue = trimTrailingSlashes(value || '/api');
+  const adminApiSuffix = `${ADMIN_ROOT_PATH}/api`;
+
+  if (normalizedValue.endsWith(adminApiSuffix)) {
+    return `${normalizedValue.slice(0, -adminApiSuffix.length)}/api`;
+  }
+
+  return normalizedValue || '/api';
+};
+
+export const publicApiBaseURL = resolvePublicApiBaseUrl(baseURL);
+
 export const resolveBackendPath = (path = '') => {
   const normalizedPath = ensureLeadingSlash(path);
   const cleanBackendBaseUrl = trimTrailingSlashes(backendBaseUrl);
@@ -75,6 +88,13 @@ export const resolveAdminUrl = () => {
 // Create axios instance with base configuration
 const API = axios.create({
   baseURL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+export const publicAPI = axios.create({
+  baseURL: publicApiBaseURL,
   headers: {
     'Content-Type': 'application/json',
   },

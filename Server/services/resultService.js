@@ -1,4 +1,5 @@
 import XLSX from "xlsx";
+import mongoose from "mongoose";
 import StudentResult, {
   normalizeSymbolNumber as normalizeStoredSymbolNumber,
 } from "../models/StudentResult.js";
@@ -20,6 +21,22 @@ const LEGACY_EXAM_TITLE_PREFIX = "Legacy Result";
 const RESULT_EXAM_STATUSES = new Set(["draft", "scheduled", "published"]);
 const SUPPORTED_TEMPLATE_FORMATS = new Set(["csv", "xlsx"]);
 const OVERALL_PASS_PERCENTAGE = 35;
+const BIT_COURSE_CODE = "BIT";
+const BIT_REQUIRED_SUBJECT = "ENGLISH";
+const BIT_ELECTIVE_SUBJECTS = new Set(["MATH", "COMPUTER"]);
+const SUBJECT_NAME_ALIASES = new Map(
+  [
+    ["ENGLISH", "English"],
+    ["MATH", "Math"],
+    ["MATHS", "Math"],
+    ["MATHEMATICS", "Math"],
+    ["COMPUTER", "Computer"],
+    ["COMPUTER SCIENCE", "Computer"],
+  ].map(([alias, canonicalName]) => [
+    normalizeLookupValue(alias),
+    canonicalName,
+  ])
+);
 
 const FIELD_ALIASES = {
   symbolNumber: [
@@ -76,9 +93,20 @@ const BASE_FIELD_KEYS = new Set(
 );
 
 function normalizeSubjectName(value) {
-  return String(value || "")
+  const normalizedValue = String(value || "")
     .trim()
     .replace(/\s+/g, " ");
+
+  if (!normalizedValue) {
+    return "";
+  }
+
+  return SUBJECT_NAME_ALIASES.get(normalizeLookupValue(normalizedValue)) || normalizedValue;
+}
+
+function normalizeSubjectLookupValue(value) {
+  const normalizedName = normalizeSubjectName(value);
+  return normalizeLookupValue(normalizedName);
 }
 
 function formatSubjectLabel(value) {
@@ -194,37 +222,106 @@ function toUtcStartOfDay(value) {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 }
 
-function parseDateValue(value) {
+function formatDateKey(year, month, day) {
+  const numericYear = Number(year);
+  const numericMonth = Number(month);
+  const numericDay = Number(day);
+
+  if (
+    !Number.isInteger(numericYear) ||
+    !Number.isInteger(numericMonth) ||
+    !Number.isInteger(numericDay) ||
+    numericYear < 1900 ||
+    numericMonth < 1 ||
+    numericMonth > 12 ||
+    numericDay < 1 ||
+    numericDay > 31
+  ) {
+    return "";
+  }
+
+  const utcDate = new Date(Date.UTC(numericYear, numericMonth - 1, numericDay));
+  if (
+    utcDate.getUTCFullYear() !== numericYear ||
+    utcDate.getUTCMonth() !== numericMonth - 1 ||
+    utcDate.getUTCDate() !== numericDay
+  ) {
+    return "";
+  }
+
+  return [
+    String(numericYear).padStart(4, "0"),
+    String(numericMonth).padStart(2, "0"),
+    String(numericDay).padStart(2, "0"),
+  ].join("-");
+}
+
+function normalizeDateObject(value) {
+  if (!(value instanceof Date) || Number.isNaN(value.getTime())) {
+    return "";
+  }
+
+  if (
+    value.getUTCHours() === 0 &&
+    value.getUTCMinutes() === 0 &&
+    value.getUTCSeconds() === 0 &&
+    value.getUTCMilliseconds() === 0
+  ) {
+    return formatDateKey(
+      value.getUTCFullYear(),
+      value.getUTCMonth() + 1,
+      value.getUTCDate()
+    );
+  }
+
+  return formatDateKey(value.getFullYear(), value.getMonth() + 1, value.getDate());
+}
+
+function normalizeExamDate(value) {
   if (value === undefined || value === null || value === "") {
-    return null;
+    return "";
   }
 
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
-    return toUtcStartOfDay(value);
+    return normalizeDateObject(value);
   }
 
   if (typeof value === "number") {
     const parsedDate = XLSX.SSF.parse_date_code(value);
     if (!parsedDate) {
-      return null;
+      return "";
     }
 
-    return new Date(
-      Date.UTC(parsedDate.y, (parsedDate.m || 1) - 1, parsedDate.d || 1)
-    );
+    return formatDateKey(parsedDate.y, parsedDate.m || 1, parsedDate.d || 1);
   }
 
   const normalizedValue = String(value).trim();
   if (!normalizedValue) {
-    return null;
+    return "";
+  }
+
+  const isoDateMatch = normalizedValue.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s]|$)/);
+  if (isoDateMatch) {
+    return formatDateKey(isoDateMatch[1], isoDateMatch[2], isoDateMatch[3]);
+  }
+
+  const yearFirstMatch = normalizedValue.match(/^(\d{4})[/. -](\d{1,2})[/. -](\d{1,2})$/);
+  if (yearFirstMatch) {
+    return formatDateKey(yearFirstMatch[1], yearFirstMatch[2], yearFirstMatch[3]);
+  }
+
+  const dayFirstMatch = normalizedValue.match(/^(\d{1,2})[/. -](\d{1,2})[/. -](\d{4})$/);
+  if (dayFirstMatch) {
+    return formatDateKey(dayFirstMatch[3], dayFirstMatch[2], dayFirstMatch[1]);
   }
 
   const parsedDate = new Date(normalizedValue);
-  if (Number.isNaN(parsedDate.getTime())) {
-    return null;
-  }
+  return Number.isNaN(parsedDate.getTime()) ? "" : normalizeDateObject(parsedDate);
+}
 
-  return toUtcStartOfDay(parsedDate);
+function parseDateValue(value) {
+  const normalizedDate = normalizeExamDate(value);
+  return normalizedDate ? new Date(`${normalizedDate}T00:00:00.000Z`) : null;
 }
 
 function parseDateTimeValue(value) {
@@ -281,12 +378,20 @@ function buildVisibleResultExamQuery(extraQuery = {}) {
   };
 }
 
-function sameCalendarDate(left, right) {
-  if (!left || !right) {
-    return false;
-  }
+function toPublicMockTestId(value) {
+  return normalizeLookupValue(value).replace(/\s+/g, "-").toLowerCase();
+}
 
-  return toUtcStartOfDay(left).getTime() === toUtcStartOfDay(right).getTime();
+function toUtcDateKey(value) {
+  return normalizeExamDate(value);
+}
+
+function isValidObjectId(value) {
+  return mongoose.Types.ObjectId.isValid(String(value || "").trim());
+}
+
+function sameCalendarDate(left, right) {
+  return Boolean(normalizeExamDate(left) && normalizeExamDate(left) === normalizeExamDate(right));
 }
 
 function convertRawRows(rows) {
@@ -602,7 +707,7 @@ function calculateResultMetrics(subjects = []) {
 function buildExamTemplateSubjects(subjects = []) {
   return subjects.map((subject, index) => ({
     name: normalizeSubjectName(subject.subjectName || subject.name),
-    code: normalizeLookupValue(subject.subjectName || subject.name).replace(/\s+/g, "_"),
+    code: normalizeSubjectLookupValue(subject.subjectName || subject.name).replace(/\s+/g, "_"),
     fullMarks: Number(subject.fullMarks || 0),
     passMarks: Number(subject.passMarks || 0),
     displayOrder: index,
@@ -611,7 +716,7 @@ function buildExamTemplateSubjects(subjects = []) {
 
 function mapSubjectByNormalizedName(subjects = []) {
   return subjects.reduce((map, subject) => {
-    const normalizedName = normalizeLookupValue(subject.subjectName || subject.name);
+    const normalizedName = normalizeSubjectLookupValue(subject.subjectName || subject.name);
     if (normalizedName) {
       map.set(normalizedName, subject);
     }
@@ -625,7 +730,7 @@ function alignSubjectsToTemplate(subjects, templateSubjects) {
   const errors = [];
 
   templateSubjects.forEach((templateSubject) => {
-    const normalizedTemplateName = normalizeLookupValue(templateSubject.name);
+    const normalizedTemplateName = normalizeSubjectLookupValue(templateSubject.name);
     const matchedSubject = subjectMap.get(normalizedTemplateName);
 
     if (!matchedSubject) {
@@ -654,12 +759,12 @@ function alignSubjectsToTemplate(subjects, templateSubjects) {
   });
 
   const templateSubjectNames = new Set(
-    templateSubjects.map((subject) => normalizeLookupValue(subject.name))
+    templateSubjects.map((subject) => normalizeSubjectLookupValue(subject.name))
   );
   const extraSubjects = subjects.filter(
     (subject) =>
       !templateSubjectNames.has(
-        normalizeLookupValue(subject.subjectName || subject.name)
+        normalizeSubjectLookupValue(subject.subjectName || subject.name)
       )
   );
 
@@ -672,6 +777,84 @@ function alignSubjectsToTemplate(subjects, templateSubjects) {
   }
 
   return { alignedSubjects, errors };
+}
+
+function normalizeImportSubject(subject) {
+  return {
+    ...subject,
+    subjectName: normalizeSubjectName(subject.subjectName || subject.name),
+    fullMarks: Number(subject.fullMarks || 0),
+    passMarks: normalizeStoredPassMarks(subject.passMarks),
+    obtainedMarks: Number(subject.obtainedMarks || 0),
+  };
+}
+
+function validateBitSubjects(subjects = []) {
+  const normalizedSubjects = subjects
+    .map((subject) => normalizeImportSubject(subject))
+    .filter(
+      (subject) =>
+        subject.subjectName ||
+        subject.fullMarks > 0 ||
+        subject.passMarks > 0 ||
+        subject.obtainedMarks > 0
+    );
+  const errors = [];
+  const unknownSubjects = [];
+  const englishSubjects = [];
+  const electiveSubjects = [];
+
+  normalizedSubjects.forEach((subject) => {
+    const subjectKey = normalizeSubjectLookupValue(subject.subjectName);
+
+    if (subjectKey === BIT_REQUIRED_SUBJECT) {
+      englishSubjects.push(subject);
+      return;
+    }
+
+    if (BIT_ELECTIVE_SUBJECTS.has(subjectKey)) {
+      electiveSubjects.push(subject);
+      return;
+    }
+
+    unknownSubjects.push(subject.subjectName || "Unknown");
+  });
+
+  if (normalizedSubjects.length !== 2) {
+    errors.push("BIT rows must contain exactly two subjects: English and one elective.");
+  }
+
+  if (englishSubjects.length !== 1) {
+    errors.push("BIT rows must contain English exactly once.");
+  }
+
+  if (electiveSubjects.length !== 1) {
+    errors.push("BIT rows must contain exactly one elective subject: Math or Computer.");
+  }
+
+  if (unknownSubjects.length > 0) {
+    errors.push(`Unknown BIT elective subject(s): ${unknownSubjects.map((name) => `"${name}"`).join(", ")}.`);
+  }
+
+  if (errors.length > 0) {
+    return { subjects: [], errors };
+  }
+
+  return {
+    subjects: [englishSubjects[0], electiveSubjects[0]],
+    errors: [],
+  };
+}
+
+function validateCourseSpecificSubjects(courseCode, subjects = []) {
+  if (normalizeCourseCode(courseCode) !== BIT_COURSE_CODE) {
+    return {
+      subjects,
+      errors: [],
+    };
+  }
+
+  return validateBitSubjects(subjects);
 }
 
 function buildPreviewRow(importRow) {
@@ -1010,11 +1193,13 @@ async function analyzeResultUpload({
     throw new Error("Selected exam could not be found.");
   }
 
-  if (exam.course !== normalizedCourseCode) {
+  const normalizedExamCourseCode = normalizeCourseCode(exam.course);
+  if (normalizedExamCourseCode !== normalizedCourseCode) {
     throw new Error("Selected exam does not belong to the selected course.");
   }
 
   const parsedRows = parseUploadSheet(fileBuffer);
+  const isBitCourse = normalizedCourseCode === BIT_COURSE_CODE;
   const templateFromExam =
     Array.isArray(exam.subjects) && exam.subjects.length > 0
       ? buildExamTemplateSubjects(exam.subjects)
@@ -1041,7 +1226,9 @@ async function analyzeResultUpload({
     const studentName = String(getFieldValue(normalizedRow, "studentName") || "").trim();
     const rowCourseCode = normalizeCourseCode(getFieldValue(normalizedRow, "course"));
     const remarks = String(getFieldValue(normalizedRow, "remarks") || "").trim();
-    const rowExamDate = parseDateValue(getFieldValue(normalizedRow, "examDate"));
+    const rawRowExamDate = getFieldValue(normalizedRow, "examDate");
+    const normalizedRowExamDate = normalizeExamDate(rawRowExamDate);
+    const normalizedSelectedExamDate = normalizeExamDate(exam.examDate);
 
     if (!symbolNumber) {
       rowErrors.push("Symbol number is required.");
@@ -1057,11 +1244,19 @@ async function analyzeResultUpload({
       );
     }
 
-    if (rowExamDate && !sameCalendarDate(rowExamDate, exam.examDate)) {
-      rowErrors.push("Exam date in the row does not match the selected exam.");
+    if (rawRowExamDate && !normalizedRowExamDate) {
+      rowErrors.push("Exam date could not be read. Use YYYY-MM-DD or DD/MM/YYYY.");
+    } else if (
+      normalizedRowExamDate &&
+      normalizedSelectedExamDate &&
+      normalizedRowExamDate !== normalizedSelectedExamDate
+    ) {
+      rowErrors.push(
+        `Excel exam date ${normalizedRowExamDate} does not match selected exam date ${normalizedSelectedExamDate}.`
+      );
     }
 
-    const rawSubjects = extractSubjectsFromRow(normalizedRow);
+    let rawSubjects = extractSubjectsFromRow(normalizedRow);
     if (!rawSubjects.length) {
       rowErrors.push("No subject columns were detected in this row.");
     }
@@ -1098,6 +1293,17 @@ async function analyzeResultUpload({
       }
     });
 
+    if (rawSubjects.length > 0) {
+      const { subjects: validatedSubjects, errors: subjectRuleErrors } =
+        validateCourseSpecificSubjects(normalizedCourseCode, rawSubjects);
+
+      if (subjectRuleErrors.length > 0) {
+        rowErrors.push(...subjectRuleErrors);
+      } else {
+        rawSubjects = validatedSubjects;
+      }
+    }
+
     if (symbolNumber) {
       if (seenSymbols.has(symbolNumber)) {
         rowErrors.push(
@@ -1108,7 +1314,7 @@ async function analyzeResultUpload({
       }
     }
 
-    const currentTemplate = inferredTemplate;
+    const currentTemplate = isBitCourse ? null : inferredTemplate;
     if (currentTemplate && rawSubjects.length > 0) {
       const { alignedSubjects, errors: alignmentErrors } = alignSubjectsToTemplate(
         rawSubjects,
@@ -1122,7 +1328,7 @@ async function analyzeResultUpload({
       }
     }
 
-    if (!inferredTemplate && rawSubjects.length > 0 && rowErrors.length === 0) {
+    if (!isBitCourse && !inferredTemplate && rawSubjects.length > 0 && rowErrors.length === 0) {
       inferredTemplate = buildExamTemplateSubjects(rawSubjects);
     }
 
@@ -1301,9 +1507,44 @@ function buildSubjectScoreVector(result, subjectOrder) {
   const resultSubjectMap = mapSubjectByNormalizedName(result.subjects || []);
 
   return subjectOrder.map((subjectName) => {
-    const matchedSubject = resultSubjectMap.get(normalizeLookupValue(subjectName));
+    const matchedSubject = resultSubjectMap.get(normalizeSubjectLookupValue(subjectName));
     return Number(matchedSubject?.obtainedMarks || 0);
   });
+}
+
+function getActualSubjectOrder(results = [], exam = {}) {
+  const discoveredSubjects = Array.from(
+    new Map(
+      results
+        .flatMap((result) => result.subjects || [])
+        .map((subject) => {
+          const subjectName = normalizeSubjectName(subject.subjectName || subject.name);
+          return [normalizeSubjectLookupValue(subjectName), subjectName];
+        })
+        .filter(([subjectKey]) => subjectKey)
+    ).values()
+  );
+
+  if (normalizeCourseCode(exam?.course) === BIT_COURSE_CODE) {
+    const preferredOrder = ["English", "Math", "Computer"];
+    const discoveredKeys = new Set(discoveredSubjects.map((subject) => normalizeSubjectLookupValue(subject)));
+    const orderedSubjects = preferredOrder.filter((subject) =>
+      discoveredKeys.has(normalizeSubjectLookupValue(subject))
+    );
+    const extraSubjects = discoveredSubjects.filter(
+      (subject) => !preferredOrder.some((preferred) => normalizeSubjectLookupValue(preferred) === normalizeSubjectLookupValue(subject))
+    );
+
+    return [...orderedSubjects, ...extraSubjects];
+  }
+
+  if (Array.isArray(exam?.subjects) && exam.subjects.length > 0) {
+    return exam.subjects
+      .sort((left, right) => (left.displayOrder || 0) - (right.displayOrder || 0))
+      .map((subject) => subject.name);
+  }
+
+  return discoveredSubjects;
 }
 
 function compareScoreVectors(leftVector, rightVector) {
@@ -1409,18 +1650,7 @@ async function recalculateExamRanks(examId) {
   }
 
   const results = await StudentResult.find({ exam: exam._id }).lean();
-  const subjectOrder =
-    Array.isArray(exam.subjects) && exam.subjects.length > 0
-      ? exam.subjects
-          .sort((left, right) => (left.displayOrder || 0) - (right.displayOrder || 0))
-          .map((subject) => subject.name)
-      : Array.from(
-          new Set(
-            results.flatMap((result) =>
-              (result.subjects || []).map((subject) => subject.subjectName)
-            )
-          )
-        );
+  const subjectOrder = getActualSubjectOrder(results, exam);
 
   const rankedResults = sortResultsForRanking(results, subjectOrder);
   const operations = [];
@@ -1515,6 +1745,109 @@ async function listPublishedResultExams(course) {
     .then((exams) => exams.map((exam) => sanitizeResultExamRecord(exam)));
 }
 
+async function listPublishedResultPrograms() {
+  const visibleExams = await ResultExam.find(
+    buildVisibleResultExamQuery(),
+    { course: 1, courseName: 1, _id: 0 }
+  ).lean();
+  const courseMap = new Map();
+
+  visibleExams.forEach((exam) => {
+    const normalizedCourseCode = normalizeCourseCode(exam.course);
+    if (!normalizedCourseCode) {
+      return;
+    }
+
+    courseMap.set(
+      normalizedCourseCode,
+      buildCoursePayload(normalizedCourseCode, exam.courseName || normalizedCourseCode)
+    );
+  });
+
+  return Array.from(courseMap.values()).sort((left, right) =>
+    String(left.name || left.code).localeCompare(String(right.name || right.code))
+  );
+}
+
+async function listPublicResultCourses() {
+  const programs = await listPublishedResultPrograms();
+
+  return programs.map((course) => ({
+    id: course.code,
+    code: course.code,
+    name: course.name || course.fullName || course.code,
+  }));
+}
+
+async function listPublicResultMockTests(courseId) {
+  const normalizedCourseCode = normalizeCourseCode(courseId);
+  if (!normalizedCourseCode) {
+    throw new Error("A valid course is required.");
+  }
+
+  const exams = await ResultExam.find(
+    buildVisibleResultExamQuery({ course: normalizedCourseCode }),
+    { title: 1, _id: 0 }
+  )
+    .sort({ title: 1 })
+    .lean();
+  const mockTestMap = new Map();
+
+  exams.forEach((exam) => {
+    const title = String(exam.title || "").trim();
+    const id = toPublicMockTestId(title);
+    if (!title || !id || mockTestMap.has(id)) {
+      return;
+    }
+
+    mockTestMap.set(id, { id, title });
+  });
+
+  return Array.from(mockTestMap.values()).sort((left, right) =>
+    left.title.localeCompare(right.title)
+  );
+}
+
+async function listPublicResultMockTestDates(courseId, mockTestId) {
+  const normalizedCourseCode = normalizeCourseCode(courseId);
+  const normalizedMockTestId = toPublicMockTestId(mockTestId);
+
+  if (!normalizedCourseCode) {
+    throw new Error("A valid course is required.");
+  }
+
+  if (!normalizedMockTestId) {
+    throw new Error("A valid mock test is required.");
+  }
+
+  const exams = await ResultExam.find(
+    buildVisibleResultExamQuery({ course: normalizedCourseCode }),
+    { title: 1, examDate: 1 }
+  )
+    .sort({ examDate: -1, publishDate: -1, createdAt: -1 })
+    .lean();
+  const dateMap = new Map();
+
+  exams
+    .filter((exam) => toPublicMockTestId(exam.title) === normalizedMockTestId)
+    .forEach((exam) => {
+      const dateKey = toUtcDateKey(exam.examDate);
+      if (!dateKey || dateMap.has(dateKey)) {
+        return;
+      }
+
+      dateMap.set(dateKey, {
+        id: String(exam._id),
+        value: String(exam._id),
+        sessionId: String(exam._id),
+        date: dateKey,
+        displayValue: dateKey,
+      });
+    });
+
+  return Array.from(dateMap.values());
+}
+
 async function getLatestPublishedExamForCourse(course) {
   const normalizedCourseCode = normalizeCourseCode(course);
   if (!normalizedCourseCode) {
@@ -1555,7 +1888,6 @@ function mapResultForPublic(result, exam) {
     percentage,
     resultStatus,
     result: resultStatus,
-    rank: result.rank,
     remarks: result.remarks || "",
     publishedAt: result.publishedAt || exam?.publishDate || null,
   };
@@ -1564,6 +1896,7 @@ function mapResultForPublic(result, exam) {
 async function searchPublishedResult({ course, symbolNumber, examId }) {
   const normalizedCourseCode = normalizeCourseCode(course);
   const normalizedSymbolNumber = normalizeStoredSymbolNumber(symbolNumber);
+  const normalizedExamId = String(examId || "").trim();
 
   if (!normalizedCourseCode) {
     throw new Error("Course is required.");
@@ -1573,14 +1906,16 @@ async function searchPublishedResult({ course, symbolNumber, examId }) {
     throw new Error("Symbol number is required.");
   }
 
-  const exam = examId
-    ? await ResultExam.findOne(
-        buildVisibleResultExamQuery({
-          _id: examId,
-          course: normalizedCourseCode,
-        })
-      ).lean()
-    : await getLatestPublishedExamForCourse(normalizedCourseCode);
+  if (!normalizedExamId) {
+    throw new Error("Mock test date is required.");
+  }
+
+  const exam = await ResultExam.findOne(
+    buildVisibleResultExamQuery({
+      _id: normalizedExamId,
+      course: normalizedCourseCode,
+    })
+  ).lean();
 
   if (!exam) {
     return null;
@@ -1599,55 +1934,134 @@ async function searchPublishedResult({ course, symbolNumber, examId }) {
   return mapResultForPublic(result, exam);
 }
 
-async function getPublishedTopResults({ course, examId, limit = DEFAULT_TOPPER_LIMIT }) {
-  const normalizedCourseCode = normalizeCourseCode(course);
-  const safeLimit = Math.max(1, Math.min(Number(limit) || DEFAULT_TOPPER_LIMIT, 50));
+async function searchPublicResult({
+  courseId,
+  mockTestId,
+  mockTestDate,
+  sessionId,
+  rollNumber,
+} = {}) {
+  const normalizedCourseCode = normalizeCourseCode(courseId);
+  const normalizedMockTestId = toPublicMockTestId(mockTestId);
+  const normalizedSymbolNumber = normalizeStoredSymbolNumber(rollNumber);
+  const normalizedSessionId = String(sessionId || "").trim();
+  const normalizedDateKey = toUtcDateKey(mockTestDate);
 
   if (!normalizedCourseCode) {
-    const groupedResults = {};
-
-    const adminCourses = await getPublicResultCourses();
-
-    for (const resultCourse of adminCourses) {
-      const courseExam = await getLatestPublishedExamForCourse(resultCourse.code);
-      if (!courseExam) {
-        groupedResults[resultCourse.code] = {
-          exam: null,
-          students: [],
-        };
-        continue;
-      }
-
-      const results = await StudentResult.find({
-        exam: courseExam._id,
-        course: resultCourse.code,
-        percentage: { $gte: OVERALL_PASS_PERCENTAGE },
-      })
-        .sort({ rank: 1, totalObtainedMarks: -1, percentage: -1 })
-        .limit(safeLimit)
-        .lean();
-
-      groupedResults[resultCourse.code] = {
-        exam: courseExam,
-        students: results.map((result) => mapResultForPublic(result, courseExam)),
-      };
-    }
-
-    return groupedResults;
+    throw new Error("Course is required.");
   }
 
-  const exam = examId
-    ? await ResultExam.findOne(
-        buildVisibleResultExamQuery({
-          _id: examId,
-          course: normalizedCourseCode,
-        })
-      ).lean()
-    : await getLatestPublishedExamForCourse(normalizedCourseCode);
+  if (!normalizedMockTestId) {
+    throw new Error("Mock test is required.");
+  }
+
+  if (!normalizedSessionId && !normalizedDateKey) {
+    throw new Error("Mock test date is required.");
+  }
+
+  if (!normalizedSymbolNumber) {
+    throw new Error("Roll number is required.");
+  }
+
+  const examQuery = buildVisibleResultExamQuery({
+    course: normalizedCourseCode,
+  });
+
+  if (normalizedSessionId) {
+    if (!isValidObjectId(normalizedSessionId)) {
+      return null;
+    }
+
+    examQuery._id = normalizedSessionId;
+  }
+
+  const candidateExams = await ResultExam.find(examQuery)
+    .sort({ examDate: -1, publishDate: -1, createdAt: -1 })
+    .lean();
+  const exam = candidateExams.find((candidate) => {
+    if (toPublicMockTestId(candidate.title) !== normalizedMockTestId) {
+      return false;
+    }
+
+    return normalizedSessionId || toUtcDateKey(candidate.examDate) === normalizedDateKey;
+  });
+
+  if (!exam) {
+    return null;
+  }
+
+  const result = await StudentResult.findOne({
+    exam: exam._id,
+    course: normalizedCourseCode,
+    symbolNumber: normalizedSymbolNumber,
+  }).lean();
+
+  return result ? mapResultForPublic(result, exam) : null;
+}
+
+function mapResultForRankingPreview(result, exam) {
+  const percentage = getResultPercentage(result);
+  const resultStatus = getOverallResultStatus(percentage);
+
+  return {
+    id: result._id,
+    rank: result.rank,
+    studentName: result.studentName,
+    symbolNumber: result.symbolNumber,
+    course: result.course,
+    courseName:
+      result.courseName ||
+      buildCoursePayload(result.course, exam?.courseName || result.course).name,
+    examId: exam?._id || result.exam,
+    examTitle: exam?.title || "",
+    examDate: exam?.examDate || result.examDate,
+    totalFullMarks: result.totalFullMarks,
+    totalObtainedMarks: result.totalObtainedMarks,
+    percentage,
+    resultStatus,
+    correctAnswers: result.correctAnswers,
+    incorrectAnswers: result.incorrectAnswers,
+    timeTaken: result.timeTaken,
+    submittedAt: result.submittedAt || result.updatedAt || result.createdAt,
+    publishedAt: result.publishedAt || exam?.publishDate || null,
+  };
+}
+
+async function getAdminRankingPreview({
+  course,
+  examId,
+  status = "",
+  limit = DEFAULT_TOPPER_LIMIT,
+} = {}) {
+  const normalizedCourseCode = normalizeCourseCode(course);
+  const normalizedExamId = String(examId || "").trim();
+  const safeLimit = Math.max(1, Math.min(Number(limit) || DEFAULT_TOPPER_LIMIT, 10));
+
+  if (!normalizedCourseCode) {
+    throw new Error("Course is required.");
+  }
+
+  if (!normalizedExamId) {
+    throw new Error("Result set is required.");
+  }
+
+  const examQuery = {
+    _id: normalizedExamId,
+    course: normalizedCourseCode,
+  };
+
+  if (status && RESULT_EXAM_STATUSES.has(status)) {
+    examQuery.status = status;
+  }
+
+  const exam = await ResultExam.findOne(examQuery).lean();
 
   if (!exam) {
     return {
       exam: null,
+      summary: {
+        totalResultRecords: 0,
+      },
       students: [],
     };
   }
@@ -1655,15 +2069,18 @@ async function getPublishedTopResults({ course, examId, limit = DEFAULT_TOPPER_L
   const results = await StudentResult.find({
     exam: exam._id,
     course: normalizedCourseCode,
-    percentage: { $gte: OVERALL_PASS_PERCENTAGE },
   })
-    .sort({ rank: 1, totalObtainedMarks: -1, percentage: -1 })
-    .limit(safeLimit)
     .lean();
+  const subjectOrder = getActualSubjectOrder(results, exam);
+  const rankedRows = rankResultRows(results, subjectOrder).slice(0, safeLimit);
 
   return {
-    exam,
-    students: results.map((result) => mapResultForPublic(result, exam)),
+    exam: sanitizeResultExamRecord(exam),
+    summary: {
+      totalResultRecords: results.length,
+      previewedRecords: rankedRows.length,
+    },
+    students: rankedRows.map((result) => mapResultForRankingPreview(result, exam)),
   };
 }
 
@@ -1749,29 +2166,7 @@ function buildTemplateFile({ course, format = "csv" }) {
 }
 
 async function getPublicResultCourses() {
-  const visibleExams = await ResultExam.find(
-    buildVisibleResultExamQuery(),
-    { course: 1, courseName: 1, _id: 0 }
-  ).lean();
-  const courseMap = new Map(
-    RESULT_COURSES.map((course) => [course.code, buildCoursePayload(course.code, course.name)])
-  );
-
-  visibleExams.forEach((exam) => {
-    const normalizedCourseCode = normalizeCourseCode(exam.course);
-    if (!normalizedCourseCode) {
-      return;
-    }
-
-    courseMap.set(
-      normalizedCourseCode,
-      buildCoursePayload(normalizedCourseCode, exam.courseName || normalizedCourseCode)
-    );
-  });
-
-  return Array.from(courseMap.values()).sort((left, right) =>
-    String(left.name || left.code).localeCompare(String(right.name || right.code))
-  );
+  return listPublicResultCourses();
 }
 
 async function backfillLegacyResultExams() {
@@ -1877,14 +2272,20 @@ export {
   deleteResultExamSet,
   listAdminResultCourses,
   getPublicResultCourses,
-  getPublishedTopResults,
+  getAdminRankingPreview,
   importResultUpload,
+  listPublicResultMockTestDates,
+  listPublicResultMockTests,
+  normalizeExamDate,
+  normalizeSubjectName,
   rankResultRows,
   listAdminResultExams,
   listPublishedResultExams,
   previewResultUpload,
   recalculateExamRanks,
+  searchPublicResult,
   searchPublishedResult,
   setResultExamStatus,
   updateResultExam,
+  validateCourseSpecificSubjects,
 };

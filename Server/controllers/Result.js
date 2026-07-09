@@ -4,14 +4,17 @@ import {
   buildTemplateFile,
   createResultExam,
   deleteResultExamSet,
+  getAdminRankingPreview,
   listAdminResultCourses,
   getPublicResultCourses,
-  getPublishedTopResults,
   importResultUpload,
   listAdminResultExams,
+  listPublicResultMockTestDates,
+  listPublicResultMockTests,
   listPublishedResultExams,
   previewResultUpload,
   recalculateExamRanks,
+  searchPublicResult,
   searchPublishedResult,
   setResultExamStatus,
   updateResultExam,
@@ -104,7 +107,8 @@ const SearchResult = async (req, res) => {
     if (!result) {
       return res.status(404).json({
         success: false,
-        error: "No published result found for the provided course and symbol number.",
+        error:
+          "No result was found for the selected program, mock test, date and roll number. Please verify the entered information and try again.",
       });
     }
 
@@ -120,11 +124,42 @@ const SearchResult = async (req, res) => {
   }
 };
 
-const GetTopResults = async (req, res) => {
+const PublicSearchResult = async (req, res) => {
   try {
-    const data = await getPublishedTopResults({
+    const result = await searchPublicResult({
+      courseId: req.body?.courseId,
+      mockTestId: req.body?.mockTestId,
+      mockTestDate: req.body?.mockTestDate,
+      sessionId: req.body?.sessionId,
+      rollNumber: req.body?.rollNumber,
+    });
+
+    if (!result) {
+      return res.status(404).json({
+        success: false,
+        error:
+          "No result was found for the selected program, mock test, date and roll number. Please verify the entered information and try again.",
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+const GetAdminResultRankingPreview = async (req, res) => {
+  try {
+    const data = await getAdminRankingPreview({
       course: req.query.course,
       examId: req.query.examId,
+      status: req.query.status,
       limit: req.query.limit,
     });
 
@@ -133,6 +168,7 @@ const GetTopResults = async (req, res) => {
       data,
     });
   } catch (error) {
+    logAdminRouteError("Loading result ranking preview", error, { query: req.query });
     return res.status(400).json({
       success: false,
       error: error.message,
@@ -164,6 +200,39 @@ const GetResultCourses = async (req, res) => {
     });
   } catch (error) {
     return res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+const GetPublicResultMockTests = async (req, res) => {
+  try {
+    const data = await listPublicResultMockTests(req.query.courseId);
+    return res.json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      error: error.message,
+    });
+  }
+};
+
+const GetPublicResultMockTestDates = async (req, res) => {
+  try {
+    const data = await listPublicResultMockTestDates(
+      req.query.courseId,
+      req.query.mockTestId
+    );
+    return res.json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    return res.status(400).json({
       success: false,
       error: error.message,
     });
@@ -360,15 +429,18 @@ export {
   CreateAdminResultExam,
   DeleteResultExamSet,
   DownloadResultTemplate,
+  GetAdminResultRankingPreview,
   GetAdminResultCourses,
   GetAdminResultExams,
+  GetPublicResultMockTestDates,
+  GetPublicResultMockTests,
   GetPublishedExams,
   GetResultCourses,
-  GetTopResults,
   ImportBulkUploadResults,
   PreviewBulkUploadResults,
   PublishResultExam,
   RecalculateExamRanks,
+  PublicSearchResult,
   SearchResult,
   UpdateAdminResultExam,
   UnpublishResultExam,
