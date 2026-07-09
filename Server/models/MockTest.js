@@ -137,6 +137,15 @@ const MockTestSchema = new mongoose.Schema({
     type: Number,
     default: 60,
   },
+  allowRetake: {
+    type: Boolean,
+    default: false,
+  },
+  maxAttempts: {
+    type: Number,
+    default: 1,
+    min: 0,
+  },
   questions: [QuestionSchema],
   questionCount: {
     type: Number,
@@ -296,11 +305,19 @@ const MockTestAttemptSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  attemptNumber: {
+    type: Number,
+    default: 1,
+    min: 1,
+  },
   completedAt: {
     type: Date,
     default: Date.now,
   },
 });
+
+MockTestAttemptSchema.index({ student: 1, mockTest: 1, completedAt: -1 });
+MockTestAttemptSchema.index({ student: 1, mockTest: 1, attemptNumber: 1 });
 
 export const MockTestAttemptModel = mongoose.model(
   "MockTestAttempt",

@@ -128,6 +128,110 @@ const matchCourse = (mockTest, course = "") => {
     .includes(normalizedCourse);
 };
 
+const normalizeMaxAttempts = (mockTest = {}) => {
+  const parsedMaxAttempts = Number(mockTest?.maxAttempts);
+
+  return Number.isFinite(parsedMaxAttempts)
+    ? Math.max(0, Math.floor(parsedMaxAttempts))
+    : 1;
+};
+
+const buildAttemptLimitState = ({ mockTest, lifecycle, attempts = [] }) => {
+  const maxAttempts = normalizeMaxAttempts(mockTest);
+  const attemptCount = attempts.length;
+  const hasCompletedAttempt = attemptCount > 0;
+  const latestAttempt = hasCompletedAttempt
+    ? [...attempts].sort(
+        (left, right) =>
+          new Date(right.completedAt || 0).getTime() -
+          new Date(left.completedAt || 0).getTime()
+      )[0]
+    : null;
+  const isUnlimited = maxAttempts === 0;
+  const attemptsRemaining = isUnlimited
+    ? null
+    : Math.max(0, maxAttempts - attemptCount);
+  const canRetake =
+    Boolean(mockTest?.allowRetake) &&
+    Boolean(lifecycle?.isAccessible) &&
+    (isUnlimited || attemptsRemaining > 0);
+  const canStartAttempt =
+    Boolean(lifecycle?.isAccessible) &&
+    (!hasCompletedAttempt || canRetake);
+
+  return {
+    hasCompletedAttempt,
+    attemptCount,
+    latestAttempt: latestAttempt
+      ? {
+          id: latestAttempt._id,
+          attemptNumber: latestAttempt.attemptNumber || attemptCount,
+          completedAt: latestAttempt.completedAt,
+          totalScore: latestAttempt.totalScore,
+          percentage: latestAttempt.percentage,
+        }
+      : null,
+    canRetake,
+    canStartAttempt,
+    attemptsRemaining,
+    maxAttempts,
+    isUnlimited,
+  };
+};
+
+const fetchStudentAttemptsForTest = async (studentId, mockTestId) => {
+  if (!studentId || !mongoose.Types.ObjectId.isValid(mockTestId)) {
+    return [];
+  }
+
+  return MockTestAttemptModel.find({
+    student: studentId,
+    mockTest: mockTestId,
+  })
+    .sort({ completedAt: -1 })
+    .lean()
+    .exec();
+};
+
+const getRetakeLimitMessage = (attemptState) => {
+  if (attemptState?.hasCompletedAttempt) {
+    return "You have already completed this mock test and no retake attempts are available.";
+  }
+
+  return "No attempts are available for this mock test.";
+};
+
+const attachDisplayAttemptNumbers = (attempts = []) => {
+  const fallbackAttemptNumberById = new Map();
+  const attemptsByTestId = attempts.reduce((lookup, attempt) => {
+    const testId = String(attempt.mockTest?._id || attempt.mockTest || "");
+    if (!lookup.has(testId)) {
+      lookup.set(testId, []);
+    }
+
+    lookup.get(testId).push(attempt);
+    return lookup;
+  }, new Map());
+
+  attemptsByTestId.forEach((testAttempts) => {
+    [...testAttempts]
+      .sort(
+        (left, right) =>
+          new Date(left.completedAt || 0).getTime() -
+          new Date(right.completedAt || 0).getTime()
+      )
+      .forEach((attempt, index) => {
+        fallbackAttemptNumberById.set(String(attempt._id), index + 1);
+      });
+  });
+
+  return attempts.map((attempt) => ({
+    ...attempt,
+    attemptNumber:
+      attempt.attemptNumber || fallbackAttemptNumberById.get(String(attempt._id)) || 1,
+  }));
+};
+
 // Get all student-visible mock tests.
 const GetMockTests = async (req, res) => {
   try {
@@ -141,10 +245,11 @@ const GetMockTests = async (req, res) => {
       .lean()
       .exec();
 
-    const visibleTests = mockTests
+    const visibleEntries = mockTests
       .map((mockTest) => {
         const lifecycle = resolveMockTestLifecycle(mockTest);
         return {
+          mockTest,
           lifecycle,
           summary: buildStudentMockTestSummary(mockTest, lifecycle),
         };
@@ -154,8 +259,46 @@ const GetMockTests = async (req, res) => {
           lifecycle.isStudentVisible &&
           matchSearch(summary, req.query.search) &&
           matchCourse(summary, req.query.course)
-      )
-      .map(({ summary }) => summary);
+      );
+    const studentId = req.student?.id;
+    const visibleTestIds = visibleEntries.map(({ mockTest }) => mockTest._id);
+    const attempts = studentId
+      ? await MockTestAttemptModel.find({
+          student: studentId,
+          mockTest: { $in: visibleTestIds },
+        })
+          .sort({ completedAt: -1 })
+          .lean()
+          .exec()
+      : [];
+    const attemptsByTestId = attempts.reduce((lookup, attempt) => {
+      const testId = String(attempt.mockTest || "");
+      if (!lookup.has(testId)) {
+        lookup.set(testId, []);
+      }
+
+      lookup.get(testId).push(attempt);
+      return lookup;
+    }, new Map());
+    const visibleTests = visibleEntries.map(({ mockTest, lifecycle, summary }) => {
+      const attemptState = buildAttemptLimitState({
+        mockTest,
+        lifecycle,
+        attempts: attemptsByTestId.get(String(mockTest._id)) || [],
+      });
+
+      return {
+        ...summary,
+        canStart: attemptState.canStartAttempt,
+        hasCompletedAttempt: attemptState.hasCompletedAttempt,
+        latestAttempt: attemptState.latestAttempt,
+        canRetake: attemptState.canRetake,
+        attemptsRemaining: attemptState.attemptsRemaining,
+        attemptCount: attemptState.attemptCount,
+        maxAttempts: attemptState.maxAttempts,
+        isUnlimitedAttempts: attemptState.isUnlimited,
+      };
+    });
 
     res.json({
       success: true,
@@ -207,6 +350,31 @@ const GetMockTestForExam = async (req, res) => {
       });
     }
 
+    const studentAttempts = await fetchStudentAttemptsForTest(req.student?.id, mockTest._id);
+    const attemptState = buildAttemptLimitState({
+      mockTest,
+      lifecycle,
+      attempts: studentAttempts,
+    });
+
+    if (req.student?.id && !attemptState.canStartAttempt) {
+      return res.status(403).json({
+        success: false,
+        error: getRetakeLimitMessage(attemptState),
+        data: {
+          ...summary,
+          canStart: false,
+          hasCompletedAttempt: attemptState.hasCompletedAttempt,
+          latestAttempt: attemptState.latestAttempt,
+          canRetake: false,
+          attemptsRemaining: attemptState.attemptsRemaining,
+          attemptCount: attemptState.attemptCount,
+          maxAttempts: attemptState.maxAttempts,
+          isUnlimitedAttempts: attemptState.isUnlimited,
+        },
+      });
+    }
+
     const { subjectLookup, questionOverrides } = await buildQuestionSubjectOverrides(mockTest);
 
     const sanitizedQuestions = (mockTest.questions || []).map((question, index) => {
@@ -233,6 +401,14 @@ const GetMockTestForExam = async (req, res) => {
       success: true,
       data: {
         ...summary,
+        canStart: req.student?.id ? attemptState.canStartAttempt : summary.canStart,
+        hasCompletedAttempt: attemptState.hasCompletedAttempt,
+        latestAttempt: attemptState.latestAttempt,
+        canRetake: attemptState.canRetake,
+        attemptsRemaining: attemptState.attemptsRemaining,
+        attemptCount: attemptState.attemptCount,
+        maxAttempts: attemptState.maxAttempts,
+        isUnlimitedAttempts: attemptState.isUnlimited,
         questions: sanitizedQuestions,
       },
     });
@@ -266,6 +442,20 @@ const SubmitMockTest = async (req, res) => {
         error: lifecycle.isUpcoming
           ? "This mock test has not started yet."
           : "This mock test is no longer accessible.",
+      });
+    }
+
+    const previousAttempts = await fetchStudentAttemptsForTest(studentId, mockTest._id);
+    const attemptState = buildAttemptLimitState({
+      mockTest,
+      lifecycle,
+      attempts: previousAttempts,
+    });
+
+    if (!attemptState.canStartAttempt) {
+      return res.status(403).json({
+        success: false,
+        error: getRetakeLimitMessage(attemptState),
       });
     }
 
@@ -324,6 +514,7 @@ const SubmitMockTest = async (req, res) => {
     const attempt = await MockTestAttemptModel.create({
       student: studentId,
       mockTest: id,
+      attemptNumber: previousAttempts.length + 1,
       answers: gradedAnswers,
       totalScore: safeScore,
       totalCorrect,
@@ -360,6 +551,7 @@ const SubmitMockTest = async (req, res) => {
       success: true,
       data: {
         attemptId: attempt._id,
+        attemptNumber: attempt.attemptNumber,
         testTitle: mockTest.title,
         totalMarks: mockTest.totalMarks,
         passMarks: mockTest.passMarks || 0,
@@ -392,7 +584,9 @@ const GetMyAttempts = async (req, res) => {
 
     res.json({
       success: true,
-      data: { attempts },
+      data: {
+        attempts: attachDisplayAttemptNumbers(attempts),
+      },
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -422,6 +616,13 @@ const GetAttemptResult = async (req, res) => {
     }
 
     const mockTest = attempt.mockTest;
+    const displayAttemptNumber =
+      attempt.attemptNumber ||
+      (await MockTestAttemptModel.countDocuments({
+        student: studentId,
+        mockTest: mockTest._id,
+        completedAt: { $lte: attempt.completedAt || new Date() },
+      }));
     const { subjectLookup, questionOverrides } = await buildQuestionSubjectOverrides(mockTest);
 
     const resultQuestions = (mockTest.questions || []).map((question, index) => {
@@ -450,6 +651,7 @@ const GetAttemptResult = async (req, res) => {
       success: true,
       data: {
         attemptId: attempt._id,
+        attemptNumber: displayAttemptNumber || 1,
         testTitle: mockTest.title,
         totalMarks: mockTest.totalMarks,
         passMarks: mockTest.passMarks || 0,

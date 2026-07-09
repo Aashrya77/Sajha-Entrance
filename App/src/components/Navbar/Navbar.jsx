@@ -1,5 +1,23 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import {
+  BookMarked,
+  BookOpen,
+  Briefcase,
+  Building2,
+  CalendarDays,
+  ClipboardList,
+  Edit3,
+  FileText,
+  GraduationCap,
+  Home,
+  Info,
+  Landmark,
+  Newspaper,
+  PhoneCall,
+  Trophy,
+  UserPlus,
+} from 'lucide-react';
 import ProfileDropdown from './ProfileDropdown';
 
 const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0, onLogout }) => {
@@ -103,25 +121,25 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0, onLogout 
   const parentGroup = getParentGroup();
   const hideNoticeBar = location.pathname.startsWith('/mocktest/');
   const primaryLinks = [
-    { to: '/', label: 'HOME', group: 'Home' },
+    { to: '/', label: 'HOME', group: 'Home', icon: Home },
     
-    { to: '/mocktests', label: 'MOCK TEST', group: 'MockTest' },
-    { to: '/past-questions', label: 'PAST QUESTIONS', group: 'PastQuestions' },
-    { to: '/results', label: 'RESULTS', group: 'Results' },
-    { to: '/colleges', label: 'COLLEGES', group: 'College' },
-    { to: '/courses', label: 'COURSES', group: 'Course' },
+    { to: '/mocktests', label: 'MOCK TEST', group: 'MockTest', icon: ClipboardList },
+    { to: '/past-questions', label: 'PAST QUESTIONS', group: 'PastQuestions', icon: FileText },
+    { to: '/results', label: 'RESULTS', group: 'Results', icon: Trophy },
+    { to: '/colleges', label: 'COLLEGES', group: 'College', icon: Building2 },
+    { to: '/courses', label: 'COURSES', group: 'Course', icon: BookOpen },
   ];
   const moreLinks = [
-    { to: '/admission', label: 'ADMISSION', group: 'Admission' },
-    { to: '/news', label: 'NEWS', group: 'News' },
-    { to: '/events', label: 'EVENTS', group: 'Event' },
-    { to: '/scholarships', label: 'SCHOLARSHIPS', group: 'Scholarship' },
-    { to: '/about', label: 'ABOUT', group: 'About' },
-    { to: '/blogs', label: 'BLOGS', group: 'Blogs' },
-    { to: '/services', label: 'SERVICES', group: 'Services' },
-    { to: '/books', label: 'BOOKS', group: 'Books' },
-    {to: '/universities', label: 'UNIVERSITIES', group: 'University' },
-    { to: '/contact', label: 'CONTACT', group: 'Contact' },
+    { to: '/admission', label: 'ADMISSION', group: 'Admission', icon: UserPlus },
+    { to: '/news', label: 'NEWS', group: 'News', icon: Newspaper },
+    { to: '/events', label: 'EVENTS', group: 'Event', icon: CalendarDays },
+    { to: '/scholarships', label: 'SCHOLARSHIPS', group: 'Scholarship', icon: GraduationCap },
+    { to: '/about', label: 'ABOUT', group: 'About', icon: Info },
+    { to: '/blogs', label: 'BLOGS', group: 'Blogs', icon: Edit3 },
+    { to: '/services', label: 'SERVICES', group: 'Services', icon: Briefcase },
+    { to: '/books', label: 'BOOKS', group: 'Books', icon: BookMarked },
+    { to: '/universities', label: 'UNIVERSITIES', group: 'University', icon: Landmark },
+    { to: '/contact', label: 'CONTACT', group: 'Contact', icon: PhoneCall },
   ];
   const isGroupActive = (group) => parentGroup === group;
   const isMoreActive = moreLinks.some((link) => link.group === parentGroup);
@@ -170,7 +188,7 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0, onLogout 
 
   return (
     <>
-      <nav className="navbar navbar-expand-lg fixed-top" id="navbar" style={{backgroundColor: '#fff', boxShadow: '0 2px 4px rgba(0,0,0,0.08)', padding: '19px 0', zIndex: 1030}}>
+      <nav className="navbar navbar-expand-lg fixed-top" id="navbar" style={{backgroundColor: '#fff', boxShadow: '0 2px 4px rgba(0,0,0,0.08)', padding: '19px 0', zIndex: isMenuOpen ? 1300 : 1030}}>
         <div className="container-fluid">
           <div className="navbar-mobile-layout d-lg-none">
             <div className="navbar-mobile-start">
@@ -231,6 +249,19 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0, onLogout 
             className={`collapse navbar-collapse ${isMenuOpen ? 'show' : ''}`}
             id="navbarContent"
           >
+            <div className="mobile-nav-drawer-header d-lg-none">
+              <Link to="/" className="mobile-nav-drawer-brand text-decoration-none" onClick={handleMobileNavClose}>
+                <img src="/img/adminlogo.png" className="mobile-nav-drawer-logo" alt="Sajha Entrance" />
+              </Link>
+              <button
+                type="button"
+                className="mobile-nav-drawer-close"
+                aria-label="Close navigation menu"
+                onClick={handleMobileNavClose}
+              >
+                <i className="fa-solid fa-xmark" aria-hidden="true"></i>
+              </button>
+            </div>
             <ul className="navbar-nav mx-auto mb-2 mb-lg-0">
               {primaryLinks.map((link) => (
                 <li key={link.to} className="nav-item">
@@ -241,7 +272,8 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0, onLogout 
                     aria-current={isGroupActive(link.group) ? 'page' : undefined}
                     style={getPrimaryNavStyle(link.group)}
                   >
-                    {link.label}
+                    <link.icon className="navbar-nav-link__icon" size={19} strokeWidth={2.1} aria-hidden="true" />
+                    <span className="navbar-nav-link__text">{link.label}</span>
                   </Link>
                 </li>
               ))}
@@ -286,7 +318,8 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0, onLogout 
                     aria-current={isGroupActive(link.group) ? 'page' : undefined}
                     style={getPrimaryNavStyle(link.group)}
                   >
-                    {link.label}
+                    <link.icon className="navbar-nav-link__icon" size={19} strokeWidth={2.1} aria-hidden="true" />
+                    <span className="navbar-nav-link__text">{link.label}</span>
                   </Link>
                 </li>
               ))}

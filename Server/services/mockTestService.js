@@ -31,6 +31,18 @@ const ensureStringArray = (value) => {
   return [value];
 };
 
+const parseBooleanValue = (value) => {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    return ["true", "1", "yes", "on"].includes(value.trim().toLowerCase());
+  }
+
+  return Boolean(value);
+};
+
 const toObjectIdString = (value = "") => {
   if (!value) {
     return "";
@@ -151,6 +163,8 @@ const normalizeMockTestPayload = (payload = {}) => {
   const status = String(payload?.status || "draft").trim().toLowerCase();
   const duration = Number(payload?.duration);
   const passMarks = Number(payload?.passMarks);
+  const allowRetake = parseBooleanValue(payload?.allowRetake);
+  const maxAttempts = Number(payload?.maxAttempts);
   const startAt = payload?.startAt ? new Date(payload.startAt) : null;
   const endAt = payload?.endAt ? new Date(payload.endAt) : null;
   const examDate = payload?.examDate ? new Date(payload.examDate) : startAt;
@@ -166,6 +180,10 @@ const normalizeMockTestPayload = (payload = {}) => {
     questionRefs: ensureStringArray(payload?.questionRefs).map(toObjectIdString).filter(Boolean),
     duration: Number.isFinite(duration) ? duration : 0,
     passMarks: Number.isFinite(passMarks) ? passMarks : 0,
+    allowRetake,
+    maxAttempts: Number.isFinite(maxAttempts)
+      ? Math.max(0, Math.floor(maxAttempts))
+      : 1,
     startAt: startAt && !Number.isNaN(startAt.getTime()) ? startAt : null,
     endAt: endAt && !Number.isNaN(endAt.getTime()) ? endAt : null,
     examDate: examDate && !Number.isNaN(examDate.getTime()) ? examDate : null,
@@ -206,6 +224,10 @@ const validateMockTestPayload = ({ payload = {}, selectedQuestions = [] }) => {
     normalizedPayload.passMarks > calculateQuestionTotals(selectedQuestions).totalMarks
   ) {
     errors.passMarks = "Pass marks must be between zero and the selected total marks.";
+  }
+
+  if (normalizedPayload.maxAttempts < 0) {
+    errors.maxAttempts = "Maximum attempts must be one or more, or unlimited.";
   }
 
   if (
@@ -368,7 +390,11 @@ const buildStudentMockTestSummary = (mockTest, lifecycle = resolveMockTestLifecy
   subjectNames: Array.isArray(mockTest?.subjectNames) ? mockTest.subjectNames : [],
   totalMarks: Number(mockTest?.totalMarks || 0) || 0,
   passMarks: Number(mockTest?.passMarks || 0) || 0,
-  duration: Number(mockTest?.duration || 0) || 0,
+    duration: Number(mockTest?.duration || 0) || 0,
+    allowRetake: Boolean(mockTest?.allowRetake),
+    maxAttempts: Number.isFinite(Number(mockTest?.maxAttempts))
+      ? Math.max(0, Math.floor(Number(mockTest.maxAttempts)))
+      : 1,
   totalQuestions:
     Number(mockTest?.questionCount || 0) || (Array.isArray(mockTest?.questions) ? mockTest.questions.length : 0),
   status: lifecycle.rawStatus,
@@ -470,6 +496,10 @@ const buildSchedulerWorkspacePayload = async () => {
       questionRefs: ensureStringArray(test.questionRefs).map(toObjectIdString),
       subjectRefs: ensureStringArray(test.subjectRefs).map(toObjectIdString),
       courseRef: toObjectIdString(test.courseRef),
+      allowRetake: Boolean(test.allowRetake),
+      maxAttempts: Number.isFinite(Number(test.maxAttempts))
+        ? Math.max(0, Math.floor(Number(test.maxAttempts)))
+        : 1,
       manualStatusOverride: Boolean(test.manualStatusOverride),
     })),
   };

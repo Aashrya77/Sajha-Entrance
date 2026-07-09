@@ -126,6 +126,8 @@ const getEmptyMockTestForm = () => ({
   endAt: "",
   duration: 60,
   passMarks: 0,
+  allowRetake: false,
+  maxAttempts: 1,
 });
 
 const formatDateTimeInput = (value) => {
@@ -339,6 +341,10 @@ export default function MockTestWorkspace() {
       endAt: formatDateTimeInput(test.endAt),
       duration: Number(test.duration || 60) || 60,
       passMarks: Number(test.passMarks || 0) || 0,
+      allowRetake: Boolean(test.allowRetake),
+      maxAttempts: Number.isFinite(Number(test.maxAttempts))
+        ? Math.max(0, Math.floor(Number(test.maxAttempts)))
+        : 1,
     });
     setActiveQuestionId("");
     setQuestionForm(getEmptyQuestionForm());
@@ -1404,6 +1410,52 @@ export default function MockTestWorkspace() {
               onChange={(event) => updateForm({ passMarks: Number(event.target.value) })}
               style={{ ...inputStyle, marginTop: 0 }}
             />
+          </Box>
+
+          <Box style={fieldBoxStyle}>
+            <Label style={fieldLabelStyle}>Allow Retake</Label>
+            <label
+              style={{
+                ...inputStyle,
+                marginTop: 0,
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                cursor: "pointer",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={Boolean(form.allowRetake)}
+                onChange={(event) =>
+                  updateForm({
+                    allowRetake: event.target.checked,
+                    maxAttempts: event.target.checked ? form.maxAttempts || 2 : 1,
+                  })
+                }
+              />
+              <span>{form.allowRetake ? "Yes" : "No"}</span>
+            </label>
+          </Box>
+
+          <Box style={fieldBoxStyle}>
+            <Label style={fieldLabelStyle}>Maximum Attempts</Label>
+            <select
+              value={Number(form.maxAttempts ?? 1)}
+              onChange={(event) => updateForm({ maxAttempts: Number(event.target.value) })}
+              disabled={!form.allowRetake}
+              style={{
+                ...inputStyle,
+                marginTop: 0,
+                background: form.allowRetake ? "#ffffff" : "#f8fafc",
+                color: form.allowRetake ? "#111827" : "#94a3b8",
+              }}
+            >
+              <option value={1}>1 attempt</option>
+              <option value={2}>2 attempts</option>
+              <option value={3}>3 attempts</option>
+              <option value={0}>Unlimited</option>
+            </select>
           </Box>
 
           <Box style={fieldBoxStyle}>

@@ -1643,6 +1643,30 @@ function rankResultRows(results, subjectOrder = []) {
   });
 }
 
+async function resolveResultRank(result, exam) {
+  const storedRank = Number(result?.rank);
+  if (Number.isInteger(storedRank) && storedRank > 0) {
+    return storedRank;
+  }
+
+  if (!result?._id || !exam?._id) {
+    return null;
+  }
+
+  const results = await StudentResult.find({
+    exam: exam._id,
+    course: result.course || exam.course,
+  }).lean();
+  const subjectOrder = getActualSubjectOrder(results, exam);
+  const rankedRows = rankResultRows(results, subjectOrder);
+  const matchedResult = rankedRows.find(
+    (rankedResult) => String(rankedResult._id) === String(result._id)
+  );
+  const resolvedRank = Number(matchedResult?.rank);
+
+  return Number.isInteger(resolvedRank) && resolvedRank > 0 ? resolvedRank : null;
+}
+
 async function recalculateExamRanks(examId) {
   const exam = await ResultExam.findById(examId).lean();
   if (!exam) {
@@ -1864,12 +1888,14 @@ async function getLatestPublishedExamForCourse(course) {
     .then((exam) => (exam ? sanitizeResultExamRecord(exam) : null));
 }
 
-function mapResultForPublic(result, exam) {
+async function mapResultForPublic(result, exam) {
   const percentage = getResultPercentage(result);
   const resultStatus = getOverallResultStatus(percentage);
+  const rank = await resolveResultRank(result, exam);
 
   return {
     id: result._id,
+    rank,
     studentName: result.studentName,
     symbolNumber: result.symbolNumber,
     course: result.course,

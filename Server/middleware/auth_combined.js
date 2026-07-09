@@ -4,14 +4,83 @@ import Student from "../models/Student.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
+const getRequestToken = (req) => {
+  const authHeader = req.headers.authorization || req.headers.Authorization;
+  const headerToken = authHeader?.startsWith("Bearer ")
+    ? authHeader.slice(7).trim()
+    : "";
+  const cookieToken = req.cookies?.studentToken;
+
+  return {
+    authHeader,
+    token: headerToken || cookieToken || req.headers["x-auth-token"],
+  };
+};
+
+const attachStudentFromToken = async (req, token, { silent = false } = {}) => {
+  try {
+    const mongoUser = jwt.verify(token, JWT_SECRET);
+
+    if (!silent) {
+      console.log("Mongo JWT Success");
+    }
+
+    req.student = mongoUser;
+    req.authType = "mongo";
+
+    return true;
+  } catch (e) {
+    if (!silent) {
+      console.log("Mongo JWT Error:", e.message);
+    }
+  }
+
+  try {
+    const firebaseUser = await admin.auth().verifyIdToken(token);
+
+    if (!silent) {
+      console.log("Firebase JWT Success");
+      console.log("Firebase Email:", firebaseUser.email);
+    }
+
+    let student = await Student.findOne({
+      email: firebaseUser.email,
+    });
+
+    if (!student) {
+      student = await Student.create({
+        email: firebaseUser.email,
+        password: Math.random().toString(36),
+        name: firebaseUser.name || firebaseUser.email.split("@")[0],
+        course: "BSc.CSIT",
+      });
+
+      if (!silent) {
+        console.log("New Firebase student created:", student.email);
+      }
+    }
+
+    req.student = {
+      id: student._id,
+      email: student.email,
+      studentId: student.studentId,
+    };
+
+    req.authType = "firebase";
+
+    return true;
+  } catch (e) {
+    if (!silent) {
+      console.log("Firebase JWT Error:", e.message);
+    }
+  }
+
+  return false;
+};
+
 export const authenticateAny = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization || req.headers.Authorization;
-    const headerToken = authHeader?.startsWith("Bearer ")
-      ? authHeader.slice(7).trim()
-      : "";
-    const cookieToken = req.cookies?.studentToken;
-    const token = headerToken || cookieToken || req.headers["x-auth-token"];
+    const { authHeader, token } = getRequestToken(req);
 
     console.log("AUTH HEADER:", authHeader);
 
@@ -24,58 +93,8 @@ export const authenticateAny = async (req, res, next) => {
 
     console.log("TOKEN RECEIVED:", token.substring(0, 30));
 
-    try {
-      const mongoUser = jwt.verify(token, JWT_SECRET);
-
-      console.log("Mongo JWT Success");
-
-      req.student = mongoUser;
-      req.authType = "mongo";
-
+    if (await attachStudentFromToken(req, token)) {
       return next();
-    } catch (e) {
-      console.log("Mongo JWT Error:", e.message);
-    }
-
-    try {
-      const firebaseUser =
-        await admin.auth().verifyIdToken(token);
-
-      console.log("Firebase JWT Success");
-      console.log("Firebase Email:", firebaseUser.email);
-
-      let student = await Student.findOne({
-        email: firebaseUser.email,
-      });
-
-      if (!student) {
-        student = await Student.create({
-          email: firebaseUser.email,
-          password: Math.random().toString(36),
-          name:
-            firebaseUser.name ||
-            firebaseUser.email.split("@")[0],
-          course: "BSc.CSIT",
-        });
-
-        console.log(
-          "New Firebase student created:",
-          student.email
-        );
-      }
-
-      req.student = {
-        id: student._id,
-        email: student.email,
-        studentId: student.studentId,
-      };
-
-      req.authType = "firebase";
-
-      console.log("CALLING NEXT()");
-      return next();
-    } catch (e) {
-      console.log("Firebase JWT Error:", e.message);
     }
 
     console.log("RETURNING INVALID TOKEN");
@@ -92,4 +111,19 @@ export const authenticateAny = async (req, res, next) => {
       message: e.message,
     });
   }
+};
+
+export const optionalAuthenticateAny = async (req, _res, next) => {
+  try {
+    const { token } = getRequestToken(req);
+
+    if (token) {
+      await attachStudentFromToken(req, token, { silent: true });
+    }
+  } catch (_error) {
+    req.student = null;
+    req.authType = null;
+  }
+
+  return next();
 };

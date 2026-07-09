@@ -259,6 +259,72 @@
   letter-spacing: 0.5px;
 }
 
+/* Hero Quick Actions */
+.hero-quick-actions {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+  flex-wrap: wrap;
+}
+
+.hero-quick-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.hero-quick-action:hover {
+  transform: translateY(-1px);
+  text-decoration: none;
+}
+
+.hero-quick-action--dashboard {
+  color: var(--sajha-orange);
+  background: rgba(255, 116, 34, 0.08);
+  border: 1px solid rgba(255, 116, 34, 0.32);
+}
+
+.hero-quick-action--dashboard:hover {
+  color: var(--sajha-orange);
+  background: rgba(255, 116, 34, 0.13);
+  border-color: var(--sajha-orange);
+  box-shadow: 0 10px 22px rgba(255, 116, 34, 0.12);
+}
+
+.hero-quick-action--mocktest {
+  color: var(--white) !important;
+  background: var(--sajha-orange);
+  border: 1px solid var(--sajha-orange);
+  box-shadow: 0 10px 20px rgba(255, 116, 34, 0.18);
+}
+
+.hero-quick-action--mocktest:hover {
+  color: var(--white) !important;
+  background: var(--sajha-orange);
+  border-color: var(--sajha-orange);
+  box-shadow: 0 12px 24px rgba(255, 116, 34, 0.22);
+}
+
+.hero-quick-action--mocktest:hover span,
+.hero-quick-action--mocktest:hover svg {
+  color: var(--white) !important;
+}
+
+.hero-quick-action__icon {
+  flex: 0 0 auto;
+}
+
 /* Ads Column */
 .ads-column {
   flex: 0 0 min(320px, 28%);
@@ -584,6 +650,17 @@
     gap: 10px;
   }
 
+  .hero-quick-actions {
+    margin-top: 16px;
+    gap: 10px;
+  }
+
+  .hero-quick-action {
+    min-height: 40px;
+    padding: 9px 16px;
+    font-size: 0.86rem;
+  }
+
   .stat h3 {
     font-size: 1.4rem;
   }
@@ -750,6 +827,19 @@
 
   .stats-bar {
     display: none;
+  }
+
+  .hero-quick-actions {
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .hero-quick-action {
+    width: 100%;
+    max-width: 320px;
+    min-height: 42px;
+    border-radius: 12px;
   }
 
   .ads-column {

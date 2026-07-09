@@ -1,5 +1,5 @@
   import express from "express";
-  import { authenticateAny } from "../middleware/auth_combined.js";
+  import { authenticateAny, optionalAuthenticateAny } from "../middleware/auth_combined.js";
   import {
     GetMockTests,
     GetMockTestForExam,
@@ -11,10 +11,10 @@
   const Router = express.Router();
 
   // Public - list all mock tests
-  Router.get("/mocktests", GetMockTests);
+  Router.get("/mocktests", optionalAuthenticateAny, GetMockTests);
 
   // Public - get test for exam (questions without answers)
-  Router.get("/mocktest/:id", GetMockTestForExam);
+  Router.get("/mocktest/:id", optionalAuthenticateAny, GetMockTestForExam);
 
   // Protected - submit test answers
   Router.post("/mocktest/:id/submit", authenticateAny, SubmitMockTest);

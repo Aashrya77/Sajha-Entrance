@@ -14,6 +14,8 @@ const MockTestAdminResource = {
       "endAt",
       "questionCount",
       "totalMarks",
+      "allowRetake",
+      "maxAttempts",
     ],
     filterProperties: ["title", "courseName", "status", "startAt", "endAt"],
     showProperties: [
@@ -28,6 +30,8 @@ const MockTestAdminResource = {
       "totalMarks",
       "passMarks",
       "duration",
+      "allowRetake",
+      "maxAttempts",
       "startAt",
       "endAt",
       "publishedAt",
@@ -87,6 +91,14 @@ const MockTestAdminResource = {
       },
       duration: {
         isVisible: { list: false, show: true, edit: false, filter: false },
+      },
+      allowRetake: {
+        label: "Allow Retake",
+        isVisible: { list: true, show: true, edit: false, filter: true },
+      },
+      maxAttempts: {
+        label: "Maximum Attempts",
+        isVisible: { list: true, show: true, edit: false, filter: false },
       },
       startAt: {
         isVisible: { list: true, show: true, edit: false, filter: true },

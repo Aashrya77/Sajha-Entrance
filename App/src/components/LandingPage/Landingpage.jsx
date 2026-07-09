@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import './LandingPageResponsive.css';
-import { Search, Building2, MapPin, GraduationCap, BookOpen, X, Loader2 } from 'lucide-react';
+import { Search, Building2, MapPin, GraduationCap, BookOpen, X, Loader2, LayoutDashboard, PlayCircle } from 'lucide-react';
 import { collegeAPI, universityAPI, courseAPI } from '../../api/services';
 import { getImageFieldUrl } from '../../utils/imageHelper';
 
@@ -292,6 +292,17 @@ const LandingPage = ({ landingAds = [] }) => {
                   <h3><Counter end={50} />k+</h3>
                   <p>Students Helped</p>
                 </div>
+            </div>
+
+            <div className="hero-quick-actions" aria-label="Quick actions">
+              <Link to="/student/profile" className="hero-quick-action hero-quick-action--dashboard">
+                <LayoutDashboard size={18} className="hero-quick-action__icon" aria-hidden="true" />
+                <span>Student Dashboard</span>
+              </Link>
+              <Link to="/mocktests" className="hero-quick-action hero-quick-action--mocktest">
+                <PlayCircle size={18} className="hero-quick-action__icon" aria-hidden="true" />
+                <span>Start Online Mocktest</span>
+              </Link>
             </div>
 
             {/* Search Results Section */}

@@ -22,6 +22,13 @@ const formatLongDate = (value) => {
 
 const normalizeRollNumber = (value = "") => String(value || "").trim();
 
+const formatResultRank = (rank) => {
+  const numericRank = Number(rank);
+  return Number.isInteger(numericRank) && numericRank > 0
+    ? `#${numericRank}`
+    : "Not Available";
+};
+
 const isRequestCanceled = (error) =>
   error?.code === "ERR_CANCELED" || error?.name === "CanceledError";
 
@@ -78,6 +85,10 @@ const IndividualResultView = ({ result }) => {
               <span className="result-meta-item">
                 <i className="fa-solid fa-calendar" aria-hidden="true"></i>
                 Date: <strong>{formatLongDate(result.examDate)}</strong>
+              </span>
+              <span className="result-meta-item">
+                <i className="fa-solid fa-ranking-star" aria-hidden="true"></i>
+                Mock Test Rank: <strong>{formatResultRank(result.rank)}</strong>
               </span>
             </div>
           </div>
@@ -139,6 +150,10 @@ const IndividualResultView = ({ result }) => {
           <div className="summary-item">
             <span className="summary-label">Percentage</span>
             <span className="summary-value">{result.percentage}%</span>
+          </div>
+          <div className="summary-item">
+            <span className="summary-label">Rank</span>
+            <span className="summary-value">{formatResultRank(result.rank)}</span>
           </div>
           <div className="summary-item">
             <span className="summary-label">Result</span>

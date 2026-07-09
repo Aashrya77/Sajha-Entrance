@@ -15,6 +15,29 @@ const formatDateTime = (value) =>
       })
     : "Not scheduled";
 
+const formatDate = (value) =>
+  value
+    ? new Date(value).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      })
+    : "Not specified";
+
+const formatDuration = (minutes) => {
+  const numericMinutes = Number(minutes || 0);
+  return numericMinutes > 0 ? `${numericMinutes} mins` : "Not specified";
+};
+
+const formatCount = (value, singular, plural) => {
+  const numericValue = Number(value || 0);
+  if (numericValue <= 0) {
+    return "Not specified";
+  }
+
+  return `${numericValue} ${numericValue === 1 ? singular : plural}`;
+};
+
 const formatCountdown = (milliseconds) => {
   if (milliseconds === null || milliseconds === undefined) {
     return "";
@@ -44,8 +67,22 @@ const formatCountdown = (milliseconds) => {
 const getAvailabilityMeta = (test, now) => {
   const startAt = test?.startAt ? new Date(test.startAt) : null;
   const endAt = test?.endAt ? new Date(test.endAt) : null;
+  const completedAt = test?.latestAttempt?.completedAt
+    ? new Date(test.latestAttempt.completedAt)
+    : null;
   const availabilityStatus = test?.availabilityStatus || "scheduled";
   const normalizedAvailabilityStatus = String(availabilityStatus).toLowerCase();
+
+  if (test?.hasCompletedAttempt) {
+    return {
+      tone: "completed",
+      label: "Completed",
+      helper:
+        completedAt && !Number.isNaN(completedAt.getTime())
+          ? `Completed on ${formatDateTime(completedAt)}`
+          : "Completed",
+    };
+  }
 
   if (normalizedAvailabilityStatus === "live") {
     return {
@@ -57,11 +94,11 @@ const getAvailabilityMeta = (test, now) => {
 
   if (normalizedAvailabilityStatus === "upcoming") {
     return {
-      tone: "warning",
-      label: "Scheduled",
+      tone: "open",
+      label: "Open",
       helper: startAt
-        ? `Starts in ${formatCountdown(startAt.getTime() - now.getTime())}`
-        : "Starts soon",
+        ? `Starts ${formatDateTime(startAt)}`
+        : "Opening soon",
     };
   }
 
@@ -80,20 +117,49 @@ const getAvailabilityMeta = (test, now) => {
   };
 };
 
-const getAvailabilityIconClass = (tone) => {
-  if (tone === "live") {
-    return "fa-circle mock-tests-page__live-dot";
+const buildMockTestActions = (test, isAuthenticated) => {
+  const canStart = test.canStart && test.availabilityStatus === "live";
+  const examHref = isAuthenticated ? `/mocktest/${test._id}` : "/student/login";
+
+  if (test.hasCompletedAttempt) {
+    const resultHref = test.latestAttempt?.id
+      ? `/mocktest-result/${test.latestAttempt.id}`
+      : "/mocktest-results";
+    const actions = [
+      {
+        type: "link",
+        label: "View Result",
+        href: isAuthenticated ? resultHref : "/student/login",
+        modifier: "secondary",
+      },
+    ];
+
+    if (test.canRetake) {
+      actions.push({
+        type: "link",
+        label: "Retake Test",
+        href: examHref,
+        modifier: "primary",
+      });
+    }
+
+    return actions;
   }
 
-  if (tone === "completed") {
-    return "fa-circle-check";
+  if (canStart) {
+    return [{
+      type: "link",
+      label: "Start Test",
+      href: examHref,
+      modifier: "primary",
+    }];
   }
 
-  if (tone === "warning") {
-    return "fa-clock";
-  }
-
-  return "fa-circle-info";
+  return [{
+    type: "button",
+    label: "Unavailable",
+    modifier: "disabled",
+  }];
 };
 
 const MockTests = ({ isAuthenticated }) => {
@@ -246,8 +312,8 @@ const MockTests = ({ isAuthenticated }) => {
               <div className="mock-tests-page__grid">
                 {filteredTests.map((test) => {
                   const availability = getAvailabilityMeta(test, now);
-                  const canStart = test.canStart && test.availabilityStatus === "live";
-                  const actionHref = isAuthenticated ? `/mocktest/${test._id}` : "/student/login";
+                  const actions = buildMockTestActions(test, isAuthenticated);
+                  const examDate = test.examDate || test.startAt || test.publishedAt;
 
                   return (
                     <div
@@ -255,113 +321,83 @@ const MockTests = ({ isAuthenticated }) => {
                       className="mock-tests-page__card"
                     >
                       <div className="mock-tests-page__card-head">
+                        <span className="mock-tests-page__exam-icon" aria-hidden="true">
+                          <i className="fa-regular fa-file-lines"></i>
+                        </span>
+
                         <div className="mock-tests-page__card-title-group">
-                          <h3 className="mock-tests-page__card-title">
-                            {test.title}
-                          </h3>
-                          <div className="mock-tests-page__badge-row">
-                            <span className={`mock-tests-page__badge mock-tests-page__badge--status mock-tests-page__badge--${availability.tone}`}>
-                              <i className={`fa-solid ${getAvailabilityIconClass(availability.tone)}`} aria-hidden="true"></i>
-                              {availability.label}
-                            </span>
-                            <span className="mock-tests-page__badge mock-tests-page__badge--questions">
-                              <i className="fa-solid fa-file-lines" aria-hidden="true"></i>
-                              {test.totalQuestions} questions
-                            </span>
-                          </div>
+                          <h3 className="mock-tests-page__card-title">{test.title}</h3>
+                          <p className="mock-tests-page__card-subtitle">
+                            {test.courseName || test.course || "Entrance Preparation"}
+                          </p>
                         </div>
 
-                        <span className="mock-tests-page__marks">
-                          Total marks: {test.totalMarks}
+                        <span className={`mock-tests-page__badge mock-tests-page__badge--${availability.tone}`}>
+                          {availability.label}
                         </span>
                       </div>
 
-                      {test.description ? (
-                        <p className="mock-tests-page__description">
-                          {test.description.replace(/<[^>]*>/g, " ").trim()}
-                        </p>
-                      ) : null}
-
                       <div className="mock-tests-page__meta-grid">
-                        <div className="mock-tests-page__meta-item mock-tests-page__meta-item--course">
-                          <span className="mock-tests-page__meta-icon">
-                            <i className="fa-solid fa-book-open" aria-hidden="true"></i>
-                          </span>
-                          <span className="mock-tests-page__meta-copy">
-                            <strong>Course</strong>
-                            <span>{test.courseName || test.course || "General"}</span>
-                          </span>
-                        </div>
-                        <div className="mock-tests-page__meta-item mock-tests-page__meta-item--subjects">
-                          <span className="mock-tests-page__meta-icon">
-                            <i className="fa-solid fa-clipboard-list" aria-hidden="true"></i>
-                          </span>
-                          <span className="mock-tests-page__meta-copy">
-                            <strong>Subjects</strong>
-                            <span>{test.subjectNames?.length ? test.subjectNames.join(", ") : "Mixed"}</span>
-                          </span>
-                        </div>
-                        <div className="mock-tests-page__meta-item mock-tests-page__meta-item--duration">
-                          <span className="mock-tests-page__meta-icon">
-                            <i className="fa-solid fa-clock" aria-hidden="true"></i>
-                          </span>
-                          <span className="mock-tests-page__meta-copy">
-                            <strong>Duration</strong>
-                            <span>{test.duration} mins</span>
-                          </span>
-                        </div>
-                        <div className="mock-tests-page__meta-item mock-tests-page__meta-item--pass">
-                          <span className="mock-tests-page__meta-icon">
-                            <i className="fa-solid fa-award" aria-hidden="true"></i>
-                          </span>
-                          <span className="mock-tests-page__meta-copy">
-                            <strong>Pass Marks</strong>
-                            <span>{test.passMarks || 0}</span>
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="mock-tests-page__date-grid">
-                        <div className="mock-tests-page__date-item">
-                          <strong>
-                            <i className="fa-solid fa-calendar-days" aria-hidden="true"></i>
-                            Start
-                          </strong>
-                          <span>{formatDateTime(test.startAt)}</span>
-                        </div>
-                        <div className="mock-tests-page__date-item">
-                          <strong>
-                            <i className="fa-solid fa-calendar-days" aria-hidden="true"></i>
-                            End
-                          </strong>
-                          <span>{formatDateTime(test.endAt)}</span>
-                        </div>
+                        {[
+                          {
+                            iconClass: "fa-regular fa-calendar",
+                            label: "Date",
+                            value: formatDate(examDate),
+                          },
+                          {
+                            iconClass: "fa-regular fa-clock",
+                            label: "Duration",
+                            value: formatDuration(test.duration),
+                          },
+                          {
+                            iconClass: "fa-regular fa-file-lines",
+                            label: "Questions",
+                            value: formatCount(test.totalQuestions, "Question", "Questions"),
+                          },
+                          {
+                            iconClass: "fa-solid fa-trophy",
+                            label: "Marks",
+                            value: formatCount(test.totalMarks, "Mark", "Marks"),
+                          },
+                        ].map((item) => (
+                          <div className="mock-tests-page__meta-item" key={item.label}>
+                            <i className={item.iconClass} aria-hidden="true"></i>
+                            <span className="mock-tests-page__meta-copy">
+                              <strong>{item.label}</strong>
+                              <span>{item.value}</span>
+                            </span>
+                          </div>
+                        ))}
                       </div>
 
                       <div className="mock-tests-page__card-footer">
                         <div className="mock-tests-page__helper">
-                          <i className="fa-solid fa-circle-info" aria-hidden="true"></i>
+                          <i className="fa-regular fa-clock" aria-hidden="true"></i>
                           {availability.helper}
                         </div>
 
-                        {canStart ? (
-                          <Link
-                            to={actionHref}
-                            className="mock-tests-page__action mock-tests-page__action--primary"
-                          >
-                            <i className="fa-solid fa-play" aria-hidden="true"></i>
-                            Start Test
-                          </Link>
-                        ) : (
-                          <button
-                            type="button"
-                            disabled
-                            className="mock-tests-page__action mock-tests-page__action--disabled"
-                          >
-                            <i className="fa-solid fa-lock" aria-hidden="true"></i>
-                            {availability.label === "Scheduled" ? "Starts Soon" : "Unavailable"}
-                          </button>
-                        )}
+                        <div className="mock-tests-page__actions">
+                          {actions.map((action) =>
+                            action.type === "link" ? (
+                              <Link
+                                key={action.label}
+                                to={action.href}
+                                className={`mock-tests-page__action mock-tests-page__action--${action.modifier}`}
+                              >
+                                {action.label}
+                              </Link>
+                            ) : (
+                              <button
+                                key={action.label}
+                                type="button"
+                                disabled
+                                className="mock-tests-page__action mock-tests-page__action--disabled"
+                              >
+                                {action.label}
+                              </button>
+                            )
+                          )}
+                        </div>
                       </div>
                     </div>
                   );

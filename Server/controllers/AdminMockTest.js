@@ -774,6 +774,10 @@ const upsertMockTest = async (req, res, existingTest = null) => {
     questionCount: totals.questionCount,
     passMarks: normalizedPayload.passMarks,
     duration: normalizedPayload.duration,
+    allowRetake: normalizedPayload.allowRetake,
+    maxAttempts: normalizedPayload.allowRetake
+      ? normalizedPayload.maxAttempts
+      : 1,
     examDate: normalizedPayload.examDate || normalizedPayload.startAt,
     startAt: normalizedPayload.startAt,
     endAt: normalizedPayload.endAt,

@@ -96,6 +96,9 @@ const MockTestResults = () => {
                       <h5 style={{ fontWeight: 600, color: '#1a365d', margin: '0 0 4px 0', fontSize: '15px' }}>
                         {attempt.mockTest?.title || 'Mock Test'}
                       </h5>
+                      <div style={{ fontSize: '12px', color: '#ff6b35', fontWeight: 700, marginBottom: '6px' }}>
+                        Attempt {attempt.attemptNumber || 1}
+                      </div>
                       <div style={{ display: 'flex', gap: '16px', fontSize: '13px', color: '#888', flexWrap: 'wrap' }}>
                         <span><i className="fa-solid fa-check-circle me-1" style={{ color: '#16a34a' }}></i>{attempt.totalCorrect} correct</span>
                         <span><i className="fa-solid fa-xmark me-1" style={{ color: '#ef4444' }}></i>{attempt.totalWrong} wrong</span>

@@ -98,6 +98,22 @@ const MockTestResult = () => {
           <h2 style={{ fontWeight: 700, color: "#1a365d", marginBottom: "4px" }}>
             {result.testTitle}
           </h2>
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "5px 12px",
+              borderRadius: "999px",
+              background: "#fff7ed",
+              color: "#c2410c",
+              fontSize: "12px",
+              fontWeight: 700,
+              marginBottom: "12px",
+            }}
+          >
+            Attempt {result.attemptNumber || 1}
+          </div>
           <p
             style={{
               color: isPassed ? "#16a34a" : "#ef4444",
