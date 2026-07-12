@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { collegeAPI, courseAPI } from '../../api/services';
 import { getImageFieldUrl } from '../../utils/imageHelper';
 import Loader from '../../components/Loader/Loader';
+import PageAdvertisements from '../../components/PageAdvertisements/PageAdvertisements';
 
 const Colleges = () => {
   const [colleges, setColleges] = useState([]);
@@ -78,7 +79,7 @@ const Colleges = () => {
       setLoading(false);
       setLoadingMore(false);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      // The page already renders its request failure state.
       setLoading(false);
       setLoadingMore(false);
     }
@@ -316,6 +317,10 @@ const Colleges = () => {
           </div>
         </div>
       </section>
+
+      <div className="container">
+        <PageAdvertisements page="colleges" />
+      </div>
 
     </div>
   );

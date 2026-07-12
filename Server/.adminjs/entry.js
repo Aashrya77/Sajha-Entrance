@@ -51,6 +51,8 @@ import AdminResourceSearch from '../admin/components/AdminResourceSearch'
 AdminJS.UserComponents.AdminResourceSearch = AdminResourceSearch
 import ImageUpload from '../admin/components/ImageUpload'
 AdminJS.UserComponents.ImageUpload = ImageUpload
+import ImagePreview from '../admin/components/ImagePreview'
+AdminJS.UserComponents.ImagePreview = ImagePreview
 import Login from '../admin/components/Login'
 AdminJS.UserComponents.Login = Login
 import LoggedIn from '../admin/components/LoggedIn'
@@ -63,5 +65,5 @@ import UploadEditComponent from '../node_modules/@adminjs/upload/build/features/
 AdminJS.UserComponents.UploadEditComponent = UploadEditComponent
 import UploadListComponent from '../node_modules/@adminjs/upload/build/features/upload-file/components/UploadListComponent'
 AdminJS.UserComponents.UploadListComponent = UploadListComponent
-import UploadShowComponent from '../node_modules/@adminjs/upload/build/features/upload-file/components/UploadShowComponent'
+import UploadShowComponent from '../admin/components/CompactUploadShow'
 AdminJS.UserComponents.UploadShowComponent = UploadShowComponent

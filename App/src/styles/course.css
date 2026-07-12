@@ -969,12 +969,15 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
+  text-decoration: none;
 }
 
-.cd-enroll-btn:hover {
+.cd-enroll-btn:hover,
+.cd-enroll-btn:focus-visible {
   background: #4fa338;
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(96, 187, 70, 0.35);
+  color: #fff;
 }
 
 .cd-secure-note {

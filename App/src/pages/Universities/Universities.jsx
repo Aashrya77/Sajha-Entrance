@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { universityAPI } from '../../api/services';
 import { getImageFieldUrl } from '../../utils/imageHelper';
 import Loader from '../../components/Loader/Loader';
+import PageAdvertisements from '../../components/PageAdvertisements/PageAdvertisements';
 import InquiryButton from '../../components/InquiryForm/InquiryButton';
 
 const UNI_GRADIENTS = {
@@ -39,7 +40,7 @@ const Universities = () => {
       }
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching universities:', error);
+      // The page already renders its request failure state.
       setLoading(false);
     }
   };
@@ -268,6 +269,10 @@ const Universities = () => {
             </div>
           )}
         </div>
+      </div>
+
+      <div className="container-fluid">
+        <PageAdvertisements page="universities" />
       </div>
 
       {/* CTA Section */}

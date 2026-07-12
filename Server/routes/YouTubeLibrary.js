@@ -9,7 +9,10 @@ import {
   upsertAdminYouTubeLibraryConfig,
 } from "../controllers/YouTubeLibrary.js";
 import { authenticateToken } from "../middleware/auth.js";
-import { requireAdminPermission } from "../admin/utils/admin-auth.js";
+import {
+  refreshAdminSession,
+  requireAdminPermission,
+} from "../admin/utils/admin-auth.js";
 import { getAdminSessionMiddleware } from "../admin/utils/admin-session.js";
 
 const Router = express.Router();
@@ -18,6 +21,7 @@ const adminSessionMiddleware = (req, res, next) => getAdminSessionMiddleware()(r
 Router.get(
   "/config",
   adminSessionMiddleware,
+  refreshAdminSession,
   requireAdminPermission("youtube_library", "view"),
   getAdminYouTubeLibraryConfig
 );
@@ -25,6 +29,7 @@ Router.get(
 Router.post(
   "/config",
   adminSessionMiddleware,
+  refreshAdminSession,
   requireAdminPermission("youtube_library", "edit"),
   upsertAdminYouTubeLibraryConfig
 );
@@ -32,6 +37,7 @@ Router.post(
 Router.post(
   "/sync",
   adminSessionMiddleware,
+  refreshAdminSession,
   requireAdminPermission("youtube_library", "edit"),
   runAdminYouTubeLibrarySync
 );

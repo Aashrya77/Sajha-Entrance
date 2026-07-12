@@ -184,6 +184,36 @@ const requireAdminPermission = (resourceKey, action = "view") => (req, res, next
   return next();
 };
 
+// AdminJS keeps the authenticated user in the session. Refresh that snapshot on
+// protected requests so a role, permission, or active-status update made by a
+// super admin is enforced immediately instead of waiting for the next login.
+const refreshAdminSession = async (req, _res, next) => {
+  const sessionAdmin = req.session?.adminUser;
+
+  if (!sessionAdmin?.id) {
+    return next();
+  }
+
+  try {
+    const adminUser = await AdminUserModel.findById(sessionAdmin.id);
+
+    if (!adminUser || !adminUser.isActive) {
+      delete req.session.adminUser;
+
+      if (req.session?.destroy) {
+        return req.session.destroy(() => next());
+      }
+
+      return next();
+    }
+
+    req.session.adminUser = toCurrentAdmin(adminUser);
+    return next();
+  } catch (error) {
+    return next(error);
+  }
+};
+
 export {
   authenticateAdminUser,
   ensureAdminUserSeed,
@@ -192,6 +222,7 @@ export {
   hasPermission,
   normalizeEmail,
   requireAdminPermission,
+  refreshAdminSession,
   syncAdminUserPermissions,
   syncAllAdminUserPermissions,
   toCurrentAdmin,

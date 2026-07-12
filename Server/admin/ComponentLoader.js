@@ -108,6 +108,7 @@ const Components = {
     path.join(__dirname, "./components/AdminResourceSearch")
   ),
   ImageUpload: componentLoader.add("ImageUpload", path.join(__dirname, "./components/ImageUpload")),
+  ImagePreview: componentLoader.add("ImagePreview", path.join(__dirname, "./components/ImagePreview")),
   Login: componentLoader.override("Login", path.join(__dirname, "./components/Login")),
   LoggedIn: componentLoader.override("LoggedIn", path.join(__dirname, "./components/LoggedIn")),
   TopBar: componentLoader.override("TopBar", path.join(__dirname, "./components/TopBar")),

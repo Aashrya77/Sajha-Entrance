@@ -42,7 +42,11 @@ const fieldBoxStyle = {
 };
 
 const fileInputStyle = {
+  display: "block",
   width: "100%",
+  maxWidth: "100%",
+  minWidth: 0,
+  boxSizing: "border-box",
   marginTop: "8px",
   borderRadius: "14px",
   border: "1px dashed #cbd5e1",
@@ -128,6 +132,8 @@ const getEmptyMockTestForm = () => ({
   passMarks: 0,
   allowRetake: false,
   maxAttempts: 1,
+  shuffleQuestions: false,
+  shuffleOptions: false,
 });
 
 const formatDateTimeInput = (value) => {
@@ -342,6 +348,8 @@ export default function MockTestWorkspace() {
       duration: Number(test.duration || 60) || 60,
       passMarks: Number(test.passMarks || 0) || 0,
       allowRetake: Boolean(test.allowRetake),
+      shuffleQuestions: Boolean(test.shuffleQuestions),
+      shuffleOptions: Boolean(test.shuffleOptions),
       maxAttempts: Number.isFinite(Number(test.maxAttempts))
         ? Math.max(0, Math.floor(Number(test.maxAttempts)))
         : 1,
@@ -1456,6 +1464,48 @@ export default function MockTestWorkspace() {
               <option value={3}>3 attempts</option>
               <option value={0}>Unlimited</option>
             </select>
+          </Box>
+
+          <Box style={fieldBoxStyle}>
+            <Label style={fieldLabelStyle}>Shuffle Questions</Label>
+            <label
+              style={{
+                ...inputStyle,
+                marginTop: 0,
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                cursor: "pointer",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={Boolean(form.shuffleQuestions)}
+                onChange={(event) => updateForm({ shuffleQuestions: event.target.checked })}
+              />
+              <span>{form.shuffleQuestions ? "Enabled" : "Keep selected order"}</span>
+            </label>
+          </Box>
+
+          <Box style={fieldBoxStyle}>
+            <Label style={fieldLabelStyle}>Shuffle Answer Options</Label>
+            <label
+              style={{
+                ...inputStyle,
+                marginTop: 0,
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                cursor: "pointer",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={Boolean(form.shuffleOptions)}
+                onChange={(event) => updateForm({ shuffleOptions: event.target.checked })}
+              />
+              <span>{form.shuffleOptions ? "Enabled" : "Keep selected order"}</span>
+            </label>
           </Box>
 
           <Box style={fieldBoxStyle}>

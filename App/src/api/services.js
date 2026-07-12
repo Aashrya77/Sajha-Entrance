@@ -49,6 +49,10 @@ export const homeAPI = {
   subscribe: (email) => API.post('/subscribe', { email }),
 };
 
+export const advertisementAPI = {
+  getForPage: (page) => API.get(`/advertisements?page=${encodeURIComponent(page)}`),
+};
+
 // Course API
 export const courseAPI = {
   getAllCourses: () => API.get('/courses'),

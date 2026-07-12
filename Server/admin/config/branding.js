@@ -13,7 +13,7 @@ const logoRelativeFile = path.join("img", "adminlogo.png");
 const logoSourceFile = path.join(appPublicDirectory, logoRelativeFile);
 const publicMountPath = buildAdminPath("/brand-assets");
 const fallbackLogoUrl = buildAdminPath("/brand-logo.svg");
-const adminStyleVersion = "admin-topbar-border-v1";
+const adminStyleVersion = "admin-rich-text-table-v1";
 const resolvedLogoUrl = fs.existsSync(logoSourceFile)
   ? `${publicMountPath}/${logoRelativeFile.replace(/\\/g, "/")}`
   : fallbackLogoUrl;

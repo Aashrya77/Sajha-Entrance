@@ -8,6 +8,7 @@ const logger = createLogger("youtube-library-scheduler");
 
 let schedulerTimer = null;
 let activeConfigId = "";
+let isSyncRunning = false;
 
 const clearCurrentSchedule = () => {
   if (schedulerTimer) {
@@ -29,6 +30,12 @@ export const refreshYouTubeLibrarySchedule = async () => {
   activeConfigId = config.id;
 
   schedulerTimer = setInterval(async () => {
+    if (isSyncRunning) {
+      logger.warn("Skipping scheduled YouTube sync because the previous sync is still running.");
+      return;
+    }
+
+    isSyncRunning = true;
     try {
       await syncYouTubeLibrary({
         configId: activeConfigId,
@@ -36,6 +43,8 @@ export const refreshYouTubeLibrarySchedule = async () => {
       });
     } catch (error) {
       logger.error("Scheduled YouTube sync failed:", error.message);
+    } finally {
+      isSyncRunning = false;
     }
   }, intervalMs);
 

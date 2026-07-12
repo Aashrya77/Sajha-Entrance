@@ -246,6 +246,7 @@ const createImageUpload = ({
       description,
       components: {
         edit: Components.ImageUpload,
+        show: Components.ImagePreview,
       },
       custom: {
         entityName: entityName || label.toLowerCase(),

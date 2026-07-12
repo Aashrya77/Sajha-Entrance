@@ -10,6 +10,40 @@ const CourseScheme = new mongoose.Schema({
   scholarshipAvailable: Boolean,
   universityName: String,
   duration: String,
+  contactCardEnabled: {
+    type: Boolean,
+    default: false,
+  },
+  contactCardTitle: {
+    type: String,
+    trim: true,
+    default: "Prepare with Sajha Entrance",
+  },
+  contactCardDescription: {
+    type: String,
+    trim: true,
+    default: "Contact our team on WhatsApp to learn about entrance preparation classes.",
+  },
+  contactCardPrice: {
+    type: String,
+    trim: true,
+    default: "",
+  },
+  contactCardWhatsAppNumber: {
+    type: String,
+    trim: true,
+    default: "",
+  },
+  contactCardWhatsAppMessage: {
+    type: String,
+    trim: true,
+    default: "",
+  },
+  contactCardButtonLabel: {
+    type: String,
+    trim: true,
+    default: "Contact us on WhatsApp",
+  },
   // New tab content fields
   aboutTab: String,
   eligibilityTab: String,

@@ -4,6 +4,7 @@ import { homeAPI } from '../../api/services';
 import { getImageFieldUrl } from '../../utils/imageHelper';
 import Loader from '../../components/Loader/Loader';
 import LandingPage from '../../components/LandingPage/Landingpage';
+import PageAdvertisements from '../../components/PageAdvertisements/PageAdvertisements';
 import './Home.css';
 
 const Counter = ({ end, duration = 2000 }) => {
@@ -71,7 +72,7 @@ const Home = () => {
       }
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching home data:', error);
+      // The page already renders its request failure state.
       setLoading(false);
     }
   };
@@ -83,6 +84,7 @@ const Home = () => {
   return (
     <>
       <LandingPage landingAds={landingAds} />
+      <div className="container-fluid"><PageAdvertisements page="home" /></div>
 
       <div className="courses mt-5" id="courses">
         <div className="container-fluid">

@@ -76,7 +76,6 @@ const RegisterForm = () => {
     }
     
     // Here you would submit the form
-    console.log('Form submitted:', formData);
     // Reset form after successful submission
   };
 

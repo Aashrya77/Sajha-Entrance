@@ -367,7 +367,7 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
         setIsPaid(classesRes.data.isPaid);
       }
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
+      // The page already renders its request failure state.
       if (error.response?.status === 401) {
         localStorage.removeItem('token');
         navigate('/student/login');

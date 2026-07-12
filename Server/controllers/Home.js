@@ -3,6 +3,7 @@ import College from "../models/College.js";
 import Blog from "../models/Blog.js";
 import Popup from "../models/Popup.js";
 import LandingAd from "../models/LandingAd.js";
+import Advertisement, { ADVERTISEMENT_PAGES } from "../models/Advertisement.js";
 import dotenv from "dotenv";
 import { MailHandler } from "./MailHandler.js";
 import NewsletterModel from "../models/Newsletter.js";
@@ -64,6 +65,31 @@ const HomeDetails = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+const GetPageAdvertisements = async (req, res) => {
+  const page = String(req.query.page || "").trim();
+
+  if (!ADVERTISEMENT_PAGES.includes(page)) {
+    return res.status(400).json({ success: false, error: "Invalid advertisement page." });
+  }
+
+  try {
+    const advertisements = await Advertisement.find({
+      isActive: true,
+      displayPages: page,
+      advertisementFile: { $nin: ["", null] },
+    })
+      .sort({ position: 1, createdAt: -1 })
+      .lean();
+
+    res.json({
+      success: true,
+      data: normalizeCollectionMedia(advertisements, mediaFieldMaps.advertisement),
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: "Unable to load advertisements." });
   }
 };
 
@@ -213,6 +239,7 @@ const GetNotice = async (req, res) => {
 
 export {
   HomeDetails,
+  GetPageAdvertisements,
   ContactPage,
   SendContact,
   GetServices,

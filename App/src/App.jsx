@@ -8,47 +8,46 @@ import { trackPageView, isAnalyticsEnabled } from './analytics';
 // Import components
 import Navbar from './components/Navbar/Navbar';
 import Footer from './components/Footer/Footer';
-import Maintenance from './pages/Maintenance/Maintenance';
-import Home from './pages/Home/Home';
-import Dashboard from './pages/Home/Dashboard';
-import About from './pages/About/About';
-import Courses from './pages/Courses/Courses';
-import CourseDetail from './pages/CourseDetail/CourseDetail';
-import Colleges from './pages/Colleges/Colleges';
-import CollegeDetail from './pages/CollegeDetail/CollegeDetail';
-import Blogs from './pages/Blogs/Blogs';
-import BlogDetail from './pages/BlogDetail/BlogDetail';
-import Contact from './pages/Contact/Contact';
-import Services from './pages/Services/Services';
-import Admission from './pages/Admission/Admission';
-import News from './pages/News/News';
-import Event from './pages/Event/Event';
-import Scholarship from './pages/Scholarship/Scholarship';
-import StudentLogin from './pages/StudentLogin/StudentLogin';
-import StudentRegister from './pages/StudentRegister/StudentRegister';
-import StudentProfile from './pages/StudentProfile/StudentProfile';
-import StudentRecordedClassesPage from './pages/StudentRecordedClasses/StudentRecordedClasses';
-import AdminRedirect from './pages/AdminRedirect/AdminRedirect';
-import NotFound from './pages/NotFound/NotFound';
-import Results from './pages/Results/Results';
-import Universities from './pages/Universities/Universities';
-import UniversityDetail from './pages/UniversityDetail/UniversityDetail';
-import MockTests from './pages/MockTests/MockTests';
-import MockTestExam from './pages/MockTestExam/MockTestExam';
-import MockTestResult from './pages/MockTestResult/MockTestResult';
-import MockTestResults from './pages/MockTestResults/MockTestResults';
-import ForgotPasswordForm from './components/FormDesign/ForgotPasswordForm';
-import Popup from './components/Popup/Popup';
 import Loader from './components/Loader/Loader';
-import BookList from './components/Books/BookList';
-import BookDetail from './components/Books/BookDetail';
-import Cart from './components/Books/Cart';
 import { booksData } from './data/booksData';
-import PaymentSuccess from './pages/PaymentSuccess/PaymentSuccess';
-import PaymentFailure from './pages/PaymentFailure/PaymentFailure';
-import TermsConditions from './pages/Legal/TermsConditions';
-import PrivacyPolicy from './pages/Legal/PrivacyPolicy';
 
+const Home = React.lazy(() => import('./pages/Home/Home'));
+const Dashboard = React.lazy(() => import('./pages/Home/Dashboard'));
+const About = React.lazy(() => import('./pages/About/About'));
+const Courses = React.lazy(() => import('./pages/Courses/Courses'));
+const CourseDetail = React.lazy(() => import('./pages/CourseDetail/CourseDetail'));
+const Colleges = React.lazy(() => import('./pages/Colleges/Colleges'));
+const CollegeDetail = React.lazy(() => import('./pages/CollegeDetail/CollegeDetail'));
+const Blogs = React.lazy(() => import('./pages/Blogs/Blogs'));
+const BlogDetail = React.lazy(() => import('./pages/BlogDetail/BlogDetail'));
+const Contact = React.lazy(() => import('./pages/Contact/Contact'));
+const Services = React.lazy(() => import('./pages/Services/Services'));
+const Admission = React.lazy(() => import('./pages/Admission/Admission'));
+const News = React.lazy(() => import('./pages/News/News'));
+const Event = React.lazy(() => import('./pages/Event/Event'));
+const Scholarship = React.lazy(() => import('./pages/Scholarship/Scholarship'));
+const StudentLogin = React.lazy(() => import('./pages/StudentLogin/StudentLogin'));
+const StudentRegister = React.lazy(() => import('./pages/StudentRegister/StudentRegister'));
+const StudentProfile = React.lazy(() => import('./pages/StudentProfile/StudentProfile'));
+const StudentRecordedClassesPage = React.lazy(() => import('./pages/StudentRecordedClasses/StudentRecordedClasses'));
+const AdminRedirect = React.lazy(() => import('./pages/AdminRedirect/AdminRedirect'));
+const NotFound = React.lazy(() => import('./pages/NotFound/NotFound'));
+const Results = React.lazy(() => import('./pages/Results/Results'));
+const Universities = React.lazy(() => import('./pages/Universities/Universities'));
+const UniversityDetail = React.lazy(() => import('./pages/UniversityDetail/UniversityDetail'));
+const MockTests = React.lazy(() => import('./pages/MockTests/MockTests'));
+const MockTestExam = React.lazy(() => import('./pages/MockTestExam/MockTestExam'));
+const MockTestResult = React.lazy(() => import('./pages/MockTestResult/MockTestResult'));
+const MockTestResults = React.lazy(() => import('./pages/MockTestResults/MockTestResults'));
+const ForgotPasswordForm = React.lazy(() => import('./components/FormDesign/ForgotPasswordForm'));
+const Popup = React.lazy(() => import('./components/Popup/Popup'));
+const BookList = React.lazy(() => import('./components/Books/BookList'));
+const BookDetail = React.lazy(() => import('./components/Books/BookDetail'));
+const Cart = React.lazy(() => import('./components/Books/Cart'));
+const PaymentSuccess = React.lazy(() => import('./pages/PaymentSuccess/PaymentSuccess'));
+const PaymentFailure = React.lazy(() => import('./pages/PaymentFailure/PaymentFailure'));
+const TermsConditions = React.lazy(() => import('./pages/Legal/TermsConditions'));
+const PrivacyPolicy = React.lazy(() => import('./pages/Legal/PrivacyPolicy'));
 const PastQuestions = React.lazy(() => import('./pages/PastQuestions/PastQuestions'));
 const PastQuestionDetail = React.lazy(() => import('./pages/PastQuestions/PastQuestionDetail'));
 
@@ -193,9 +192,7 @@ function App() {
       if (response.data.success) {
         setNotice(response.data.data);
       }
-    } catch (error) {
-      console.error('Error fetching notice:', error);
-    }
+    } catch (_error) {}
   };
 
   const checkAuth = async () => {
@@ -221,9 +218,7 @@ function App() {
       if (localStorage.getItem('token')) {
         await authAPI.logout();
       }
-    } catch (error) {
-      console.error('Error logging out:', error);
-    } finally {
+    } catch (_error) {} finally {
       localStorage.removeItem('token');
       setStudentData(null);
       setIsAuthenticated(false);
@@ -242,6 +237,7 @@ function App() {
     <div className="App">
       <ScrollToTop />
       {!hideSiteChrome && <Navbar notice={notice} studentData={studentData} isAuthenticated={isAuthenticated} cartCount={cartItems.reduce((total, item) => total + item.quantity, 0)} onLogout={handleStudentLogout} />}
+      <React.Suspense fallback={<PageLoader />}>
       <Routes>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/" element={<Home />} />
@@ -299,6 +295,7 @@ function App() {
         <Route path={`${ADMIN_ROOT_PATH}/*`} element={<AdminRedirect />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
+      </React.Suspense>
       {!hideSiteChrome && <Footer />}
       {popup && <Popup popup={popup} setPopup={setPopup} />}
     </div>

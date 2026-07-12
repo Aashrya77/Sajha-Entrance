@@ -181,6 +181,8 @@ const normalizeMockTestPayload = (payload = {}) => {
     duration: Number.isFinite(duration) ? duration : 0,
     passMarks: Number.isFinite(passMarks) ? passMarks : 0,
     allowRetake,
+    shuffleQuestions: parseBooleanValue(payload?.shuffleQuestions),
+    shuffleOptions: parseBooleanValue(payload?.shuffleOptions),
     maxAttempts: Number.isFinite(maxAttempts)
       ? Math.max(0, Math.floor(maxAttempts))
       : 1,
@@ -345,12 +347,18 @@ const resolveSerializedQuestionSubject = (question, subjectLookup = {}) => {
 
 const serializeQuestionForStudent = (question, index, subjectLookup = {}) => ({
   index,
+  sourceQuestionIndex: Number.isInteger(Number(question?.sourceQuestionIndex))
+    ? Number(question.sourceQuestionIndex)
+    : index,
   ...resolveSerializedQuestionSubject(question, subjectLookup),
   questionText: question?.questionText || "",
   questionImage: question?.questionImage || "",
   options: Array.from({ length: 4 }, (_, optionIndex) => ({
     text: question?.options?.[optionIndex]?.text || "",
     image: question?.options?.[optionIndex]?.image || "",
+    sourceOptionIndex: Number.isInteger(Number(question?.options?.[optionIndex]?.sourceOptionIndex))
+      ? Number(question.options[optionIndex].sourceOptionIndex)
+      : optionIndex,
   })),
   marks: Number(question?.marks || 0) || 0,
 });
@@ -497,6 +505,8 @@ const buildSchedulerWorkspacePayload = async () => {
       subjectRefs: ensureStringArray(test.subjectRefs).map(toObjectIdString),
       courseRef: toObjectIdString(test.courseRef),
       allowRetake: Boolean(test.allowRetake),
+      shuffleQuestions: Boolean(test.shuffleQuestions),
+      shuffleOptions: Boolean(test.shuffleOptions),
       maxAttempts: Number.isFinite(Number(test.maxAttempts))
         ? Math.max(0, Math.floor(Number(test.maxAttempts)))
         : 1,

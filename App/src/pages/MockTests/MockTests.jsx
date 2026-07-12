@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { mockTestAPI } from "../../api/services";
 import Loader from "../../components/Loader/Loader";
+import PageAdvertisements from "../../components/PageAdvertisements/PageAdvertisements";
 import "./MockTests.css";
 
 const formatDateTime = (value) =>
@@ -191,7 +192,7 @@ const MockTests = ({ isAuthenticated }) => {
       }
       setPageError("");
     } catch (error) {
-      console.error("Error fetching mock tests:", error);
+      // The page already renders its request failure state.
       setPageError("Unable to load mock tests right now.");
     } finally {
       setLoading(false);
@@ -406,6 +407,7 @@ const MockTests = ({ isAuthenticated }) => {
             )}
           </>
         )}
+        <PageAdvertisements page="mock-tests" />
       </div>
     </div>
   );

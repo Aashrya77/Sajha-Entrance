@@ -142,7 +142,7 @@ const LandingPage = ({ landingAds = [] }) => {
         setSearchResults(response.data.data[dataKey] || []);
       }
     } catch (error) {
-      console.error('Search error:', error);
+      // The search UI already renders its request failure state.
       setSearchError('Failed to search. Please try again.');
     }
 

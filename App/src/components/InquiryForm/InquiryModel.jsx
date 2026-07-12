@@ -79,7 +79,7 @@ const InquiryModal = ({ isOpen, onClose, collegeName, collegeId, universityId, c
         }, 2000);
       }
     } catch (err) {
-      console.error('Error submitting inquiry:', err);
+      // The form displays the submission failure to the user.
       setError(err.response?.data?.error || 'Failed to submit inquiry. Please try again.');
     }
 

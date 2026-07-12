@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { courseAPI } from '../../api/services';
 import Loader from '../../components/Loader/Loader';
+import PageAdvertisements from '../../components/PageAdvertisements/PageAdvertisements';
 
 const COURSE_ICONS = {
   'BIT': 'fa-laptop-code',
@@ -39,7 +40,7 @@ const Courses = () => {
       }
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching courses:', error);
+      // The page already renders its request failure state.
       setLoading(false);
     }
   };
@@ -189,6 +190,10 @@ const Courses = () => {
             </div>
           )}
         </div>
+      </div>
+
+      <div className="container-fluid">
+        <PageAdvertisements page="courses" />
       </div>
 
       {/* CTA Section */}

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { collegeAPI, universityAPI } from '../../api/services';
 import Loader from '../../components/Loader/Loader';
+import PageAdvertisements from '../../components/PageAdvertisements/PageAdvertisements';
 import '../../styles/admission.css';
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
@@ -255,6 +256,7 @@ const Admission = () => {
   const [levelSearch, setLevelSearch] = useState('');
   const [affiliationSearch, setAffiliationSearch] = useState('');
   const [locationSearch, setLocationSearch] = useState('');
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [expandedSections, setExpandedSections] = useState({
     status: true,
     level: true,
@@ -323,7 +325,7 @@ const Admission = () => {
 
         setAdmissions(mergedAdmissions);
       } catch (requestError) {
-        console.error('Error loading admissions:', requestError);
+        // The page already renders its request failure state.
 
         if (!ignore) {
           setAdmissions([]);
@@ -441,6 +443,17 @@ const Admission = () => {
     setLocationSearch('');
   };
 
+  useEffect(() => {
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') {
+        setIsFilterModalOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, []);
+
   const renderChecklist = (options, selectedValues, onToggle, emptyMessage) => {
     if (!options.length) {
       return (
@@ -496,13 +509,33 @@ const Admission = () => {
               placeholder="Search for admissions..."
               aria-label="Search admissions"
             />
+            <button
+              type="button"
+              className={`admissions-directory__filter-button${hasActiveFilters ? ' is-active' : ''}`}
+              onClick={() => setIsFilterModalOpen(true)}
+              aria-label="Open admission filters"
+              aria-haspopup="dialog"
+            >
+              <SlidersHorizontal size={18} />
+            </button>
           </label>
         </div>
 
         {error && <div className="admissions-directory__alert">{error}</div>}
-
         <div className="admissions-directory__shell">
-          <aside className="admissions-directory__sidebar">
+          {isFilterModalOpen && (
+            <div
+              className="admissions-directory__filter-modal-backdrop"
+              role="presentation"
+              onMouseDown={() => setIsFilterModalOpen(false)}
+            >
+          <aside
+            className="admissions-directory__sidebar admissions-directory__filter-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Filter admissions"
+            onMouseDown={(event) => event.stopPropagation()}
+          >
             <div className="admissions-directory__sidebar-header">
               <span>
                 <SlidersHorizontal size={16} />
@@ -517,6 +550,14 @@ const Admission = () => {
                   Clear all
                 </button>
               )}
+              <button
+                type="button"
+                className="admissions-directory__filter-close"
+                onClick={() => setIsFilterModalOpen(false)}
+                aria-label="Close filters"
+              >
+                &times;
+              </button>
             </div>
 
             <div className="admissions-directory__filter-group">
@@ -639,6 +680,8 @@ const Admission = () => {
               )}
             </div>
           </aside>
+            </div>
+          )}
 
           <section className="admissions-directory__results">
             <div className="admissions-directory__toolbar">
@@ -750,6 +793,7 @@ const Admission = () => {
             )}
           </section>
         </div>
+        <PageAdvertisements page="admissions" />
       </div>
     </div>
   );

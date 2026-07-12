@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { courseAPI } from '../../api/services';
 import Loader from '../../components/Loader/Loader';
-import EsewaPayment from '../../components/Payment/EsewaPayment';
 import InquiryButton from '../../components/InquiryForm/InquiryButton';
 
 const TABS = [
@@ -17,7 +16,6 @@ const CourseDetail = () => {
   const [courseData, setCourseData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('about');
-  const [showPayment, setShowPayment] = useState(false);
 
   useEffect(() => {
     fetchCourseDetail();
@@ -31,7 +29,7 @@ const CourseDetail = () => {
       }
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching course details:', error);
+      // The page already renders its request failure state.
       setLoading(false);
     }
   };
@@ -56,6 +54,13 @@ const CourseDetail = () => {
   }
 
   const { courseData: course, colleges } = courseData;
+  const whatsappNumber = String(course.contactCardWhatsAppNumber || '').replace(/\D/g, '');
+  const whatsappMessage =
+    course.contactCardWhatsAppMessage ||
+    `Hello, I would like to know more about ${course.title} entrance preparation.`;
+  const whatsappUrl = whatsappNumber
+    ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`
+    : '';
 
   const tabContent = {
     about: course.aboutTab || course.descriptionFormatted || '<p>Information will be updated soon.</p>',
@@ -205,36 +210,36 @@ const CourseDetail = () => {
                   </div>
                 </div>
 
-                {/* Enrollment / Payment Card */}
+                {/* Admin-controlled WhatsApp enquiry card */}
+                {course.contactCardEnabled && whatsappUrl && (
                 <div className="cd-sidebar-card cd-enroll-card">
                   <h4 className="cd-sidebar-title">
-                    <i className="fa-solid fa-user-plus me-2"></i>Enroll in Entrance Preparation of this course
+                    <i className="fa-brands fa-whatsapp me-2"></i>{course.contactCardTitle || 'Contact us'}
                   </h4>
                   <p className="cd-enroll-desc">
-                    Secure your seat for the {course.title} entrance preparation class. Pay securely via eSewa.
+                    {course.contactCardDescription}
                   </p>
-                  <div className="cd-price-row">
-                    <span className="cd-price-label">Course Fee</span>
-                    <span className="cd-price-value">Rs. 5,000</span>
-                  </div>
-                  {!showPayment ? (
-                    <button className="cd-enroll-btn" onClick={() => setShowPayment(true)}>
-                      <i className="fa-solid fa-credit-card me-2"></i>
-                      Pay with eSewa
-                    </button>
-                  ) : (
-                    <EsewaPayment
-                      courseId={id}
-                      courseTitle={course.title}
-                      amount={5000}
-                      onCancel={() => setShowPayment(false)}
-                    />
+                  {course.contactCardPrice && (
+                    <div className="cd-price-row">
+                      <span className="cd-price-label">Course Fee</span>
+                      <span className="cd-price-value">{course.contactCardPrice}</span>
+                    </div>
                   )}
+                  <a
+                    className="cd-enroll-btn"
+                    href={whatsappUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <i className="fa-brands fa-whatsapp me-2"></i>
+                    {course.contactCardButtonLabel || 'Contact us on WhatsApp'}
+                  </a>
                   <div className="cd-secure-note">
-                    <i className="fa-solid fa-shield-halved me-1"></i>
-                    Secure payment powered by eSewa
+                    <i className="fa-solid fa-comments me-1"></i>
+                    Our team will help you with the next steps.
                   </div>
                 </div>
+                )}
 
                 {/* Scholarship Info */}
                 {course.scholarshipAvailable && course.scholarshipDescription && (

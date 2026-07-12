@@ -68,7 +68,11 @@ const badgeStyle = (tone = "neutral") => {
 };
 
 const fileInputStyle = {
+  display: "block",
   width: "100%",
+  maxWidth: "100%",
+  minWidth: 0,
+  boxSizing: "border-box",
   marginTop: "8px",
   borderRadius: "14px",
   border: "1px dashed #cbd5e1",

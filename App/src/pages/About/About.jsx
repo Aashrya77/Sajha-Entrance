@@ -38,7 +38,7 @@ const About = () => {
         setContactForm({ name: '', phone: '', address: 'Kathmandu', email: '', course: '', college: '', message: '' });
       }
     } catch (error) {
-      console.error("Error submitting form:", error);
+      // The form displays the submission failure to the user.
       alert(error.response?.data?.error || 'Failed to send message. Please check all fields.');
     }
     setContactLoading(false);
@@ -112,7 +112,7 @@ const About = () => {
       await homeAPI.getAboutData();
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching about data:', error);
+      // The page already renders its request failure state.
       setLoading(false);
     }
   };

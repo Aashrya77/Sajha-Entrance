@@ -146,6 +146,14 @@ const MockTestSchema = new mongoose.Schema({
     default: 1,
     min: 0,
   },
+  shuffleQuestions: {
+    type: Boolean,
+    default: false,
+  },
+  shuffleOptions: {
+    type: Boolean,
+    default: false,
+  },
   questions: [QuestionSchema],
   questionCount: {
     type: Number,

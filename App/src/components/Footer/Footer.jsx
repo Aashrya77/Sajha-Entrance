@@ -58,13 +58,17 @@ const Footer = () => {
                 <div className="d-flex align-items-start justify-content-evenly mt-2">
                   <div className="footer-links d-flex flex-column">
                     <Link to="/">Home</Link>
-                    <Link to="/services">Services</Link>
                     <Link to="/colleges">Colleges</Link>
+                    <Link to="/courses">Courses</Link>
+                    <Link to="/mocktests">Mock Tests</Link>
+                    <Link to="/past-questions">Past Questions</Link>
                   </div>
                   <div className="footer-links d-flex flex-column">
-                    <Link to="/courses">Course</Link>
-                    <Link to="/entrance">Entrance</Link>
                     <Link to="/about">About</Link>
+                    <Link to="/services">Services</Link>
+                    <Link to="/results">Results</Link>
+                    <Link to="/admission">Admission</Link>
+                    <Link to="/contact">Contact</Link>
                   </div>
                 </div>
               </div>

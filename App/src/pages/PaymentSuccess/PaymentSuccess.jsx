@@ -28,7 +28,7 @@ const PaymentSuccess = () => {
         setPayment(response.data.data);
       }
     } catch (error) {
-      console.error('Error fetching payment details:', error);
+      // The page already renders its request failure state.
     }
     setLoading(false);
   };

@@ -265,7 +265,7 @@ const Scholarship = () => {
 
         setScholarships(merged);
       } catch (requestError) {
-        console.error('Error loading scholarships:', requestError);
+        // The page already renders its request failure state.
 
         if (!ignore) {
           setScholarships([]);

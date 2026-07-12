@@ -225,6 +225,19 @@ const mountPublicApiRoutes = () => {
   registerApiRoutes(apiRouter);
 
   app.use(apiRouter);
+
+  app.use((error, _req, res, _next) => {
+    logger.error("Unhandled request error:", error.message);
+
+    if (res.headersSent) {
+      return;
+    }
+
+    res.status(error.status || 500).json({
+      success: false,
+      message: "An unexpected server error occurred.",
+    });
+  });
 };
 
 // ================= STARTUP TASKS =================

@@ -69,7 +69,7 @@ const Cart = ({ cartItems, removeFromCart, updateQuantity, clearCart }) => {
         setCheckoutError(response.data.message || 'Failed to initiate payment');
       }
     } catch (error) {
-      console.error('Checkout error:', error);
+      // The checkout UI already displays the request failure.
       setCheckoutError(error.response?.data?.message || 'Failed to initiate payment. Please try again.');
     }
     setCheckoutLoading(false);

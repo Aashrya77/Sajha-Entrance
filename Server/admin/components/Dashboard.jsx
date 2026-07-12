@@ -162,31 +162,43 @@ const AreaTrendChart = ({
   }
 
   const width = Math.max(460, data.length * 96);
-  const height = 296;
-  const chartTop = 24;
-  const chartBottom = 222;
-  const leftPad = 64;
-  const rightPad = 24;
+  const height = 276;
+  const chartTop = 18;
+  const chartBottom = 210;
+  const leftPad = 58;
+  const rightPad = 22;
   const drawableHeight = chartBottom - chartTop;
   const max = Math.max(...data.map((item) => item[valueKey] || 0), 1);
   const step = data.length > 1 ? (width - leftPad - rightPad) / (data.length - 1) : 0;
-  const gradientId = `trend-fill-${valueKey}-${palette.line.replace("#", "")}`;
-  const glowId = `trend-glow-${valueKey}-${palette.line.replace("#", "")}`;
   const points = data.map((item, index) => ({
     x: leftPad + index * step,
     y: chartBottom - ((item[valueKey] || 0) / max) * drawableHeight,
     label: item[labelKey],
     value: item[valueKey] || 0,
   }));
-  const line = points.map((point, index) => `${index ? "L" : "M"} ${point.x} ${point.y}`).join(" ");
+  const line = points
+    .map((point, index) => {
+      if (!index) {
+        return `M ${point.x} ${point.y}`;
+      }
+
+      if (variant !== "flow") {
+        return `L ${point.x} ${point.y}`;
+      }
+
+      const previousPoint = points[index - 1];
+      const controlX = (previousPoint.x + point.x) / 2;
+      return `C ${controlX} ${previousPoint.y}, ${controlX} ${point.y}, ${point.x} ${point.y}`;
+    })
+    .join(" ");
   const area = `${line} L ${points[points.length - 1].x} ${chartBottom} L ${points[0].x} ${chartBottom} Z`;
   const yFractions = [1, 0.75, 0.5, 0.25, 0];
   const safeActiveIndex = clamp(activeIndex, 0, points.length - 1);
   const activePoint = points[safeActiveIndex];
   const tooltipWidth = 170;
   const tooltipHeight = 60;
-  const showArea = variant !== "line";
-  const strokeWidth = variant === "line" ? 5 : 4;
+  const showArea = variant === "area" || variant === "flow";
+  const strokeWidth = variant === "flow" ? 4.5 : 4;
   const tooltipX = activePoint
     ? clamp(activePoint.x - tooltipWidth / 2, leftPad, width - rightPad - tooltipWidth)
     : leftPad;
@@ -203,20 +215,6 @@ const AreaTrendChart = ({
         className="dashboard-trend-chart__svg"
         style={{ height: "auto" }}
       >
-        <defs>
-          <linearGradient id={gradientId} x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor={palette.line} stopOpacity="0.22" />
-            <stop offset="100%" stopColor={palette.line} stopOpacity="0.02" />
-          </linearGradient>
-          <filter id={glowId} x="-20%" y="-20%" width="140%" height="140%">
-            <feGaussianBlur stdDeviation="6" result="coloredBlur" />
-            <feMerge>
-              <feMergeNode in="coloredBlur" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
-
         {yFractions.map((fraction) => {
           const y = chartBottom - drawableHeight * fraction;
 
@@ -228,7 +226,7 @@ const AreaTrendChart = ({
                 x2={width - rightPad}
                 y2={y}
                 stroke={dashboardTheme.borderSoft}
-                strokeDasharray="4 8"
+                strokeOpacity="0.8"
               />
               <text
                 x={leftPad - 14}
@@ -244,15 +242,37 @@ const AreaTrendChart = ({
           );
         })}
 
-        {showArea ? <path d={area} fill={`url(#${gradientId})`} /> : null}
-        <path
-          d={line}
-          fill="none"
-          stroke={palette.line}
-          strokeWidth={strokeWidth}
-          strokeLinecap="round"
-          filter={`url(#${glowId})`}
-        />
+        {variant === "bars"
+          ? points.map((point, index) => {
+              const isActive = index === safeActiveIndex;
+              const barWidth = Math.min(48, Math.max(24, step * 0.55 || 42));
+
+              return (
+                <rect
+                  key={`bar-${point.label}-${index}`}
+                  x={point.x - barWidth / 2}
+                  y={point.y}
+                  width={barWidth}
+                  height={Math.max(chartBottom - point.y, 3)}
+                  rx="6"
+                  fill={palette.line}
+                  fillOpacity={isActive ? "1" : "0.7"}
+                />
+              );
+            })
+          : (
+            <>
+              {showArea ? <path d={area} fill={palette.line} fillOpacity="0.07" /> : null}
+              <path
+                d={line}
+                fill="none"
+                stroke={palette.line}
+                strokeWidth={strokeWidth}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </>
+          )}
 
         {activePoint ? (
           <line
@@ -261,8 +281,7 @@ const AreaTrendChart = ({
             x2={activePoint.x}
             y2={chartBottom}
             stroke={palette.line}
-            strokeOpacity="0.18"
-            strokeDasharray="5 8"
+            strokeOpacity="0.25"
           />
         ) : null}
 
@@ -280,10 +299,10 @@ const AreaTrendChart = ({
               <circle
                 cx={point.x}
                 cy={point.y}
-                r={isActive ? "7" : "5"}
-                fill={dashboardTheme.white}
+                r={isActive ? "7" : variant === "bars" ? "0" : "5"}
+                fill={variant === "bars" ? palette.line : dashboardTheme.white}
                 stroke={palette.line}
-                strokeWidth="3"
+                strokeWidth={variant === "bars" ? "0" : "3"}
               />
               <text
                 x={point.x}
@@ -304,13 +323,14 @@ const AreaTrendChart = ({
             <rect
               width={tooltipWidth}
               height={tooltipHeight}
-              rx="16"
-              fill="rgba(15, 23, 42, 0.96)"
+              rx="10"
+              fill={dashboardTheme.white}
+              stroke={dashboardTheme.borderSoft}
             />
-            <text x="16" y="24" fontSize="12" fontWeight="700" fill="rgba(255,255,255,0.72)">
+            <text x="16" y="24" fontSize="11" fontWeight="700" fill={dashboardTheme.muted}>
               {activePoint.label}
             </text>
-            <text x="16" y="43" fontSize="20" fontWeight="800" fill={dashboardTheme.white}>
+            <text x="16" y="44" fontSize="19" fontWeight="800" fill={dashboardTheme.ink}>
               {formatValue(activePoint.value)}
             </text>
           </g>
@@ -922,7 +942,7 @@ export default function Dashboard() {
             formatValue={(value) => fmtNum(value)}
             formatAxisValue={(value) => fmtNum(Math.round(value))}
             formatTick={(label) => label.split(" ")[0]}
-            variant="area"
+            variant="bars"
           />
         </Panel>
 
@@ -964,7 +984,7 @@ export default function Dashboard() {
             formatValue={(value) => fmtMoneyCompact(value)}
             formatAxisValue={(value) => fmtMoneyCompact(value)}
             formatTick={(label) => label.split(" ")[0]}
-            variant="line"
+            variant="flow"
           />
         </Panel>
       </div>

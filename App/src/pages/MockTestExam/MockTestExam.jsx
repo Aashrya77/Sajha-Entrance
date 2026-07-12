@@ -121,8 +121,8 @@ const MockTestExam = () => {
           setTestData(data);
           setTimeLeft((Number(data.duration || 0) || 0) * 60);
           setAnswers(
-            (data.questions || []).map((_, index) => ({
-              questionIndex: index,
+            (data.questions || []).map((question, index) => ({
+              questionIndex: Number(question?.sourceQuestionIndex ?? index),
               selectedOption: -1,
             }))
           );
@@ -133,7 +133,7 @@ const MockTestExam = () => {
           setPageError("");
         }
       } catch (error) {
-        console.error("Error fetching test:", error);
+        // The page already renders its request failure state.
         setPageError(
           error.response?.data?.error || "Unable to open this mock test right now."
         );
@@ -166,7 +166,7 @@ const MockTestExam = () => {
         });
       }
     } catch (error) {
-      console.error("Error submitting test:", error);
+      // The page already renders its request failure state.
       alert(error.response?.data?.error || "Error submitting test. Please try again.");
       setSubmitting(false);
     }
@@ -197,6 +197,7 @@ const MockTestExam = () => {
       (testData?.questions || []).map((question, index) => ({
         ...question,
         index,
+        sourceQuestionIndex: Number(question?.sourceQuestionIndex ?? index),
         questionNumber: index + 1,
         subject: normalizeSubjectLabel(question, testData?.subjectNames || []),
       })),
@@ -231,8 +232,14 @@ const MockTestExam = () => {
   }, [questions, testData?.subjectNames]);
 
   const answersByQuestion = useMemo(
-    () => new Map(answers.map((answer) => [answer.questionIndex, answer])),
-    [answers]
+    () =>
+      new Map(
+        questions.map((question) => [
+          question.index,
+          answers.find((answer) => answer.questionIndex === question.sourceQuestionIndex),
+        ])
+      ),
+    [answers, questions]
   );
 
   const filteredQuestions = useMemo(
@@ -279,15 +286,16 @@ const MockTestExam = () => {
     selectedSubject === ALL_SUBJECTS ? "All Questions" : selectedSubject;
   const selectedReviewLabel =
     REVIEW_FILTERS.find((filter) => filter.value === reviewFilter)?.label || "All Questions";
-  const selectOption = (questionIndex, optionIndex) => {
-    setCurrentQuestion(questionIndex);
+  const selectOption = (question, optionIndex) => {
+    const sourceOptionIndex = Number(question.options?.[optionIndex]?.sourceOptionIndex ?? optionIndex);
+    setCurrentQuestion(question.index);
     setAnswers((previous) =>
       previous.map((answer) =>
-        answer.questionIndex === questionIndex
+        answer.questionIndex === question.sourceQuestionIndex
           ? {
               ...answer,
               selectedOption:
-                answer.selectedOption === optionIndex ? -1 : optionIndex,
+                answer.selectedOption === sourceOptionIndex ? -1 : sourceOptionIndex,
             }
           : answer
       )
@@ -582,7 +590,7 @@ const MockTestExam = () => {
               <div className="mock-test-exam__question-list">
                 {filteredQuestions.map((question) => {
                   const questionAnswer = answersByQuestion.get(question.index) || {
-                    questionIndex: question.index,
+                    questionIndex: question.sourceQuestionIndex,
                     selectedOption: -1,
                   };
                   const isCurrentQuestion = question.index === currentQuestion;
@@ -659,7 +667,8 @@ const MockTestExam = () => {
                         aria-label={`Options for question ${question.questionNumber}`}
                       >
                         {(question.options || []).map((option, optionIndex) => {
-                          const isSelected = questionAnswer.selectedOption === optionIndex;
+                          const sourceOptionIndex = Number(option.sourceOptionIndex ?? optionIndex);
+                          const isSelected = questionAnswer.selectedOption === sourceOptionIndex;
                           const optionLabel = String.fromCharCode(65 + optionIndex);
 
                           return (
@@ -671,7 +680,7 @@ const MockTestExam = () => {
                               className={`mock-test-exam__option ${
                                 isSelected ? "mock-test-exam__option--selected" : ""
                               }`.trim()}
-                              onClick={() => selectOption(question.index, optionIndex)}
+                              onClick={() => selectOption(question, optionIndex)}
                             >
                               <div className="mock-test-exam__option-head">
                                 <span className="mock-test-exam__option-radio" aria-hidden="true">

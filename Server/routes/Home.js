@@ -6,7 +6,8 @@ import {
   GetServices,
   GetAbout,
   PostSubscribe,
-  GetNotice
+  GetNotice,
+  GetPageAdvertisements
 } from "../controllers/Home.js";
 
 const Router = express.Router();
@@ -24,5 +25,7 @@ Router.get("/about", GetAbout);
 Router.post("/subscribe", PostSubscribe)
 
 Router.get("/notice", GetNotice);
+
+Router.get("/advertisements", GetPageAdvertisements);
 
 export default Router;

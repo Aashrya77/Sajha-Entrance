@@ -42,7 +42,7 @@ const UniversityDetail = () => {
       }
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching university details:', error);
+      // The page already renders its request failure state.
       setLoading(false);
     }
   };

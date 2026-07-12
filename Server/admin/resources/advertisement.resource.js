@@ -1,4 +1,4 @@
-import AdvertisementModel from "../../models/Advertisement.js";
+import AdvertisementModel, { ADVERTISEMENT_PAGES } from "../../models/Advertisement.js";
 import { createSingleImageUpload } from "./helpers/single-image-upload.js";
 
 const {
@@ -12,7 +12,7 @@ const {
   entityName: "advertisement image",
   storageFolder: "advertisement",
   publicBaseUrl: "/media/advertisement",
-  description: "Upload the creative shown across the public pages.",
+  description: "Upload a small banner shown only on the selected public pages.",
 });
 
 const AdvertisementAdminResource = {
@@ -21,10 +21,10 @@ const AdvertisementAdminResource = {
   options: {
     id: "Advertisement",
     navigation: { name: "Content", icon: "Image" },
-    listProperties: ["advertisementName", fields.fileProperty, "advertisementLink"],
-    editProperties: ["advertisementName", fields.fileProperty, "advertisementLink"],
-    showProperties: ["advertisementName", fields.fileProperty, "advertisementLink"],
-    filterProperties: ["advertisementName"],
+    listProperties: ["advertisementName", fields.fileProperty, "displayPages", "isActive", "position"],
+    editProperties: ["advertisementName", fields.fileProperty, "advertisementLink", "displayPages", "isActive", "position"],
+    showProperties: ["advertisementName", fields.fileProperty, "advertisementLink", "displayPages", "isActive", "position"],
+    filterProperties: ["advertisementName", "displayPages", "isActive"],
     properties: {
       advertisementName: {
         label: "Name",
@@ -32,6 +32,20 @@ const AdvertisementAdminResource = {
       },
       advertisementLink: {
         label: "Target link",
+      },
+      displayPages: {
+        label: "Show on pages",
+        availableValues: ADVERTISEMENT_PAGES.map((page) => ({
+          value: page,
+          label: page === "mock-tests" ? "Mock Tests" : page[0].toUpperCase() + page.slice(1),
+        })),
+      },
+      isActive: {
+        label: "Active",
+      },
+      position: {
+        label: "Display order",
+        description: "Lower numbers appear first.",
       },
       ...propertyOptions,
     },

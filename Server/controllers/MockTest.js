@@ -98,6 +98,45 @@ const buildQuestionSubjectOverrides = async (mockTest) => {
 const toPlainQuestionSnapshot = (question) =>
   question?.toObject?.() ? question.toObject() : question;
 
+const shuffleItems = (items = []) => {
+  const shuffled = [...items];
+
+  if (shuffled.length < 2) {
+    return shuffled;
+  }
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+  }
+
+  // A random shuffle can occasionally keep every item in the same position.
+  // Rotate once in that case so an enabled shuffle is always visible to students.
+  if (shuffled.every((item, index) => item === items[index])) {
+    return [...shuffled.slice(1), shuffled[0]];
+  }
+
+  return shuffled;
+};
+
+const buildExamQuestions = (mockTest) => {
+  const questions = (mockTest.questions || []).map((question, sourceQuestionIndex) => {
+    const plainQuestion = toPlainQuestionSnapshot(question);
+    const options = (plainQuestion.options || []).map((option, sourceOptionIndex) => ({
+      ...option,
+      sourceOptionIndex,
+    }));
+
+    return {
+      ...plainQuestion,
+      sourceQuestionIndex,
+      options: mockTest.shuffleOptions ? shuffleItems(options) : options,
+    };
+  });
+
+  return mockTest.shuffleQuestions ? shuffleItems(questions) : questions;
+};
+
 const matchSearch = (mockTest, search = "") => {
   const normalizedSearch = String(search || "").trim().toLowerCase();
   if (!normalizedSearch) {
@@ -377,7 +416,7 @@ const GetMockTestForExam = async (req, res) => {
 
     const { subjectLookup, questionOverrides } = await buildQuestionSubjectOverrides(mockTest);
 
-    const sanitizedQuestions = (mockTest.questions || []).map((question, index) => {
+    const sanitizedQuestions = buildExamQuestions(mockTest).map((question, index) => {
       const plainQuestion = toPlainQuestionSnapshot(question);
 
       return serializeQuestionForStudent(

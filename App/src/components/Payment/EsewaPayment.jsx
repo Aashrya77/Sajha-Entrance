@@ -81,7 +81,7 @@ const EsewaPayment = ({ courseId, courseTitle, amount, onCancel }) => {
       document.body.appendChild(form);
       form.submit();
     } catch (error) {
-      console.error('Payment initiation error:', error);
+      // The payment UI already displays the request failure.
       setApiError(
         error.response?.data?.message || 'Something went wrong. Please try again.'
       );

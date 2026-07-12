@@ -39,7 +39,7 @@ const Contact = () => {
         setFormData({ name: '', phone: '', address: 'Kathmandu', email: '', course: '', college: '', message: '' });
       }
     } catch (error) {
-      console.error("Error submitting form:", error);
+      // The form displays the submission failure to the user.
       alert(error.response?.data?.error || 'Failed to send message. Please check all fields.');
     }
     setLoading(false);

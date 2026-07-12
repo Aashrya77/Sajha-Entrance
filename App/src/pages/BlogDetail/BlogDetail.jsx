@@ -24,7 +24,7 @@ const BlogDetail = () => {
       }
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching blog details:', error);
+      // The page already renders its request failure state.
       setLoading(false);
     }
   };

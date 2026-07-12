@@ -34,7 +34,7 @@ const MockTestResult = () => {
       }
       setLoading(false);
     } catch (error) {
-      console.error("Error fetching result:", error);
+      // The page already renders its request failure state.
       setLoading(false);
     }
   };

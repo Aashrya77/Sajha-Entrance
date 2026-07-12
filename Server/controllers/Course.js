@@ -73,10 +73,7 @@ const CourseDetail = async (req, res) => {
     const advertisement = await Advertisement.findOne().sort({ _id: -1 }).exec();
     const popup = await Popup.findOne({ isActive: true }).exec();
     
-    const courseData = await Course.findOne(
-      { _id: req.params.id },
-      { colleges: { $slice: -6 } }
-    )
+    const courseData = await Course.findOne({ _id: req.params.id })
       .populate("colleges.collegeDetails")
       .exec();
       
@@ -85,7 +82,9 @@ const CourseDetail = async (req, res) => {
     }
     
     const courses = await Course.find().exec();
-    const colleges = courseData.colleges;
+    // Keep the course settings intact in the response and limit only the
+    // related-college list displayed on the detail page.
+    const colleges = (courseData.colleges || []).slice(-6);
     
     res.json({
       success: true,

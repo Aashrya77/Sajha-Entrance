@@ -21,6 +21,7 @@ import {
   ensureAdminUserSeed,
   hasPermission,
   requireAdminPermission,
+  refreshAdminSession,
   syncAllAdminUserPermissions,
 } from "./utils/admin-auth.js";
 import { decorateAdminResource } from "./utils/admin-resource.js";
@@ -36,7 +37,7 @@ import {
 } from "../constants/youtubeLibrary.js";
 import { formatOnlineClassCourseLabel } from "../utils/onlineClassCourses.js";
 import { getActiveUsersSnapshot } from "../utils/activeUsers.js";
-import { buildAdminSessionConfig } from "./utils/admin-session.js";
+import { buildAdminSessionConfig, getAdminSessionMiddleware } from "./utils/admin-session.js";
 import { refreshYouTubeLibrarySchedule } from "../services/youtubeLibraryScheduler.js";
 import {
   syncYouTubeLibrary,
@@ -138,6 +139,12 @@ import {
   UpdateAdminQuestionBank,
 } from "../controllers/QuestionBank.js";
 
+// Upload resources register their default show component during module load.
+// Replace it after those registrations so all record pages use thumbnails.
+componentLoader.override(
+  "UploadShowComponent",
+  path.join(__dirname, "./components/CompactUploadShow")
+);
 
 // Helper function to extract YouTube video ID from URL
 const extractVideoId = (url) => {
@@ -989,6 +996,33 @@ const startAdminPanel = async () => {
             edit: true,
             filter: true,
           },
+        },
+        contactCardEnabled: {
+          label: "Show WhatsApp enquiry card",
+          description: "When disabled, no enquiry card is shown on this course page.",
+        },
+        contactCardTitle: {
+          label: "Enquiry card title",
+        },
+        contactCardDescription: {
+          label: "Enquiry card description",
+          type: "textarea",
+        },
+        contactCardPrice: {
+          label: "Displayed price",
+          description: "Optional. Example: Rs. 5,000 or Starting from Rs. 3,500.",
+        },
+        contactCardWhatsAppNumber: {
+          label: "WhatsApp number",
+          description: "Include country code, numbers only. Example: 97798XXXXXXXX.",
+        },
+        contactCardWhatsAppMessage: {
+          label: "Prefilled WhatsApp message",
+          type: "textarea",
+          description: "Optional. Leave blank to use a course-specific default message.",
+        },
+        contactCardButtonLabel: {
+          label: "WhatsApp button label",
         },
         aboutTab: {
           label: "About Section",
@@ -2219,6 +2253,33 @@ const startAdminPanel = async () => {
     AdvertisementAdminResource,
     mergeResourceOptions(CollegeAdminResource, {
       navigation: contentNavigation,
+      properties: {
+        overview: {
+          type: "richtext",
+          components: richTextEditComponent,
+          props: { tableTools: true },
+        },
+        admissionGuidelines: {
+          type: "richtext",
+          components: richTextEditComponent,
+          props: { tableTools: true },
+        },
+        scholarshipInfo: {
+          type: "richtext",
+          components: richTextEditComponent,
+          props: { tableTools: true },
+        },
+        messageFromChairman: {
+          type: "richtext",
+          components: richTextEditComponent,
+          props: { tableTools: true },
+        },
+        chairmanMessage: {
+          type: "richtext",
+          components: richTextEditComponent,
+          props: { tableTools: true },
+        },
+      },
     }),
     mergeResourceOptions(UniversityFileModel, {
       navigation: contentNavigation,
@@ -2751,10 +2812,15 @@ const startAdminPanel = async () => {
     res.setHeader("Expires", "0");
     next();
   });
-  Router.use(admin.options.rootPath, adminRouter);
+  // Load the same session before AdminJS so its currentAdmin snapshot can be
+  // refreshed before AdminJS evaluates any resource action guards.
+  Router.use(
+    admin.options.rootPath,
+    getAdminSessionMiddleware(),
+    refreshAdminSession,
+    adminRouter
+  );
   return Router;
 };
-
-    
 
 export { startAdminPanel };

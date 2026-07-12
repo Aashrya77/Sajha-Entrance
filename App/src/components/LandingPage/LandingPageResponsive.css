@@ -15,7 +15,7 @@
   margin-top: 50px;
   background-color: #fafafa;
   min-height: auto;
-  font-family: 'Inter', sans-serif;
+  font-family: var(--font-sans);
 }
 
 /* Main Layout */

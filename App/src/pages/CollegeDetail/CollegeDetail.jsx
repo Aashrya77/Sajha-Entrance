@@ -61,7 +61,7 @@ const CollegeDetail = () => {
       }
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching college details:', error);
+      // The page already renders its request failure state.
       setLoading(false);
     }
   };
