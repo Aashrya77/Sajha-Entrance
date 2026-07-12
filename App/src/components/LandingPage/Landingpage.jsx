@@ -1,32 +1,10 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import './LandingPageResponsive.css';
 import { Search, Building2, MapPin, GraduationCap, BookOpen, X, Loader2, LayoutDashboard, PlayCircle } from 'lucide-react';
 import { collegeAPI, universityAPI, courseAPI } from '../../api/services';
 import { getImageFieldUrl } from '../../utils/imageHelper';
-
-const Counter = ({ end, duration = 2000 }) => {
-  const [count, setCount] = React.useState(0);
-
-  React.useEffect(() => {
-    let start = 0;
-    const increment = end / (duration / 10);
-    
-    const timer = setInterval(() => {
-      start += increment;
-      if (start >= end) {
-        setCount(end);
-        clearInterval(timer);
-      } else {
-        setCount(Math.floor(start));
-      }
-    }, 10);
-
-    return () => clearInterval(timer);
-  }, [end, duration]);
-
-  return <span>{count}</span>;
-};
+import AnimatedCounter from '../AnimatedCounter/AnimatedCounter';
 
 const normalizeAdHref = (href = '') => {
   if (typeof href !== 'string') {
@@ -164,7 +142,7 @@ const LandingPage = ({ landingAds = [] }) => {
     "/CollegeImage/texas.jpg", "/CollegeImage/sagarmatha.jpg", "/CollegeImage/shikshyalaya.jpg",
   ];
 
-  const resolvedLandingAds = landingAds
+  const resolvedLandingAds = useMemo(() => landingAds
     .map((ad, index) => {
       const imageUrl = getImageFieldUrl(ad, 'adImage', 'landing');
       if (!imageUrl) {
@@ -192,7 +170,7 @@ const LandingPage = ({ landingAds = [] }) => {
       }
 
       return new Date(firstAd.createdAt || 0) - new Date(secondAd.createdAt || 0);
-    });
+    }), [landingAds]);
 
   const visibleLandingAds = resolvedLandingAds.filter((ad) => !failedAdKeys[ad.key]);
 
@@ -281,15 +259,15 @@ const LandingPage = ({ landingAds = [] }) => {
             
             <div className="stats-bar">
                 <div className="stat">
-                  <h3><Counter end={500} />+</h3>
+                  <h3><AnimatedCounter end={500} />+</h3>
                   <p>Colleges</p>
                 </div>
                 <div className="stat">
-                  <h3><Counter end={1000} />+</h3>
+                  <h3><AnimatedCounter end={1000} />+</h3>
                   <p>Programs</p>
                 </div>
                 <div className="stat">
-                  <h3><Counter end={50} />k+</h3>
+                  <h3><AnimatedCounter end={50} />k+</h3>
                   <p>Students Helped</p>
                 </div>
             </div>
@@ -416,14 +394,16 @@ const LandingPage = ({ landingAds = [] }) => {
         {visibleLandingAds.length > 0 && (
           <aside className="ads-column" aria-label="Landing page advertisements">
             <div className="ads-column__inner">
-              {visibleLandingAds.map((ad) => (
+              {visibleLandingAds.map((ad, index) => (
                 <div className="ad-box" key={ad.key}>
                   {ad.href && ad.href.startsWith('/') ? (
                     <Link to={ad.href} className="ad-box__link">
                       <img
                         src={ad.imageUrl}
                         alt={ad.title}
-                        loading="lazy"
+                        loading={index === 0 ? 'eager' : 'lazy'}
+                        fetchPriority={index === 0 ? 'high' : 'auto'}
+                        decoding="async"
                         onError={() => handleAdImageError(ad.key)}
                       />
                     </Link>
@@ -437,7 +417,9 @@ const LandingPage = ({ landingAds = [] }) => {
                       <img
                         src={ad.imageUrl}
                         alt={ad.title}
-                        loading="lazy"
+                        loading={index === 0 ? 'eager' : 'lazy'}
+                        fetchPriority={index === 0 ? 'high' : 'auto'}
+                        decoding="async"
                         onError={() => handleAdImageError(ad.key)}
                       />
                     </a>
@@ -445,7 +427,9 @@ const LandingPage = ({ landingAds = [] }) => {
                     <img
                       src={ad.imageUrl}
                       alt={ad.title}
-                      loading="lazy"
+                      loading={index === 0 ? 'eager' : 'lazy'}
+                      fetchPriority={index === 0 ? 'high' : 'auto'}
+                      decoding="async"
                       onError={() => handleAdImageError(ad.key)}
                     />
                   )}
@@ -463,11 +447,11 @@ const LandingPage = ({ landingAds = [] }) => {
           <div className="marquee-content">
             {/* Pahilo Set */}
             {logos.map((src, index) => (
-              <img key={`orig-${index}`} src={src} alt={`Partner ${index}`} />
+              <img key={`orig-${index}`} src={src} alt={`Partner ${index + 1}`} loading="lazy" decoding="async" />
             ))}
             {/* Dosro Set (Copy) - Yesle loop lai non-stop banaucha */}
             {logos.map((src, index) => (
-              <img key={`copy-${index}`} src={src} alt={`Partner Copy ${index}`} />
+              <img key={`copy-${index}`} src={src} alt="" aria-hidden="true" loading="lazy" decoding="async" />
             ))}
           </div>
         </div>

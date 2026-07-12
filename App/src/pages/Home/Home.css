@@ -341,3 +341,21 @@
         margin-top: 30px;
     }
 }
+/* Let the browser skip layout and paint work for long, below-fold sections. */
+.why-choose-section,
+.stats-section,
+.quote-section,
+.learn-best-section,
+.class-preference-section,
+.scholarship-section,
+.mock-tests-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 600px;
+}
+
+.home-content-loader {
+  display: flex;
+  min-height: 8rem;
+  align-items: center;
+  justify-content: center;
+}
