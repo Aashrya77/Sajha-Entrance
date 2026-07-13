@@ -1,5 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  ArrowDown,
+  BadgeCheck,
+  Building2,
+  Loader2,
+  MapPin,
+  Search,
+  SlidersHorizontal,
+  X,
+} from 'lucide-react';
 import { collegeAPI, courseAPI } from '../../api/services';
 import { getImageFieldUrl } from '../../utils/imageHelper';
 import Loader from '../../components/Loader/Loader';
@@ -136,7 +146,7 @@ const Colleges = () => {
                 aria-label="Search partnered colleges"
               >
                 <div className="colleges-search-field">
-                  <i className="fa-solid fa-magnifying-glass colleges-search-icon" aria-hidden="true"></i>
+                  <Search className="colleges-search-icon" size={18} aria-hidden="true" />
                   <input
                     type="search"
                     name="collegeName"
@@ -154,7 +164,7 @@ const Colleges = () => {
                     aria-controls="college-location-options"
                     onClick={() => setIsLocationFilterOpen((current) => !current)}
                   >
-                    <i className="fa-solid fa-sliders" aria-hidden="true"></i>
+                    <SlidersHorizontal size={18} aria-hidden="true" />
                   </button>
                   <button type="submit" className="colleges-search-submit-sr">
                     Search colleges
@@ -215,16 +225,16 @@ const Colleges = () => {
                     <div className="d-flex align-items-center justify-content-center gap-3 flex-wrap">
                       {searchTerm && (
                         <span className="filter-tag">
-                          <i className="fa-solid fa-search"></i> "{searchTerm}"
+                          <Search size={14} aria-hidden="true" /> "{searchTerm}"
                         </span>
                       )}
                       {locationFilter && (
                         <span className="filter-tag">
-                          <i className="fa-solid fa-map-marker-alt"></i> {locationFilter.charAt(0).toUpperCase() + locationFilter.slice(1)}
+                          <MapPin size={14} aria-hidden="true" /> {locationFilter.charAt(0).toUpperCase() + locationFilter.slice(1)}
                         </span>
                       )}
                       <button type="button" onClick={clearFilters} className="btn-remove-filter">
-                        <i className="fa-solid fa-times"></i> Clear All
+                        <X size={14} aria-hidden="true" /> Clear All
                       </button>
                     </div>
                   </div>
@@ -261,7 +271,7 @@ const Colleges = () => {
                             />
                           ) : (
                             <div className="college-banner-placeholder">
-                              <i className="fa-solid fa-building-columns college-banner-placeholder-icon"></i>
+                              <Building2 className="college-banner-placeholder-icon" aria-hidden="true" />
                             </div>
                           )}
                         </div>
@@ -270,18 +280,18 @@ const Colleges = () => {
                         <div className="college-content">
                           <div className="college-name-section">
                             <h3 className="college-name">{college.collegeName}</h3>
-                            <i className="fa-solid fa-circle-check verified-icon"></i>
+                            <BadgeCheck className="verified-icon" size={17} aria-hidden="true" />
                           </div>
 
                           <div className="college-university-section">
-                            <i className="fa-solid fa-building-columns university-icon"></i>
+                            <Building2 className="university-icon" size={16} aria-hidden="true" />
                             <span className="university-name">
                               {college.universityName || 'University Affiliation'}
                             </span>
                           </div>
 
                           <div className="college-location-section">
-                            <i className="fa-solid fa-location-dot location-icon"></i>
+                            <MapPin className="location-icon" size={16} aria-hidden="true" />
                             <span className="college-location-text">{college.collegeAddress}</span>
                           </div>
                         </div>
@@ -302,13 +312,13 @@ const Colleges = () => {
                 >
                   {loadingMore ? (
                     <>
-                      <i className="fa-solid fa-spinner fa-spin"></i>
+                      <Loader2 className="spin" size={17} aria-hidden="true" />
                       Loading...
                     </>
                   ) : (
                     <>
                       More Colleges
-                      <i className="fa-solid fa-arrow-down"></i>
+                      <ArrowDown size={17} aria-hidden="true" />
                     </>
                   )}
                 </button>

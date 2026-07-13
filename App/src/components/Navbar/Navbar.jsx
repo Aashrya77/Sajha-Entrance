@@ -13,10 +13,14 @@ import {
   Home,
   Info,
   Landmark,
+  LogIn,
+  Menu,
   Newspaper,
   PhoneCall,
+  ShoppingCart,
   Trophy,
   UserPlus,
+  X,
 } from 'lucide-react';
 import ProfileDropdown from './ProfileDropdown';
 
@@ -202,9 +206,9 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0, onLogout 
                 style={{ border: 'none', outline: 'none', boxShadow: 'none' }}
               >
                 {isMenuOpen ? (
-                  <i className="fa-solid fa-xmark" style={{ fontSize: '20px' }}></i>
+                  <X size={20} strokeWidth={2.2} aria-hidden="true" />
                 ) : (
-                  <i className="fa-solid fa-bars" style={{ fontSize: '18px' }}></i>
+                  <Menu size={20} strokeWidth={2.2} aria-hidden="true" />
                 )}
               </button>
 
@@ -216,7 +220,7 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0, onLogout 
             <div className="navbar-mobile-actions">
               <Link to="/cart" className="navbar-mobile-quick-link navbar-mobile-quick-link--cart text-decoration-none">
                 <span className="navbar-mobile-quick-link__icon">
-                  <i className="fa-solid fa-cart-shopping"></i>
+                  <ShoppingCart size={18} strokeWidth={2.2} aria-hidden="true" />
                   {cartCount > 0 && (
                     <span className="navbar-mobile-cart-count">{cartCount}</span>
                   )}
@@ -235,7 +239,7 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0, onLogout 
                   to="/student/login"
                   className="navbar-mobile-quick-link navbar-mobile-quick-link--primary navbar-mobile-quick-link--login text-decoration-none"
                 >
-                  <i className="fa-solid fa-right-to-bracket"></i>
+                  <LogIn size={18} strokeWidth={2.2} aria-hidden="true" />
                   <span className="navbar-mobile-quick-link__label">Login</span>
                 </Link>
               )}
@@ -259,7 +263,7 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0, onLogout 
                 aria-label="Close navigation menu"
                 onClick={handleMobileNavClose}
               >
-                <i className="fa-solid fa-xmark" aria-hidden="true"></i>
+                <X size={20} strokeWidth={2.2} aria-hidden="true" />
               </button>
             </div>
             <ul className="navbar-nav mx-auto mb-2 mb-lg-0">
@@ -333,7 +337,7 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0, onLogout 
             </ul>
             <div className="d-flex align-items-center d-none d-lg-flex" style={{gap: '8px'}}>
               <Link to="/cart" className="btn btn-link text-decoration-none position-relative" style={{color: '#333', fontSize: '18px', padding: '4px 8px'}}>
-                <i className="fa-solid fa-cart-shopping"></i>
+                <ShoppingCart size={19} strokeWidth={2.2} aria-hidden="true" />
                 {cartCount > 0 && (
                   <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style={{fontSize: '9px'}}>
                     {cartCount}
@@ -345,6 +349,7 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0, onLogout 
               ) : (
                 <>
                   <Link to="/student/login" className="btn" style={{border: '1.5px solid #ff6b35', color: '#ff6b35', backgroundColor: 'transparent', fontWeight: 600, fontSize: '13px', padding: '6px 16px', borderRadius: '5px', textDecoration: 'none', transition: 'all 0.2s ease'}}>
+                    <LogIn size={15} strokeWidth={2.2} aria-hidden="true" style={{ marginRight: '6px', verticalAlign: '-2px' }} />
                     Login
                   </Link>
                   <Link to="/student/register" className="btn btn-register" style={{backgroundColor: '#ff6b35', color: '#fff', fontWeight: 600, fontSize: '13px', padding: '6px 16px', borderRadius: '5px', border: 'none', textDecoration: 'none', transition: 'all 0.2s ease'}}>

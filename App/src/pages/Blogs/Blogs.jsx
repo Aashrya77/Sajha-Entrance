@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { ArrowRight, CalendarDays, MessageCircle, Search, Send, Share2 } from 'lucide-react';
 import { blogAPI } from '../../api/services';
 import { getImageFieldUrl } from '../../utils/imageHelper';
 import Loader from '../../components/Loader/Loader';
@@ -92,7 +93,7 @@ const Blogs = () => {
           <div className="blogs-search-shell">
             <form onSubmit={handleSearch} className="blogs-search-form">
               <span className="blogs-search-icon" aria-hidden="true">
-                <i className="fa-solid fa-search"></i>
+                <Search size={18} />
               </span>
               <input
                 type="text"
@@ -102,7 +103,7 @@ const Blogs = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
               <button type="submit" className="blogs-search-submit" aria-label="Search articles">
-                <i className="fa-solid fa-search"></i>
+                <Search size={18} />
               </button>
             </form>
           </div>
@@ -132,7 +133,7 @@ const Blogs = () => {
                     <div className="blog-meta">
                       <div className="blog-meta-left">
                         <span className="blog-date">
-                          <i className="fa-solid fa-calendar-days"></i>
+                          <CalendarDays size={15} aria-hidden="true" />
                           {new Date(blog.createdAt).toLocaleDateString()}
                         </span>
                       </div>
@@ -140,14 +141,14 @@ const Blogs = () => {
                         className="btn-share"
                         onClick={(e) => openShareModal(e, blog)}
                       >
-                        <i className="fa-solid fa-share-nodes"></i>Share
+                        <Share2 size={15} aria-hidden="true" />Share
                       </button>
                     </div>
 
                     {/* Read More: Aligned Right */}
                     <div className="text-end mt-2">
                        <span className="btn-read-more">
-                         Read More <i className="fa-solid fa-arrow-right"></i>
+                         Read More <ArrowRight size={15} aria-hidden="true" />
                        </span>
                     </div>
                   </div>
@@ -184,15 +185,15 @@ const Blogs = () => {
             </div>
             <div className="share-options">
               <button className="share-option" onClick={() => handleShare('facebook')}>
-                <i className="fa-brands fa-facebook" style={{color: '#1877f2'}}></i>
+                <Share2 size={20} style={{color: '#1877f2'}} aria-hidden="true" />
                 <span>Facebook</span>
               </button>
               <button className="share-option" onClick={() => handleShare('whatsapp')}>
-                <i className="fa-brands fa-whatsapp" style={{color: '#25d366'}}></i>
+                <MessageCircle size={20} style={{color: '#25d366'}} aria-hidden="true" />
                 <span>WhatsApp</span>
               </button>
               <button className="share-option" onClick={() => handleShare('twitter')}>
-                <i className="fa-brands fa-twitter" style={{color: '#1da1f2'}}></i>
+                <Send size={20} style={{color: '#1da1f2'}} aria-hidden="true" />
                 <span>Twitter</span>
               </button>
             </div>

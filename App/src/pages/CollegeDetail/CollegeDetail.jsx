@@ -2,9 +2,23 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ArrowLeft,
+  ArrowRight,
+  Banknote,
+  BookOpen,
   Building2,
   CalendarDays,
+  Check,
+  Clock,
+  FileText,
+  Globe,
+  GraduationCap,
+  Image,
+  Info,
+  Mail,
   MapPin,
+  Phone,
+  Star,
+  User,
 } from 'lucide-react';
 import { collegeAPI } from '../../api/services';
 import { getImageFieldUrl, getImageList } from '../../utils/imageHelper';
@@ -103,17 +117,17 @@ const CollegeDetail = () => {
   const navSections = [
     courses && courses.length > 0 && {
       id: 'programs',
-      icon: 'fa-book',
+      icon: BookOpen,
       label: 'Programs',
       badge: courses.length,
     },
-    college.overview && { id: 'about', icon: 'fa-circle-info', label: 'About' },
-    college.admissionNotice && { id: 'admission', icon: 'fa-graduation-cap', label: 'Admission' },
-    { id: 'features', icon: 'fa-star', label: 'Features' },
-    college.admissionGuidelines && { id: 'guidelines', icon: 'fa-file-alt', label: 'Guidelines' },
-    college.scholarshipInfo && { id: 'scholarship', icon: 'fa-money-bill', label: 'Scholarship' },
-    galleryImages.length > 0 && { id: 'gallery', icon: 'fa-images', label: 'Gallery' },
-    hasChairmanSection && { id: 'chairman', icon: 'fa-user-tie', label: 'Chairman' },
+    college.overview && { id: 'about', icon: Info, label: 'About' },
+    college.admissionNotice && { id: 'admission', icon: GraduationCap, label: 'Admission' },
+    { id: 'features', icon: Star, label: 'Features' },
+    college.admissionGuidelines && { id: 'guidelines', icon: FileText, label: 'Guidelines' },
+    college.scholarshipInfo && { id: 'scholarship', icon: Banknote, label: 'Scholarship' },
+    galleryImages.length > 0 && { id: 'gallery', icon: Image, label: 'Gallery' },
+    hasChairmanSection && { id: 'chairman', icon: User, label: 'Chairman' },
   ].filter(Boolean);
 
   const heroStyle = coverImageUrl
@@ -171,18 +185,21 @@ const CollegeDetail = () => {
         <div className="college-mobile-nav d-lg-none">
           <div className="container-fluid">
             <div className="college-mobile-nav-scroll">
-              {navSections.map((section) => (
+              {navSections.map((section) => {
+                const SectionIcon = section.icon;
+                return (
                 <a
                   key={section.id}
                   href={`#${section.id}`}
                   className={`college-mobile-nav-link ${activeSection === section.id ? 'active' : ''}`}
                   onClick={(e) => scrollToSection(e, section.id)}
                 >
-                  <i className={`fa-solid ${section.icon}`}></i>
+                  <SectionIcon size={17} strokeWidth={2.1} aria-hidden="true" />
                   <span>{section.label}</span>
                   {section.badge ? <span className="nav-badge">{section.badge}</span> : null}
                 </a>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
@@ -196,20 +213,23 @@ const CollegeDetail = () => {
             <div className="col-lg-2 d-none d-lg-block">
               <nav className="college-sidebar-nav sticky-top">
                 <ul className="college-nav-list">
-                  {navSections.map((section) => (
+                  {navSections.map((section) => {
+                    const SectionIcon = section.icon;
+                    return (
                     <li key={section.id} className="college-nav-item">
                       <a 
                         href={`#${section.id}`}
                         className={`college-nav-link ${activeSection === section.id ? 'active' : ''}`}
                         onClick={(e) => scrollToSection(e, section.id)}
                       >
-                        <i className={`fa-solid ${section.icon}`}></i> {section.label}
+                        <SectionIcon size={17} strokeWidth={2.1} aria-hidden="true" /> {section.label}
                         {section.badge ? (
                           <span className="nav-badge">{section.badge}</span>
                         ) : null}
                       </a>
                     </li>
-                  ))}
+                    );
+                  })}
                 </ul>
               </nav>
             </div>
@@ -229,18 +249,18 @@ const CollegeDetail = () => {
                           <div className="college-course-card-content">
                             <h3 className="college-course-title">{course.fullForm || course.title}</h3>
                             <div className="college-course-detail">
-                              <i className="fa-solid fa-building-columns"></i>
+                              <Building2 size={16} aria-hidden="true" />
                               <span>{course.universityName || 'University Affiliation'}</span>
                             </div>
                             <div className="college-course-detail">
-                              <i className="fa-solid fa-clock"></i>
+                              <Clock size={16} aria-hidden="true" />
                               <span>{course.duration || 'Duration'}</span>
                             </div>
                           </div>
                           <div className="college-course-card-footer">
                             <div className="college-course-action">
                               <span>Learn More</span>
-                              <i className="fa-solid fa-arrow-right"></i>
+                              <ArrowRight size={16} aria-hidden="true" />
                             </div>
                           </div>
                         </Link>
@@ -269,7 +289,7 @@ const CollegeDetail = () => {
                       <Link to="/contact" className="college-btn-apply">Apply Now</Link>
                       {college.admissionCloseDate && (
                         <span className="college-admission-deadline">
-                          <i className="fa-solid fa-clock"></i>
+                          <Clock size={16} aria-hidden="true" />
                           Closes: {formatDate(college.admissionCloseDate)}
                         </span>
                       )}
@@ -287,7 +307,7 @@ const CollegeDetail = () => {
                       <ul style={{paddingLeft: '20px'}}>
                         {college.keyFeatures.map((feature, index) => (
                           <li key={index} style={{marginBottom: '12px'}}>
-                            <i className="fa-solid fa-check" style={{color: '#ff9800', marginRight: '8px'}}></i>
+                            <Check size={16} style={{color: '#ff9800', marginRight: '8px'}} aria-hidden="true" />
                             {feature}
                           </li>
                         ))}
@@ -345,7 +365,7 @@ const CollegeDetail = () => {
                 {college.universityName && (
                   <div className="college-contact-item">
                     <div className="college-contact-icon">
-                      <i className="fa-solid fa-building-columns"></i>
+                      <Building2 size={18} aria-hidden="true" />
                     </div>
                     <div className="college-contact-content">
                       <div className="college-contact-label">University</div>
@@ -357,7 +377,7 @@ const CollegeDetail = () => {
                 {college.collegeAddress && (
                   <div className="college-contact-item">
                     <div className="college-contact-icon">
-                      <i className="fa-solid fa-map-marker-alt"></i>
+                      <MapPin size={18} aria-hidden="true" />
                     </div>
                     <div className="college-contact-content">
                       <div className="college-contact-label">Address</div>
@@ -369,7 +389,7 @@ const CollegeDetail = () => {
                 {college.collegePhone && (
                   <div className="college-contact-item">
                     <div className="college-contact-icon">
-                      <i className="fa-solid fa-phone"></i>
+                      <Phone size={18} aria-hidden="true" />
                     </div>
                     <div className="college-contact-content">
                       <div className="college-contact-label">Phone</div>
@@ -383,7 +403,7 @@ const CollegeDetail = () => {
                 {college.collegeEmail && (
                   <div className="college-contact-item">
                     <div className="college-contact-icon">
-                      <i className="fa-solid fa-envelope"></i>
+                      <Mail size={18} aria-hidden="true" />
                     </div>
                     <div className="college-contact-content">
                       <div className="college-contact-label">Email</div>
@@ -397,7 +417,7 @@ const CollegeDetail = () => {
                 {college.website && (
                   <div className="college-contact-item">
                     <div className="college-contact-icon">
-                      <i className="fa-solid fa-globe"></i>
+                      <Globe size={18} aria-hidden="true" />
                     </div>
                     <div className="college-contact-content">
                       <div className="college-contact-label">Website</div>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { ArrowLeft, ArrowRight, BookOpen, Building2, CalendarDays, Headphones, MapPin, School, Search, Trophy, X } from 'lucide-react';
 import { universityAPI } from '../../api/services';
 import { getImageFieldUrl } from '../../utils/imageHelper';
 import Loader from '../../components/Loader/Loader';
@@ -72,7 +73,7 @@ const Universities = () => {
         <div className="container position-relative">
           <div className="courses-hero-content text-center">
             <span className="courses-hero-badge">
-              <i className="fa-solid fa-building-columns me-2"></i>
+              <Building2 className="me-2" size={18} aria-hidden="true" />
               Explore Universities
             </span>
             <h1 className="courses-hero-title">
@@ -83,7 +84,7 @@ const Universities = () => {
             </p>
             <div className="courses-search-wrapper">
               <div className="courses-search-box">
-                <i className="fa-solid fa-magnifying-glass courses-search-icon"></i>
+                <Search className="courses-search-icon" size={19} aria-hidden="true" />
                 <input
                   type="text"
                   placeholder="Search universities by name, location, type..."
@@ -94,7 +95,7 @@ const Universities = () => {
                 />
                 {searchTerm && (
                   <button className="courses-search-clear" onClick={() => { setSearchTerm(''); setCurrentPage(1); fetchData(); }}>
-                    <i className="fa-solid fa-xmark"></i>
+                    <X size={18} aria-hidden="true" />
                   </button>
                 )}
               </div>
@@ -108,28 +109,28 @@ const Universities = () => {
         <div className="container">
           <div className="courses-stats-row">
             <div className="courses-stat-item">
-              <i className="fa-solid fa-building-columns"></i>
+              <Building2 aria-hidden="true" />
               <div>
                 <strong>{universities.length}</strong>
                 <span>Universities</span>
               </div>
             </div>
             <div className="courses-stat-item">
-              <i className="fa-solid fa-book-open"></i>
+              <BookOpen aria-hidden="true" />
               <div>
                 <strong>{[...new Set(universities.flatMap(u => (u.coursesOffered || []).map(c => c._id || c)))].length}</strong>
                 <span>Programs</span>
               </div>
             </div>
             <div className="courses-stat-item">
-              <i className="fa-solid fa-school"></i>
+              <School aria-hidden="true" />
               <div>
                 <strong>{[...new Set(universities.flatMap(u => (u.affiliatedColleges || []).map(c => c._id || c)))].length}</strong>
                 <span>Affiliated Colleges</span>
               </div>
             </div>
             <div className="courses-stat-item">
-              <i className="fa-solid fa-trophy"></i>
+              <Trophy aria-hidden="true" />
               <div>
                 <strong>100%</strong>
                 <span>Recognized</span>
@@ -144,7 +145,7 @@ const Universities = () => {
         <div className="container-fluid">
           {noResult || filteredUniversities.length === 0 ? (
             <div className="courses-empty">
-              <i className="fa-solid fa-face-sad-tear"></i>
+              <Search size={42} aria-hidden="true" />
               <h3>No universities found</h3>
               <p>Try adjusting your search term</p>
             </div>
@@ -196,25 +197,25 @@ const Universities = () => {
                           </div>
                           <div className="cp-card-meta">
                             <div className="cp-card-meta-item">
-                              <i className="fa-solid fa-location-dot"></i>
+                              <MapPin size={16} aria-hidden="true" />
                               <span>{uni.universityAddress || 'Location N/A'}</span>
                             </div>
                             {uni.establishedYear && (
                               <div className="cp-card-meta-item">
-                                <i className="fa-solid fa-calendar"></i>
+                                <CalendarDays size={16} aria-hidden="true" />
                                 <span>Established {uni.establishedYear}</span>
                               </div>
                             )}
                             {uni.coursesOffered && uni.coursesOffered.length > 0 && (
                               <div className="cp-card-meta-item cp-scholarship">
-                                <i className="fa-solid fa-book-open"></i>
+                                <BookOpen size={16} aria-hidden="true" />
                                 <span>{uni.coursesOffered.length} Program{uni.coursesOffered.length > 1 ? 's' : ''}</span>
                               </div>
                             )}
                           </div>
                           {uni.affiliatedColleges && uni.affiliatedColleges.length > 0 && (
                             <div className="cp-card-colleges">
-                              <i className="fa-solid fa-school"></i>
+                              <School size={16} aria-hidden="true" />
                               <span>{uni.affiliatedColleges.length} Affiliated College{uni.affiliatedColleges.length > 1 ? 's' : ''}</span>
                             </div>
                           )}
@@ -222,7 +223,7 @@ const Universities = () => {
                         <div className="cp-card-footer">
                           <span className="cp-card-cta">
                             View Details
-                            <i className="fa-solid fa-arrow-right"></i>
+                            <ArrowRight size={16} aria-hidden="true" />
                           </span>
                         </div>
                       </div>
@@ -247,7 +248,7 @@ const Universities = () => {
                       color: '#ff6b35', cursor: 'pointer', fontSize: '16px'
                     }}
                   >
-                    <i className="fa-solid fa-angle-left"></i>
+                    <ArrowLeft size={17} aria-hidden="true" />
                   </button>
                 )}
               </div>
@@ -262,7 +263,7 @@ const Universities = () => {
                       color: '#ff6b35', cursor: 'pointer', fontSize: '16px'
                     }}
                   >
-                    <i className="fa-solid fa-angle-right"></i>
+                    <ArrowRight size={17} aria-hidden="true" />
                   </button>
                 )}
               </div>
@@ -283,7 +284,7 @@ const Universities = () => {
             Our counselors can help you pick the right university based on your interests and career goals.
           </p>
           <Link to="/contact" className="courses-cta-btn">
-            <i className="fa-solid fa-headset me-2"></i>
+            <Headphones className="me-2" size={18} aria-hidden="true" />
             Get Free Counseling
           </Link>
         </div>

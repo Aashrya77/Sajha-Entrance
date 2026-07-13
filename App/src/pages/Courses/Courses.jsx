@@ -1,18 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { ArrowRight, Award, BookOpen, Building2, Clock, Headphones, School, Search, Trophy, Users, X } from 'lucide-react';
 import { courseAPI } from '../../api/services';
 import Loader from '../../components/Loader/Loader';
 import PageAdvertisements from '../../components/PageAdvertisements/PageAdvertisements';
-
-const COURSE_ICONS = {
-  'BIT': 'fa-laptop-code',
-  'BCA': 'fa-desktop',
-  'CMAT': 'fa-chart-line',
-  'CSIT': 'fa-microchip',
-  'BSc.CSIT': 'fa-microchip',
-  'BE': 'fa-cogs',
-  'IOT': 'fa-wifi',
-};
 
 const COURSE_GRADIENTS = {
   0: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -73,7 +64,7 @@ const Courses = () => {
             </p>
             <div className="courses-search-wrapper">
               <div className="courses-search-box">
-                <i className="fa-solid fa-magnifying-glass courses-search-icon"></i>
+                <Search className="courses-search-icon" size={19} aria-hidden="true" />
                 <input
                   type="text"
                   placeholder="Search courses, programs, or fields..."
@@ -83,7 +74,7 @@ const Courses = () => {
                 />
                 {searchTerm && (
                   <button className="courses-search-clear" onClick={() => setSearchTerm('')}>
-                    <i className="fa-solid fa-xmark"></i>
+                    <X size={18} aria-hidden="true" />
                   </button>
                 )}
               </div>
@@ -97,28 +88,28 @@ const Courses = () => {
         <div className="container">
           <div className="courses-stats-row">
             <div className="courses-stat-item">
-              <i className="fa-solid fa-book-open"></i>
+              <BookOpen aria-hidden="true" />
               <div>
                 <strong>{courses.length}</strong>
                 <span>Courses</span>
               </div>
             </div>
             <div className="courses-stat-item">
-              <i className="fa-solid fa-building-columns"></i>
+              <Building2 aria-hidden="true" />
               <div>
                 <strong>{[...new Set(courses.map(c => c.universityName).filter(Boolean))].length}</strong>
                 <span>Universities</span>
               </div>
             </div>
             <div className="courses-stat-item">
-              <i className="fa-solid fa-users"></i>
+              <Users aria-hidden="true" />
               <div>
                 <strong>1000+</strong>
                 <span>Students</span>
               </div>
             </div>
             <div className="courses-stat-item">
-              <i className="fa-solid fa-trophy"></i>
+              <Trophy aria-hidden="true" />
               <div>
                 <strong>95%</strong>
                 <span>Success Rate</span>
@@ -133,14 +124,13 @@ const Courses = () => {
         <div className="container-fluid">
           {filteredCourses.length === 0 ? (
             <div className="courses-empty">
-              <i className="fa-solid fa-face-sad-tear"></i>
+              <Search size={42} aria-hidden="true" />
               <h3>No courses found</h3>
               <p>Try adjusting your search term</p>
             </div>
           ) : (
             <div className="row g-4">
               {filteredCourses.map((course, index) => {
-                const icon = COURSE_ICONS[course.title] || 'fa-book';
                 const gradient = COURSE_GRADIENTS[index % Object.keys(COURSE_GRADIENTS).length];
                 return (
                   <div key={course._id} className="col-12 col-sm-6 col-lg-4">
@@ -155,23 +145,23 @@ const Courses = () => {
                           </div>
                           <div className="cp-card-meta">
                             <div className="cp-card-meta-item">
-                              <i className="fa-solid fa-building-columns"></i>
+                              <Building2 size={16} aria-hidden="true" />
                               <span>{course.universityName || 'University'}</span>
                             </div>
                             <div className="cp-card-meta-item">
-                              <i className="fa-solid fa-clock"></i>
+                              <Clock size={16} aria-hidden="true" />
                               <span>{course.duration || 'Duration N/A'}</span>
                             </div>
                             {course.scholarshipAvailable && (
                               <div className="cp-card-meta-item cp-scholarship">
-                                <i className="fa-solid fa-award"></i>
+                                <Award size={16} aria-hidden="true" />
                                 <span>Scholarship Available</span>
                               </div>
                             )}
                           </div>
                           {course.colleges && course.colleges.length > 0 && (
                             <div className="cp-card-colleges">
-                              <i className="fa-solid fa-school"></i>
+                              <School size={16} aria-hidden="true" />
                               <span>{course.colleges.length} College{course.colleges.length > 1 ? 's' : ''} Offering</span>
                             </div>
                           )}
@@ -179,7 +169,7 @@ const Courses = () => {
                         <div className="cp-card-footer">
                           <span className="cp-card-cta">
                             View Details & Enroll
-                            <i className="fa-solid fa-arrow-right"></i>
+                            <ArrowRight size={16} aria-hidden="true" />
                           </span>
                         </div>
                       </div>
@@ -204,7 +194,7 @@ const Courses = () => {
             Our counselors can help you pick the right program based on your interests and career goals.
           </p>
           <Link to="/contact" className="courses-cta-btn">
-            <i className="fa-solid fa-headset me-2"></i>
+            <Headphones className="me-2" size={18} aria-hidden="true" />
             Get Free Counseling
           </Link>
         </div>
