@@ -326,6 +326,12 @@ const MockTestAttemptSchema = new mongoose.Schema({
 
 MockTestAttemptSchema.index({ student: 1, mockTest: 1, completedAt: -1 });
 MockTestAttemptSchema.index({ student: 1, mockTest: 1, attemptNumber: 1 });
+// Attempts contain per-question answer payloads and are useful only for recent
+// review. MongoDB removes them automatically seven days after completion.
+MockTestAttemptSchema.index(
+  { completedAt: 1 },
+  { expireAfterSeconds: 7 * 24 * 60 * 60, name: "completedAt_7d_retention" }
+);
 
 export const MockTestAttemptModel = mongoose.model(
   "MockTestAttempt",

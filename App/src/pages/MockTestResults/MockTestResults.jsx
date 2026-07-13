@@ -1,129 +1,176 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  ArrowRight,
+  BarChart3,
+  CalendarDays,
+  CheckCircle2,
+  ClipboardList,
+  Clock3,
+  Plus,
+  Target,
+  Trophy,
+  XCircle,
+} from 'lucide-react';
 import { mockTestAPI } from '../../api/services';
 import Loader from '../../components/Loader/Loader';
+import './MockTestResults.css';
+
+const PASS_PERCENTAGE = 40;
+
+const formatTime = (value) => {
+  const seconds = Math.max(0, Number(value) || 0);
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes}m ${remainingSeconds}s`;
+};
+
+const formatPercentage = (value) => {
+  const percentage = Number(value) || 0;
+  return `${Number.isInteger(percentage) ? percentage : percentage.toFixed(1)}%`;
+};
 
 const MockTestResults = () => {
   const [attempts, setAttempts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const fetchAttempts = async () => {
+      try {
+        const response = await mockTestAPI.getMyAttempts();
+        if (response.data.success) {
+          setAttempts(response.data.data.attempts || []);
+        }
+      } catch (error) {
+        // The empty state remains useful when the request cannot be completed.
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchAttempts();
   }, []);
 
-  const fetchAttempts = async () => {
-    try {
-      const response = await mockTestAPI.getMyAttempts();
-      if (response.data.success) {
-        setAttempts(response.data.data.attempts || []);
-      }
-      setLoading(false);
-    } catch (error) {
-      // The page already renders its request failure state.
-      setLoading(false);
+  const summary = useMemo(() => {
+    if (!attempts.length) {
+      return { best: 0, average: 0, passed: 0 };
     }
-  };
 
-  const formatTime = (seconds) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}m ${s}s`;
-  };
+    const percentages = attempts.map((attempt) => Number(attempt.percentage) || 0);
+    return {
+      best: Math.max(...percentages),
+      average: percentages.reduce((total, value) => total + value, 0) / percentages.length,
+      passed: percentages.filter((value) => value >= PASS_PERCENTAGE).length,
+    };
+  }, [attempts]);
 
   if (loading) {
     return <div className="container mt-5 pt-5 d-flex justify-content-center"><Loader /></div>;
   }
 
   return (
-    <div style={{ paddingTop: '130px', minHeight: '100vh', backgroundColor: '#f8f9fa' }}>
-      <div className="container" style={{ maxWidth: '900px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-          <h2 style={{ fontWeight: 700, color: '#1a365d', margin: 0 }}>
-            <i className="fa-solid fa-chart-bar me-2"></i>My Test Results
-          </h2>
-          <Link to="/mocktests" style={{
-            padding: '8px 20px', borderRadius: '8px', fontSize: '14px', fontWeight: 600,
-            background: '#ff6b35', color: '#fff', textDecoration: 'none'
-          }}>
-            <i className="fa-solid fa-plus me-2"></i>Take New Test
+    <main className="test-results-page">
+      <div className="test-results-page__glow" aria-hidden="true" />
+      <div className="container test-results-page__container">
+        <header className="test-results-header">
+          <div>
+            <span className="test-results-header__eyebrow">Performance dashboard</span>
+            <h1 className="test-results-header__title">
+              <BarChart3 aria-hidden="true" />
+              My Test Results
+            </h1>
+            <p className="test-results-header__subtitle">
+              Review your recent attempts and track your preparation progress.
+            </p>
+          </div>
+          <Link to="/mocktests" className="test-results-primary-action">
+            <Plus size={18} aria-hidden="true" />
+            Take New Test
           </Link>
-        </div>
+        </header>
 
         {attempts.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 20px', background: '#fff', borderRadius: '12px', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
-            <i className="fa-solid fa-clipboard-list" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
-            <h4 style={{ color: '#555', fontWeight: 600 }}>No attempts yet</h4>
-            <p style={{ color: '#888' }}>Take a mock test to see your results here.</p>
-            <Link to="/mocktests" style={{
-              padding: '10px 28px', borderRadius: '8px', fontSize: '14px', fontWeight: 600,
-              background: '#ff6b35', color: '#fff', textDecoration: 'none', display: 'inline-block', marginTop: '12px'
-            }}>
-              Browse Mock Tests
+          <section className="test-results-empty">
+            <span className="test-results-empty__icon"><ClipboardList size={34} /></span>
+            <h2>No test results yet</h2>
+            <p>Complete your first mock test to start tracking your performance.</p>
+            <Link to="/mocktests" className="test-results-primary-action">
+              Browse Mock Tests <ArrowRight size={17} />
             </Link>
-          </div>
+          </section>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            {attempts.map((attempt) => {
-              const isPassed = attempt.percentage >= 40;
-              return (
-                <Link
-                  key={attempt._id}
-                  to={`/mocktest-result/${attempt._id}`}
-                  style={{ textDecoration: 'none' }}
-                >
-                  <div style={{
-                    background: '#fff', borderRadius: '12px', padding: '20px 24px',
-                    boxShadow: '0 1px 4px rgba(0,0,0,0.04)', display: 'flex',
-                    alignItems: 'center', gap: '20px', transition: 'box-shadow 0.2s',
-                    borderLeft: `4px solid ${isPassed ? '#16a34a' : '#ef4444'}`
-                  }}
-                  onMouseOver={(e) => e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.08)'}
-                  onMouseOut={(e) => e.currentTarget.style.boxShadow = '0 1px 4px rgba(0,0,0,0.04)'}
-                  >
-                    {/* Score Circle */}
-                    <div style={{
-                      width: '56px', height: '56px', borderRadius: '50%', flexShrink: 0,
-                      border: `3px solid ${isPassed ? '#16a34a' : '#ef4444'}`,
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
-                    }}>
-                      <span style={{ fontSize: '16px', fontWeight: 800, color: isPassed ? '#16a34a' : '#ef4444', lineHeight: 1 }}>
-                        {attempt.percentage}%
+          <>
+            <section className="test-results-summary" aria-label="Results summary">
+              <article className="test-results-summary__card">
+                <span className="test-results-summary__icon"><ClipboardList size={20} /></span>
+                <div><strong>{attempts.length}</strong><span>Recent attempts</span></div>
+              </article>
+              <article className="test-results-summary__card">
+                <span className="test-results-summary__icon"><Trophy size={20} /></span>
+                <div><strong>{formatPercentage(summary.best)}</strong><span>Best score</span></div>
+              </article>
+              <article className="test-results-summary__card">
+                <span className="test-results-summary__icon"><Target size={20} /></span>
+                <div><strong>{formatPercentage(summary.average)}</strong><span>Average score</span></div>
+              </article>
+              <article className="test-results-summary__card">
+                <span className="test-results-summary__icon"><CheckCircle2 size={20} /></span>
+                <div><strong>{summary.passed}</strong><span>Tests passed</span></div>
+              </article>
+            </section>
+
+            <section className="test-results-list" aria-label="Recent test attempts">
+              <div className="test-results-list__heading">
+                <div><h2>Recent attempts</h2><p>Results are retained for seven days.</p></div>
+                <span>{attempts.length} result{attempts.length === 1 ? '' : 's'}</span>
+              </div>
+
+              <div className="test-results-list__items">
+                {attempts.map((attempt) => {
+                  const isPassed = Number(attempt.percentage) >= PASS_PERCENTAGE;
+                  return (
+                    <Link
+                      key={attempt._id}
+                      to={`/mocktest-result/${attempt._id}`}
+                      className={`test-result-card ${isPassed ? 'is-passed' : 'is-failed'}`}
+                    >
+                      <div className="test-result-card__score">
+                        <strong>{formatPercentage(attempt.percentage)}</strong>
+                        <span>{isPassed ? 'Passed' : 'Keep going'}</span>
+                      </div>
+
+                      <div className="test-result-card__content">
+                        <div className="test-result-card__title-row">
+                          <div>
+                            <h3>{attempt.mockTest?.title || 'Mock Test'}</h3>
+                            <span className="test-result-card__attempt">Attempt {attempt.attemptNumber || 1}</span>
+                          </div>
+                          <div className="test-result-card__marks">
+                            <strong>{attempt.totalScore}<span>/{attempt.mockTest?.totalMarks || 0}</span></strong>
+                            <small>marks</small>
+                          </div>
+                        </div>
+
+                        <div className="test-result-card__metrics">
+                          <span className="is-correct"><CheckCircle2 size={16} />{attempt.totalCorrect} correct</span>
+                          <span className="is-wrong"><XCircle size={16} />{attempt.totalWrong} wrong</span>
+                          <span><Clock3 size={16} />{formatTime(attempt.timeTaken)}</span>
+                          <span><CalendarDays size={16} />{new Date(attempt.completedAt).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+
+                      <span className="test-result-card__view" aria-label="View result">
+                        <ArrowRight size={19} />
                       </span>
-                    </div>
-
-                    {/* Info */}
-                    <div style={{ flex: 1 }}>
-                      <h5 style={{ fontWeight: 600, color: '#1a365d', margin: '0 0 4px 0', fontSize: '15px' }}>
-                        {attempt.mockTest?.title || 'Mock Test'}
-                      </h5>
-                      <div style={{ fontSize: '12px', color: '#ff6b35', fontWeight: 700, marginBottom: '6px' }}>
-                        Attempt {attempt.attemptNumber || 1}
-                      </div>
-                      <div style={{ display: 'flex', gap: '16px', fontSize: '13px', color: '#888', flexWrap: 'wrap' }}>
-                        <span><i className="fa-solid fa-check-circle me-1" style={{ color: '#16a34a' }}></i>{attempt.totalCorrect} correct</span>
-                        <span><i className="fa-solid fa-xmark me-1" style={{ color: '#ef4444' }}></i>{attempt.totalWrong} wrong</span>
-                        <span><i className="fa-solid fa-clock me-1"></i>{formatTime(attempt.timeTaken)}</span>
-                        <span><i className="fa-solid fa-calendar me-1"></i>{new Date(attempt.completedAt).toLocaleDateString()}</span>
-                      </div>
-                    </div>
-
-                    {/* Score */}
-                    <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                      <div style={{ fontSize: '16px', fontWeight: 700, color: '#1a365d' }}>
-                        {attempt.totalScore}/{attempt.mockTest?.totalMarks || 0}
-                      </div>
-                      <div style={{ fontSize: '11px', color: '#888' }}>marks</div>
-                    </div>
-
-                    <i className="fa-solid fa-chevron-right" style={{ color: '#ccc', fontSize: '14px' }}></i>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          </>
         )}
       </div>
-    </div>
+    </main>
   );
 };
 

@@ -124,6 +124,7 @@ export const ADMIN_PERMISSION_RESOURCES = [
   createPermissionResource("colleges", "Colleges"),
   createPermissionResource("universities", "Universities"),
   createPermissionResource("landing_ads", "Landing Ads"),
+  createPermissionResource("top_college_section", "Top Colleges Section"),
   createPermissionResource("mock_test_courses", "Mock Test Courses"),
   createPermissionResource("mock_test_subjects", "Mock Test Subjects"),
   createPermissionResource("mock_tests", "Mock Tests"),
@@ -196,6 +197,9 @@ export const ADMIN_RESOURCE_ACCESS = {
   },
   LandingAd: {
     permissionResource: "landing_ads",
+  },
+  TopCollegeSection: {
+    permissionResource: "top_college_section",
   },
   MockTestCourse: {
     permissionResource: "mock_test_courses",

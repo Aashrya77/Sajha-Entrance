@@ -123,6 +123,8 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0, onLogout 
   };
 
   const parentGroup = getParentGroup();
+  const isStudentDashboard = location.pathname === '/student/profile'
+    || location.pathname.startsWith('/student/profile/');
   const hideNoticeBar = location.pathname.startsWith('/mocktest/');
   const primaryLinks = [
     { to: '/', label: 'HOME', group: 'Home', icon: Home },
@@ -233,6 +235,7 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0, onLogout 
                   username={studentDisplayName}
                   onLogout={onLogout}
                   variant="mobile"
+                  isDashboardActive={isStudentDashboard}
                 />
               ) : (
                 <Link
@@ -345,7 +348,11 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0, onLogout 
                 )}
               </Link>
               {isAuthenticated && studentData ? (
-                <ProfileDropdown username={studentDisplayName} onLogout={onLogout} />
+                <ProfileDropdown
+                  username={studentDisplayName}
+                  onLogout={onLogout}
+                  isDashboardActive={isStudentDashboard}
+                />
               ) : (
                 <>
                   <Link to="/student/login" className="btn" style={{border: '1.5px solid #ff6b35', color: '#ff6b35', backgroundColor: 'transparent', fontWeight: 600, fontSize: '13px', padding: '6px 16px', borderRadius: '5px', textDecoration: 'none', transition: 'all 0.2s ease'}}>

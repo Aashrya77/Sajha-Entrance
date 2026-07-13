@@ -2,6 +2,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { flat } from "adminjs";
 import uploadFeature from "@adminjs/upload";
+import sharp from "sharp";
+import ValidationError from "../../../node_modules/adminjs/lib/backend/utils/errors/validation-error.js";
 import componentLoader, { Components } from "../../ComponentLoader.js";
 import UploadProvider from "../../UploadProvider.js";
 import { mediaRootDirectory } from "../../../utils/media.js";
@@ -199,6 +201,40 @@ const createMultipleImageActionHooks = ({ fields, provider }) => {
   };
 };
 
+const createImageDimensionHook = ({ fields, dimensions }) => async (request) => {
+  if (request.method !== "post" || !request.payload || !dimensions) {
+    return request;
+  }
+
+  const uploadedFiles = toArray(flat.get(request.payload, fields.fileProperty));
+
+  for (const uploadedFile of uploadedFiles) {
+    const imageSource = uploadedFile?.filepath || uploadedFile?.path || uploadedFile?.buffer;
+    if (!imageSource) {
+      continue;
+    }
+
+    let metadata;
+    try {
+      metadata = await sharp(imageSource).metadata();
+    } catch (_error) {
+      throw new ValidationError({
+        [fields.fileProperty]: { message: "The selected file is not a readable image." },
+      });
+    }
+
+    if (metadata.width !== dimensions.width || metadata.height !== dimensions.height) {
+      throw new ValidationError({
+        [fields.fileProperty]: {
+          message: `Every image must be exactly ${dimensions.width} x ${dimensions.height} pixels. ${uploadedFile.originalFilename || uploadedFile.name || "Selected image"} is ${metadata.width || "unknown"} x ${metadata.height || "unknown"} pixels.`,
+        },
+      });
+    }
+  }
+
+  return request;
+};
+
 const createImageUpload = ({
   keyProperty,
   propertyBase = keyProperty,
@@ -213,6 +249,7 @@ const createImageUpload = ({
   uploadPath = defaultUploadPath,
   uploadPathLabel,
   multiple = false,
+  dimensions,
 }) => {
   const fields = buildUploadFieldMap({ keyProperty, propertyBase });
   const provider = new UploadProvider({
@@ -255,6 +292,7 @@ const createImageUpload = ({
         multiple,
         mimeTypes,
         maxSize,
+        dimensions,
         fileProperty: fields.fileProperty,
         filePathProperty: fields.filePathProperty,
         filesToDeleteProperty: fields.filesToDeleteProperty,
@@ -291,7 +329,27 @@ const createImageUpload = ({
     feature,
     fields,
     propertyOptions,
-    actionHooks: multiple ? createMultipleImageActionHooks({ fields, provider }) : {},
+    actionHooks: (() => {
+      const multipleHooks = multiple
+        ? createMultipleImageActionHooks({ fields, provider })
+        : { new: {}, edit: {} };
+      const validateDimensions = createImageDimensionHook({ fields, dimensions });
+
+      if (!dimensions) {
+        return multiple ? multipleHooks : {};
+      }
+
+      return {
+        new: {
+          ...multipleHooks.new,
+          before: [validateDimensions, ...(multipleHooks.new?.before || [])],
+        },
+        edit: {
+          ...multipleHooks.edit,
+          before: [validateDimensions, ...(multipleHooks.edit?.before || [])],
+        },
+      };
+    })(),
   };
 };
 

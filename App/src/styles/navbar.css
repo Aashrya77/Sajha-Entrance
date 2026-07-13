@@ -236,6 +236,17 @@
   box-shadow: 0 12px 30px rgba(31, 41, 55, 0.12);
 }
 
+.profile-dropdown.is-dashboard-active .profile-dropdown__trigger {
+  border-color: rgba(255, 107, 53, 0.55);
+  background: #fff7f2;
+  box-shadow: 0 8px 22px rgba(255, 107, 53, 0.14);
+}
+
+.profile-dropdown.is-dashboard-active .profile-dropdown__greeting,
+.profile-dropdown.is-dashboard-active .profile-dropdown__chevron {
+  color: #ff6b35;
+}
+
 .profile-dropdown__trigger:active {
   transform: translateY(1px);
 }
@@ -347,6 +358,11 @@
 .profile-dropdown__item:focus-visible {
   background: #f4f2fb;
   color: #111827;
+}
+
+.profile-dropdown__item--active {
+  background: #fff1e9;
+  color: #e95420;
 }
 
 .profile-dropdown__item:active {

@@ -1541,7 +1541,21 @@ export default function MockTestWorkspace() {
           alignItems: "start",
         }}
       >
-        <Box style={{ ...surfaceStyle, padding: "22px", display: "grid", gap: "16px", position: "sticky", top: "88px" }}>
+        <Box
+          style={{
+            ...surfaceStyle,
+            padding: "22px",
+            display: "grid",
+            gap: "16px",
+            position: "sticky",
+            top: "88px",
+            boxSizing: "border-box",
+            maxHeight: "calc(100vh - 112px)",
+            overflowY: "auto",
+            overscrollBehavior: "contain",
+            scrollbarGutter: "stable",
+          }}
+        >
           <Box>
             <H4 style={{ marginBottom: "6px" }}>Subject Navigator</H4>
             <Text style={{ color: "#64748b" }}>

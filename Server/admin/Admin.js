@@ -83,6 +83,7 @@ import AdvertisementAdminResource from "./resources/advertisement.resource.js";
 import NoticeAdminResource from "./resources/notice.resource.js";
 import PopupAdminResource from "./resources/popup.resource.js";
 import LandingAdAdminResource from "./resources/landing-ad.resource.js";
+import TopCollegeSectionAdminResource from "./resources/top-college-section.resource.js";
 import CollegeAdminResource from "./resources/college.resource.js";
 import AdminUserAdminResource from "./resources/admin-user.resource.js";
 import AdminNotificationAdminResource from "./resources/admin-notification.resource.js";
@@ -2285,6 +2286,7 @@ const startAdminPanel = async () => {
       navigation: contentNavigation,
     }),
     LandingAdAdminResource,
+    TopCollegeSectionAdminResource,
     MockTestCourseAdminResource,
     MockTestSubjectAdminResource,
     MockQuestionAdminResource,

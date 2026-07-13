@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import './LandingPageResponsive.css';
 import { Search, Building2, MapPin, GraduationCap, BookOpen, X, Loader2, LayoutDashboard, PlayCircle } from 'lucide-react';
 import { collegeAPI, universityAPI, courseAPI } from '../../api/services';
-import { getImageFieldUrl } from '../../utils/imageHelper';
+import { getImageFieldUrl, getImageUrl } from '../../utils/imageHelper';
 import AnimatedCounter from '../AnimatedCounter/AnimatedCounter';
 
 const normalizeAdHref = (href = '') => {
@@ -41,7 +41,14 @@ const MOBILE_LOCATION_LABELS = {
   Lalitpur: 'LTP',
 };
 
-const LandingPage = ({ landingAds = [] }) => {
+const LEGACY_TOP_COLLEGE_LOGOS = [
+  "/CollegeImage/Techspire.jpg", "/CollegeImage/lbef.jpg", "/CollegeImage/pcps.jpg",
+  "/CollegeImage/maharshi.jpg", "/CollegeImage/iims.jpg", "/CollegeImage/kathfoard.jpg",
+  "/CollegeImage/kcc.jpg", "/CollegeImage/nagarjuna.jpg", "/CollegeImage/samriddhi.jpg",
+  "/CollegeImage/texas.jpg", "/CollegeImage/sagarmatha.jpg", "/CollegeImage/shikshyalaya.jpg",
+];
+
+const LandingPage = ({ landingAds = [], topCollegeSection }) => {
   const [location, setLocation] = useState('All Locations');
   const [showDropdown, setShowDropdown] = useState(false);
 
@@ -134,13 +141,15 @@ const LandingPage = ({ landingAds = [] }) => {
     setSearchError('');
   };
 
-  // Logo Array (Yo list lai update garna sajilo huncha)
-  const logos = [
-    "/CollegeImage/Techspire.jpg", "/CollegeImage/lbef.jpg", "/CollegeImage/pcps.jpg",
-    "/CollegeImage/maharshi.jpg", "/CollegeImage/iims.jpg", "/CollegeImage/kathfoard.jpg",
-    "/CollegeImage/kcc.jpg", "/CollegeImage/nagarjuna.jpg", "/CollegeImage/samriddhi.jpg",
-    "/CollegeImage/texas.jpg", "/CollegeImage/sagarmatha.jpg", "/CollegeImage/shikshyalaya.jpg",
-  ];
+  const logos = topCollegeSection === undefined || topCollegeSection === null
+    ? LEGACY_TOP_COLLEGE_LOGOS
+    : topCollegeSection.isActive
+      ? (topCollegeSection.topCollegeImages || [])
+          .map((imagePath) => getImageUrl(imagePath, 'top-college'))
+          .filter(Boolean)
+      : [];
+  const topCollegeTitle = topCollegeSection?.title?.trim() || 'Top Colleges in Nepal';
+  const topCollegeTitleParts = topCollegeTitle.match(/^(.*?)(\s+in\s+nepal)$/i);
 
   const resolvedLandingAds = useMemo(() => landingAds
     .map((ad, index) => {
@@ -441,13 +450,17 @@ const LandingPage = ({ landingAds = [] }) => {
       </main>
 
       {/* Marquee Footer (Updated for Seamless Loop) */}
-      <div className="partner-marquee container-fluid px-0 ">
-        <h1 className="partner-title" style={{fontWeight: 900, color: 'var(--primary-orange)'}}> TOP COLLEGES <span style={{color: 'var(--primary-black)'}}>IN NEPAL</span></h1>
+      {logos.length > 0 && <div className="partner-marquee container-fluid px-0 ">
+        <h1 className="partner-title">
+          {topCollegeTitleParts ? (
+            <>{topCollegeTitleParts[1]}<span>{topCollegeTitleParts[2]}</span></>
+          ) : topCollegeTitle}
+        </h1>
         <div className="marquee-wrapper">
           <div className="marquee-content">
             {/* Pahilo Set */}
             {logos.map((src, index) => (
-              <img key={`orig-${index}`} src={src} alt={`Partner ${index + 1}`} loading="lazy" decoding="async" />
+              <img key={`orig-${index}`} src={src} alt={`${topCollegeTitle} logo ${index + 1}`} loading="lazy" decoding="async" />
             ))}
             {/* Dosro Set (Copy) - Yesle loop lai non-stop banaucha */}
             {logos.map((src, index) => (
@@ -455,7 +468,7 @@ const LandingPage = ({ landingAds = [] }) => {
             ))}
           </div>
         </div>
-      </div>
+      </div>}
     </div>
   );
 };

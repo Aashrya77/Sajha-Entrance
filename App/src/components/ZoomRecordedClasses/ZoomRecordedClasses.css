@@ -314,6 +314,26 @@
   font-weight: 800;
 }
 
+.zoom-recording-card__progress {
+  position: absolute;
+  z-index: 3;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 5px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.38);
+}
+
+.zoom-recording-card__progress > span {
+  display: block;
+  height: 100%;
+  border-radius: 0 999px 999px 0;
+  background: #ff5a00;
+  box-shadow: 0 0 8px rgba(255, 90, 0, 0.55);
+  transition: width 0.25s ease;
+}
+
 .zoom-recording-card__body {
   display: flex;
   flex-direction: column;

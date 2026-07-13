@@ -18,6 +18,25 @@ import { useNavigate } from 'react-router-dom';
 import { zoomRecordingAPI } from '../../api/services';
 import './ZoomRecordedClasses.css';
 
+const WATCH_PROGRESS_STORAGE_KEY = 'sajha:zoom-recording-progress';
+
+const readWatchProgress = () => {
+  try {
+    const value = JSON.parse(window.localStorage.getItem(WATCH_PROGRESS_STORAGE_KEY) || '{}');
+    return value && typeof value === 'object' ? value : {};
+  } catch {
+    return {};
+  }
+};
+
+const writeWatchProgress = (progress) => {
+  try {
+    window.localStorage.setItem(WATCH_PROGRESS_STORAGE_KEY, JSON.stringify(progress));
+  } catch {
+    // Playback remains available if browser storage is disabled.
+  }
+};
+
 const dateFormatter = new Intl.DateTimeFormat(undefined, {
   month: 'short',
   day: 'numeric',
@@ -128,7 +147,7 @@ const EmptyState = ({ onSync, syncing, allowSync }) => (
   </div>
 );
 
-const RecordingCard = ({ recording, onOpen }) => (
+const RecordingCard = ({ recording, onOpen, progress = 0 }) => (
   <button type="button" className="zoom-recording-card" onClick={() => onOpen(recording)}>
     <span className="zoom-recording-card__media">
       {recording.hasThumbnail ? (
@@ -145,6 +164,11 @@ const RecordingCard = ({ recording, onOpen }) => (
         <Clock3 size={16} strokeWidth={2.2} />
         {formatDuration(recording.durationMinutes)}
       </span>
+      {progress > 0 && (
+        <span className="zoom-recording-card__progress" aria-label={`${progress}% watched`}>
+          <span style={{ width: `${progress}%` }} />
+        </span>
+      )}
     </span>
 
     <span className="zoom-recording-card__body">
@@ -157,7 +181,7 @@ const RecordingCard = ({ recording, onOpen }) => (
   </button>
 );
 
-const RecordingPlayer = ({ recording, onClose }) => {
+const RecordingPlayer = ({ recording, onClose, progress = 0, onProgress }) => {
   useEffect(() => {
     if (!recording) {
       return undefined;
@@ -219,6 +243,19 @@ const RecordingPlayer = ({ recording, onClose }) => {
             controls
             playsInline
             autoPlay
+            onLoadedMetadata={(event) => {
+              const video = event.currentTarget;
+              if (progress > 0 && progress < 95 && Number.isFinite(video.duration)) {
+                video.currentTime = (progress / 100) * video.duration;
+              }
+            }}
+            onTimeUpdate={(event) => {
+              const video = event.currentTarget;
+              if (Number.isFinite(video.duration) && video.duration > 0) {
+                onProgress?.(recording.id, (video.currentTime / video.duration) * 100);
+              }
+            }}
+            onEnded={() => onProgress?.(recording.id, 100, true)}
           />
         </div>
 
@@ -235,7 +272,13 @@ const RecordingPlayer = ({ recording, onClose }) => {
   );
 };
 
-const ZoomRecordedClasses = ({ isPaid, onCountChange, allowSync = true, pageSize = 24 }) => {
+const ZoomRecordedClasses = ({
+  isPaid,
+  onCountChange,
+  allowSync = true,
+  pageSize = 24,
+  loadMoreBehavior = 'navigate',
+}) => {
   const navigate = useNavigate();
   const PAGE_SIZE = pageSize;
 
@@ -251,6 +294,7 @@ const ZoomRecordedClasses = ({ isPaid, onCountChange, allowSync = true, pageSize
   const [syncNotice, setSyncNotice] = useState(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
+  const [watchProgress, setWatchProgress] = useState(readWatchProgress);
 
   const loadRecordings = async ({ pageNumber = 1, append = false, silent = false } = {}) => {
     if (!isPaid) {
@@ -261,10 +305,10 @@ const ZoomRecordedClasses = ({ isPaid, onCountChange, allowSync = true, pageSize
       return;
     }
 
-    if (!silent) {
-      setLoading(true);
-    } else if (append) {
+    if (append) {
       setLoadingMore(true);
+    } else if (!silent) {
+      setLoading(true);
     }
 
     setError('');
@@ -290,13 +334,13 @@ const ZoomRecordedClasses = ({ isPaid, onCountChange, allowSync = true, pageSize
         (sum, category) => sum + Number(category.count || 0),
         0
       );
-      const totalPages = Number(recordingData.pages || 1);
+      const totalRecordings = Number(recordingData.total || 0);
 
       setRecordings((previousRecordings) =>
         append ? [...previousRecordings, ...nextRecordings] : nextRecordings
       );
       setCategories(nextCategories);
-      setHasMore(pageNumber < totalPages);
+      setHasMore(pageNumber * PAGE_SIZE < totalRecordings);
       onCountChange?.(totalCategoryCount || Number(recordingData.total || nextRecordings.length || 0));
     } catch (loadError) {
       const message =
@@ -304,10 +348,10 @@ const ZoomRecordedClasses = ({ isPaid, onCountChange, allowSync = true, pageSize
       setError(message);
       onCountChange?.(0);
     } finally {
-      if (!silent) {
-        setLoading(false);
-      } else if (append) {
+      if (append) {
         setLoadingMore(false);
+      } else if (!silent) {
+        setLoading(false);
       }
     }
   };
@@ -341,11 +385,31 @@ const ZoomRecordedClasses = ({ isPaid, onCountChange, allowSync = true, pageSize
   }, [syncNotice]);
 
   const handleLoadMore = () => {
-    if (!hasMore) {
+    if (!hasMore || loadingMore) {
       return;
     }
 
-    navigate('/student/recorded-classes');
+    if (loadMoreBehavior === 'navigate') {
+      navigate('/student/recorded-classes');
+      return;
+    }
+
+    setPage((currentPage) => currentPage + 1);
+  };
+
+  const handleWatchProgress = (recordingId, rawProgress, force = false) => {
+    const normalizedProgress = Math.max(0, Math.min(100, Math.round(Number(rawProgress) || 0)));
+
+    setWatchProgress((current) => {
+      const previousProgress = Number(current[recordingId] || 0);
+      if (!force && normalizedProgress < previousProgress + 2) {
+        return current;
+      }
+
+      const next = { ...current, [recordingId]: normalizedProgress };
+      writeWatchProgress(next);
+      return next;
+    });
   };
 
   const handleSearchChange = (event) => {
@@ -447,6 +511,7 @@ const ZoomRecordedClasses = ({ isPaid, onCountChange, allowSync = true, pageSize
                 key={recording.id}
                 recording={recording}
                 onOpen={setSelectedRecording}
+                progress={Number(watchProgress[recording.id] || 0)}
               />
             ))}
           </div>
@@ -488,6 +553,8 @@ const ZoomRecordedClasses = ({ isPaid, onCountChange, allowSync = true, pageSize
       <RecordingPlayer
         recording={selectedRecording}
         onClose={() => setSelectedRecording(null)}
+        progress={Number(watchProgress[selectedRecording?.id] || 0)}
+        onProgress={handleWatchProgress}
       />
     </section>
   );

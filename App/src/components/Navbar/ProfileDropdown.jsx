@@ -27,6 +27,7 @@ const ProfileDropdown = ({
   username = 'Profile',
   onLogout,
   variant = 'desktop',
+  isDashboardActive = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const rootRef = useRef(null);
@@ -114,7 +115,7 @@ const ProfileDropdown = ({
 
   return (
     <div
-      className={`profile-dropdown profile-dropdown--${variant}${isOpen ? ' is-open' : ''}`}
+      className={`profile-dropdown profile-dropdown--${variant}${isOpen ? ' is-open' : ''}${isDashboardActive ? ' is-dashboard-active' : ''}`}
       ref={rootRef}
     >
       <button
@@ -125,6 +126,7 @@ const ProfileDropdown = ({
         aria-expanded={isOpen}
         aria-controls={menuId}
         aria-label={`Open profile menu for ${profileName}`}
+        aria-current={isDashboardActive ? 'page' : undefined}
         onClick={() => setIsOpen((prev) => !prev)}
         onKeyDown={handleButtonKeyDown}
       >
@@ -132,7 +134,9 @@ const ProfileDropdown = ({
           <UserCircle size={variant === 'mobile' ? 16 : 18} strokeWidth={2.2} />
         </span>
         <span className="profile-dropdown__copy">
-          <span className="profile-dropdown__greeting">Welcome !</span>
+          <span className="profile-dropdown__greeting">
+            {isDashboardActive ? 'Dashboard' : 'Welcome !'}
+          </span>
           <span className="profile-dropdown__name">{profileName}</span>
         </span>
         <ChevronDown className="profile-dropdown__chevron" size={18} strokeWidth={2.2} />
@@ -156,10 +160,11 @@ const ProfileDropdown = ({
               {item.type === 'link' ? (
                 <Link
                   to={item.to}
-                  className={item.className}
+                  className={`${item.className}${isDashboardActive ? ' profile-dropdown__item--active' : ''}`}
                   role="menuitem"
                   tabIndex={isOpen ? 0 : -1}
                   onClick={handleItemSelect}
+                  aria-current={isDashboardActive ? 'page' : undefined}
                 >
                   <Icon size={18} strokeWidth={2.1} aria-hidden="true" />
                   <span>{item.label}</span>

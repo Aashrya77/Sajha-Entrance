@@ -231,8 +231,6 @@ const MockTests = ({ isAuthenticated }) => {
       <div className="container">
         <div className="mock-tests-page__tabs">
           {[
-            { key: "online", label: "Online Exam", icon: "fa-laptop" },
-            { key: "physical", label: "Physical Exam", icon: "fa-building" },
             { key: "mocktest", label: "Mock Test", icon: "fa-file-lines" },
             { key: "results", label: "Results", icon: "fa-chart-bar" },
           ].map((tab) => (
@@ -247,10 +245,6 @@ const MockTests = ({ isAuthenticated }) => {
               }}
               className={`mock-tests-page__tab ${
                 activeTab === tab.key ? "mock-tests-page__tab--active" : ""
-              } ${
-                tab.key === "online" || tab.key === "physical"
-                  ? "mock-tests-page__tab--secondary"
-                  : ""
               }`.trim()}
             >
               <i className={`fa-solid ${tab.icon} mock-tests-page__tab-icon`}></i>
@@ -258,14 +252,6 @@ const MockTests = ({ isAuthenticated }) => {
             </button>
           ))}
         </div>
-
-        {(activeTab === "online" || activeTab === "physical") && (
-          <div className="mock-tests-page__state">
-            <i className="fa-solid fa-clock mock-tests-page__state-icon"></i>
-            <h3 className="mock-tests-page__state-title">Coming Soon</h3>
-            <p>This feature will be available soon. Stay tuned!</p>
-          </div>
-        )}
 
         {activeTab === "mocktest" && (
           <>

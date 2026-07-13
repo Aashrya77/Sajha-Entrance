@@ -9,15 +9,71 @@
   --bg-light-orange: #fff5eb;
 }
 
-.container-fluid {
-  width: 95% !important;
+.home-page {
+  --home-page-background: #ffffff;
+  --home-page-gutter: clamp(1rem, 4vw, 4rem);
+  --home-page-content-width: 1440px;
+  --home-section-spacing: clamp(3rem, 4vw, 4rem);
+  background: var(--home-page-background);
+}
+
+.home-page .landing-container,
+.home-page .courses,
+.home-page .why-choose-section,
+.home-page .stats-section,
+.home-page .quote-section,
+.home-page .learn-best-section,
+.home-page .class-preference-section,
+.home-page .scholarship-section,
+.home-page .mock-tests-section {
+  background-color: var(--home-page-background);
+}
+
+.home-page .container-fluid {
+  width: 100% !important;
+  max-width: var(--home-page-content-width);
+  padding-right: var(--home-page-gutter);
+  padding-left: var(--home-page-gutter);
   margin-left: auto !important;
   margin-right: auto !important;
 }
 
 .text-orange { color: var(--primary-orange); }
 .text-dark { color: var(--primary-black); }
-.mt-3 { margin-top: 3rem !important; }
+
+.home-page .landing-container {
+  padding-right: var(--home-page-gutter);
+  padding-left: var(--home-page-gutter);
+}
+
+.home-advertisements {
+  padding-top: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.home-page .home-section {
+  margin: 0;
+  padding: var(--home-section-spacing) 0 0;
+}
+
+.home-page section.home-section:last-of-type {
+  padding-bottom: var(--home-section-spacing);
+}
+
+.home-section-title {
+  margin: 0 0 clamp(1.75rem, 3vw, 2.5rem);
+  color: var(--primary-orange);
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.home-section-grid {
+  margin-top: 0;
+}
+
+.home-section-action {
+  margin-top: clamp(1.75rem, 3vw, 2.5rem);
+}
 
 /* Grouped Info Sections (Common Styles for all text+image blocks) */
 .learn-best-section,
@@ -29,12 +85,12 @@
 
 .class-preference-section,
 .mock-tests-section {
-  background: var(--bg-light-orange);
+  background: var(--home-page-background);
 }
 
 .learn-best-section,
 .scholarship-section {
-  background: #fff;
+  background: var(--home-page-background);
 }
 
 .section-heading {
@@ -58,13 +114,23 @@
   margin: 0 auto;
 }
 
+.home-info-section .section-image {
+  width: 100%;
+  max-width: 720px;
+  height: clamp(320px, 30vw, 460px);
+  object-fit: contain;
+}
+
+.home-info-section .section-image--photo {
+  border-radius: 20px;
+  object-fit: cover;
+}
+
 /* ==========================================================================
    2. STATS COUNTER SECTION
    ========================================================================== */
 .stats-section {
-  background: linear-gradient(135deg, #fff5eb 0%, #fff 50%, #fff5eb 100%);
-  padding: 60px 0;
-  margin-top: 40px;
+  background: var(--home-page-background);
   position: relative;
 }
 
@@ -103,14 +169,12 @@
    3. WHY CHOOSE US & FEATURE CARDS
    ========================================================================== */
 .why-choose-section {
-  padding: 80px 0;
-  background: #fff;
+  background: var(--home-page-background);
 }
 
 .section-title {
-  font-size: 36px;
-  font-weight: 700;
-  margin-bottom: 20px;
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  font-weight: 900;
 }
 
 /* Merged Feature Card Styles */
@@ -173,9 +237,7 @@
    4. QUOTE SECTION
    ========================================================================== */
 .quote-section {
-  padding: 600x 0; /* Note: Reduced padding for better flow */
-  background: #fff;
-  padding: 60px 0;
+  background: var(--home-page-background);
 }
 
 .quote-text {
@@ -358,4 +420,25 @@
   min-height: 8rem;
   align-items: center;
   justify-content: center;
+}
+
+@media (max-width: 576px) {
+  .home-page {
+    --home-section-spacing: 2.5rem;
+  }
+
+  .home-page .container-fluid,
+  .home-page .landing-container {
+    padding-right: 1rem;
+    padding-left: 1rem;
+  }
+
+  .home-info-section .row {
+    --bs-gutter-y: 2rem;
+  }
+
+  .home-page .home-info-section .section-image {
+    height: 260px;
+    margin-top: 0;
+  }
 }

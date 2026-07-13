@@ -10,19 +10,21 @@ import {
 } from "../constants/roles.js";
 
 const buildPermissionOverridesFromSource = (source = {}) =>
-  ADMIN_PERMISSION_PROPERTY_DESCRIPTORS.reduce((permissions, descriptor) => {
-    const rawValue = flat.get(source, descriptor.path);
+  flat.unflatten(
+    ADMIN_PERMISSION_PROPERTY_DESCRIPTORS.reduce((permissions, descriptor) => {
+      const rawValue = flat.get(source, descriptor.path);
 
-    if (rawValue === undefined) {
-      return permissions;
-    }
+      if (rawValue === undefined) {
+        return permissions;
+      }
 
-    return flat.set(
-      permissions,
-      descriptor.path.replace(/^permissions\./, ""),
-      rawValue
-    );
-  }, {});
+      return flat.set(
+        permissions,
+        descriptor.path.replace(/^permissions\./, ""),
+        rawValue
+      );
+    }, {})
+  );
 
 const applyPermissionPayload = (payload, permissions) => {
   ADMIN_PERMISSION_PROPERTY_DESCRIPTORS.forEach((descriptor) => {
@@ -41,13 +43,15 @@ const hasGrantedPermission = (permissions) =>
   );
 
 const buildPermissionSelectionFromPayload = (payload, role) => {
-  const selectedPermissions = ADMIN_PERMISSION_PROPERTY_DESCRIPTORS.reduce((permissions, descriptor) => {
-    return flat.set(
-      permissions,
-      descriptor.path.replace(/^permissions\./, ""),
-      flat.get(payload, descriptor.path) ?? false
-    );
-  }, {});
+  const selectedPermissions = flat.unflatten(
+    ADMIN_PERMISSION_PROPERTY_DESCRIPTORS.reduce((permissions, descriptor) => {
+      return flat.set(
+        permissions,
+        descriptor.path.replace(/^permissions\./, ""),
+        flat.get(payload, descriptor.path) ?? false
+      );
+    }, {})
+  );
 
   return buildPermissionSet(role, selectedPermissions);
 };

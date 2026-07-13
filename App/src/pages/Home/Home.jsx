@@ -15,6 +15,7 @@ const Home = () => {
   const [showPopup, setShowPopup] = useState(false);
   const [popupData, setPopupData] = useState(null);
   const [landingAds, setLandingAds] = useState([]);
+  const [topCollegeSection, setTopCollegeSection] = useState(undefined);
 
   useEffect(() => {
     fetchHomeData();
@@ -48,6 +49,7 @@ const Home = () => {
         setColleges(response.data.data.colleges || []);
         setPopupData(response.data.data.popup || null);
         setLandingAds(response.data.data.landingAds || []);
+        setTopCollegeSection(response.data.data.topCollegeSection || null);
       }
       setLoading(false);
     } catch (error) {
@@ -57,21 +59,20 @@ const Home = () => {
   };
 
   return (
-    <>
-      <LandingPage landingAds={landingAds} />
-      <div className="container-fluid"><PageAdvertisements page="home" /></div>
+    <main className="home-page">
+      <LandingPage landingAds={landingAds} topCollegeSection={topCollegeSection} />
+      <div className="container-fluid home-advertisements"><PageAdvertisements page="home" /></div>
 
       {loading && <div className="home-content-loader" aria-label="Loading homepage content"><Loader /></div>}
 
-      <div className="courses mt-5" id="courses">
+      <section className="courses home-section home-listing-section" id="courses">
         <div className="container-fluid">
           <h1
-            className="text-uppercase mb-4 text-center"
-            style={{fontWeight: 900, color: 'var(--primary-orange)'}}
+            className="home-section-title text-uppercase text-center"
           >
             OUR <span style={{color: 'var(--primary-black)'}}>COURSES</span>
           </h1>
-          <div className="row g-4 mt-4">
+          <div className="row g-4 home-section-grid">
             {courses.map((course) => (
               <div key={course._id} className="col-12 col-sm-6 col-lg-3">
                 <Link to={`/course/${course._id}`} className="course-card-link">
@@ -104,23 +105,22 @@ const Home = () => {
             ))}
           </div>
 
-          <div className="text-center mt-3">
+          <div className="home-section-action text-center">
             <Link to="/courses" className="btn-primary btn-lg">
               <i className="fa-solid fa-plus me-2"></i>More Courses
             </Link>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className="courses mt-5" id="colleges">
+      <section className="courses home-section home-listing-section" id="colleges">
         <div className="container-fluid">
           <h1
-            className="text-uppercase mb-4 text-center"
-            style={{fontWeight: 900, color: 'var(--primary-orange)'}}
+            className="home-section-title text-uppercase text-center"
           >
             TOP <span style={{color: 'var(--primary-black)'}}>COLLEGES</span>
           </h1>
-          <div className="row g-4 mt-4">
+          <div className="row g-4 home-section-grid">
             {colleges.map((college) => (
               <div key={college._id} className="col-12 col-sm-6 col-lg-3">
                 <Link to={`/college/${college._id}`} className="college-card-link">
@@ -167,23 +167,23 @@ const Home = () => {
             ))}
           </div>
 
-          <div className="text-center mt-3">
+          <div className="home-section-action text-center">
             <Link to="/colleges" className="btn-primary btn-lg">
               <i className="fa-solid fa-plus me-2"></i>More Colleges
             </Link>
           </div>
         </div>
-      </div>
+      </section>
 
       
 
       {/* Why Choose Us Section */}
-      <div className="why-choose-section">
+      <section className="why-choose-section home-section">
         <div className="container-fluid">
-          <h2 className="section-title text-center">
+          <h2 className="section-title home-section-title text-center">
             <span className="text-orange">WHY CHOOSE</span> <span className="text-dark">US ?</span>
           </h2>
-          <div className="row g-4 mt-4">
+          <div className="row g-4 home-section-grid">
             <div className="col-12 col-md-6 col-lg-3">
               <div className="feature-card text-center">
                 <div className="feature-icon">
@@ -230,9 +230,9 @@ const Home = () => {
             </div>
           </div>
         </div>
-      </div>
+      </section>
               {/* Stats Counter Section */}
-        <div className="stats-section">
+        <section className="stats-section home-section">
           <div className="container-fluid">
             <div className="row text-center">
               <div className="col-6 col-md-3">
@@ -261,22 +261,22 @@ const Home = () => {
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
       {/* Quote Section */}
-      <div className="quote-section">
+      <section className="quote-section home-section">
         <div className="container-fluid text-center">
           <p className="quote-text">
             "education is the passport to the future, for tomorrow belongs to those who prepare for it today"
           </p>
           <p className="quote-author">MalcolmX -</p>
         </div>
-      </div>
+      </section>
 
       {/* Learn from the Best Section */}
-      <div className="learn-best-section">
+      <section className="learn-best-section home-section home-info-section">
         <div className="container-fluid">
-          <div className="row align-items-center">
+          <div className="row g-5 align-items-center">
             <div className="col-lg-6">
               <h2 className="section-heading">
                 Learn from the <span className="text-orange">best</span>
@@ -289,18 +289,18 @@ const Home = () => {
               </p>
             </div>
             <div className="col-lg-6">
-              <img src="/sajhaphoto/sajhastudents.jpg" alt="Learn from the best" className="section-image img-fluid" loading="lazy" decoding="async" />
+              <img src="/sajhaphoto/sajhastudents.jpg" alt="Learn from the best" className="section-image section-image--photo img-fluid" loading="lazy" decoding="async" />
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Class Preference Section */}
-      <div className="class-preference-section">
+      <section className="class-preference-section home-section home-info-section">
         <div className="container-fluid">
-          <div className="row align-items-center">
+          <div className="row g-5 align-items-center">
             <div className="col-lg-6 order-lg-1 order-2">
-              <img src="/img/online.png" alt="Class as per your preference" className="section-image" loading="lazy" decoding="async" />
+              <img src="/img/online.png" alt="Class as per your preference" className="section-image section-image--illustration" loading="lazy" decoding="async" />
             </div>
             <div className="col-lg-6 order-lg-2 order-1">
               <h2 className="section-heading">
@@ -312,12 +312,12 @@ const Home = () => {
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Scholarship Section */}
-      <div className="scholarship-section">
+      <section className="scholarship-section home-section home-info-section">
         <div className="container-fluid">
-          <div className="row align-items-center">
+          <div className="row g-5 align-items-center">
             <div className="col-lg-6">
               <h2 className="section-heading">
                 Chance to get huge <span className="text-orange">scholarships</span>
@@ -327,18 +327,18 @@ const Home = () => {
               </p>
             </div>
             <div className="col-lg-6">
-              <img src="/img/scholar.png" alt="Scholarships" className="section-image" loading="lazy" decoding="async" />
+              <img src="/img/scholar.png" alt="Scholarships" className="section-image section-image--illustration" loading="lazy" decoding="async" />
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Mock Tests Section */}
-      <div className="mock-tests-section">
+      <section className="mock-tests-section home-section home-info-section">
         <div className="container-fluid">
-          <div className="row align-items-center">
+          <div className="row g-5 align-items-center">
             <div className="col-lg-6 order-lg-1 order-2">
-              <img src="/img/exam.png" alt="Mock Tests" className="section-image" loading="lazy" decoding="async" />
+              <img src="/img/exam.png" alt="Mock Tests" className="section-image section-image--illustration" loading="lazy" decoding="async" />
             </div>
             <div className="col-lg-6 order-lg-2 order-1">
               <h2 className="section-heading">
@@ -350,7 +350,7 @@ const Home = () => {
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Popup Modal */}
       {showPopup && popupData && (
@@ -390,7 +390,7 @@ const Home = () => {
           </div>
         </div>
       )}
-    </>
+    </main>
   );
 };
 

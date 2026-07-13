@@ -137,6 +137,22 @@ const getFilenameLabel = (item) => {
   return "Selected image";
 };
 
+const readImageDimensions = (file) =>
+  new Promise((resolve, reject) => {
+    const previewUrl = URL.createObjectURL(file);
+    const image = new Image();
+
+    image.onload = () => {
+      resolve({ width: image.naturalWidth, height: image.naturalHeight });
+      URL.revokeObjectURL(previewUrl);
+    };
+    image.onerror = () => {
+      reject(new Error("The selected file is not a readable image."));
+      URL.revokeObjectURL(previewUrl);
+    };
+    image.src = previewUrl;
+  });
+
 export default function ImageUpload(props) {
   const { property, record, onChange } = props;
   const { i18n, translateProperty } = useTranslation();
@@ -149,7 +165,7 @@ export default function ImageUpload(props) {
     ? custom.mimeTypes.map(formatMimeTypeLabel).join(", ")
     : "JPG, PNG, WEBP, GIF";
   const helperText = custom.maxSize
-    ? `Supported formats: ${acceptedFormatsLabel}. Maximum file size: ${formatFileSize(custom.maxSize)}.${custom.uploadPath ? ` Stored in ${custom.uploadPath}.` : ""}`
+    ? `Supported formats: ${acceptedFormatsLabel}. Maximum file size: ${formatFileSize(custom.maxSize)}.${custom.dimensions ? ` Required dimensions: ${custom.dimensions.width} x ${custom.dimensions.height} px.` : ""}${custom.uploadPath ? ` Stored in ${custom.uploadPath}.` : ""}`
     : `Supported formats: ${acceptedFormatsLabel}.${custom.uploadPath ? ` Stored in ${custom.uploadPath}.` : ""}`;
 
   const fileValue = flat.get(params, custom.fileProperty);
@@ -300,8 +316,28 @@ export default function ImageUpload(props) {
       noKeyboard: true,
       accept: buildAcceptConfig(custom.mimeTypes),
       maxSize: custom.maxSize,
-      onDropAccepted: (acceptedFiles) => {
+      onDropAccepted: async (acceptedFiles) => {
         setErrorMessage("");
+
+        if (custom.dimensions) {
+          try {
+            for (const file of acceptedFiles) {
+              const actualDimensions = await readImageDimensions(file);
+              if (
+                actualDimensions.width !== custom.dimensions.width ||
+                actualDimensions.height !== custom.dimensions.height
+              ) {
+                setErrorMessage(
+                  `${file.name} is ${actualDimensions.width} x ${actualDimensions.height} px. Every image must be exactly ${custom.dimensions.width} x ${custom.dimensions.height} px.`
+                );
+                return;
+              }
+            }
+          } catch (error) {
+            setErrorMessage(error.message);
+            return;
+          }
+        }
 
         if (isMultiple) {
           const newItems = acceptedFiles.map((file) => ({

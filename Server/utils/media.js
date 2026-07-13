@@ -13,6 +13,8 @@ export const MEDIA_TYPES = Object.freeze({
   advertisement: "advertisement",
   popup: "popup",
   landing: "landing",
+  topCollege: "top-college",
+  "top-college": "top-college",
   college: "college",
   university: "university",
   mocktest: "mocktest",
@@ -37,6 +39,7 @@ export const legacyMediaDirectories = Object.freeze({
     path.join(publicDirectory, "landingads"),
     path.join(publicDirectory, "uploads", "landing"),
   ],
+  [MEDIA_TYPES.topCollege]: [],
   [MEDIA_TYPES.college]: [
     path.join(publicDirectory, "colleges"),
     path.join(publicDirectory, "uploads", "college"),
@@ -67,6 +70,9 @@ export const mediaFieldMaps = Object.freeze({
   },
   landingAd: {
     adImage: MEDIA_TYPES.landing,
+  },
+  topCollegeSection: {
+    topCollegeImages: MEDIA_TYPES.topCollege,
   },
   college: {
     collegeLogo: MEDIA_TYPES.college,

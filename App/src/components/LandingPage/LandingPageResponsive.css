@@ -380,6 +380,7 @@
   color: var(--sajha-orange);
   margin-bottom: 20px;
   font-size: 1.2rem;
+  text-transform: uppercase;
 }
 
 .partner-title span {
@@ -402,7 +403,9 @@
 }
 
 .marquee-content img {
-  height: 50px;
+  width: 150px;
+  height: 60px;
+  object-fit: contain;
   flex-shrink: 0;
 }
 
@@ -697,7 +700,8 @@
   }
 
   .marquee-content img {
-    height: 40px;
+    width: 125px;
+    height: 50px;
   }
 
   .search-results-grid {
@@ -1024,7 +1028,8 @@
   }
 
   .marquee-content img {
-    height: 28px;
+    width: 100px;
+    height: 40px;
   }
 
   .search-results-section {

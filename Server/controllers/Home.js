@@ -3,6 +3,7 @@ import College from "../models/College.js";
 import Blog from "../models/Blog.js";
 import Popup from "../models/Popup.js";
 import LandingAd from "../models/LandingAd.js";
+import TopCollegeSection from "../models/TopCollegeSection.js";
 import Advertisement, { ADVERTISEMENT_PAGES } from "../models/Advertisement.js";
 import dotenv from "dotenv";
 import { MailHandler } from "./MailHandler.js";
@@ -31,6 +32,7 @@ const HomeDetails = async (req, res) => {
     })
       .sort({ position: 1, createdAt: 1 })
       .exec();
+    const topCollegeSection = await TopCollegeSection.findOne({ sectionKey: "top-colleges" }).exec();
 
     const popupImageExists =
       popupRecord?.popupType === "image" && popupRecord?.popupImage
@@ -61,6 +63,10 @@ const HomeDetails = async (req, res) => {
         colleges: normalizeCollectionMedia(colleges, mediaFieldMaps.college),
         popup: normalizeMediaFields(popup, mediaFieldMaps.popup),
         landingAds: normalizeCollectionMedia(safeLandingAds, mediaFieldMaps.landingAd),
+        topCollegeSection: normalizeMediaFields(
+          topCollegeSection,
+          mediaFieldMaps.topCollegeSection
+        ),
       }
     });
   } catch (error) {

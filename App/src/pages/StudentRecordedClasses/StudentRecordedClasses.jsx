@@ -27,7 +27,12 @@ const StudentRecordedClassesPage = () => {
             </div>
           </div>
 
-          <ZoomRecordedClasses isPaid={true} allowSync={true} pageSize={100} />
+          <ZoomRecordedClasses
+            isPaid={true}
+            allowSync={true}
+            pageSize={100}
+            loadMoreBehavior="paginate"
+          />
         </article>
       </div>
     </div>
