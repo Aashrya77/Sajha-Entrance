@@ -437,7 +437,7 @@ const ConfirmationModal = ({ confirmation, busy, onCancel, onConfirm }) => {
   );
 };
 
-export default function MockTestResults() {
+function MockTestResults() {
   const [selection, setSelection] = useState({
     courseId: "",
     mockTestId: "",
@@ -1025,3 +1025,5 @@ export default function MockTestResults() {
     </Box>
   );
 }
+
+export default MockTestResults;

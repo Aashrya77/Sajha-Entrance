@@ -119,5 +119,5 @@ const Components = {
   SidebarBranding: componentLoader.override("SidebarBranding", path.join(__dirname, "./components/SidebarBranding")),
 };
 
-export { Components };
+export { componentLoader, Components };
 export default componentLoader;

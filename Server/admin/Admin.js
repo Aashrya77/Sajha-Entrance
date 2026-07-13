@@ -2538,6 +2538,19 @@ const startAdminPanel = async () => {
     },
   };
 
+  if (Components.MockTestResults === undefined) {
+    throw new Error(
+      "AdminJS component registration failed: Components.MockTestResults is undefined."
+    );
+  }
+
+  const registeredAdminComponents = componentLoader.getComponents();
+  if (!registeredAdminComponents[Components.MockTestResults]) {
+    throw new Error(
+      "AdminJS component registration failed: MockTestResults is not registered on the shared componentLoader."
+    );
+  }
+
   const admin = new AdminJS(adminOptions);
   const shouldWatchAdmin =
     process.env.NODE_ENV !== "production" && process.env.ADMINJS_WATCH === "true";
@@ -2547,8 +2560,14 @@ const startAdminPanel = async () => {
   } else {
     await admin.initialize();
 
-    if (process.env.NODE_ENV !== "production") {
-      logger.info("Bundling AdminJS user components for development mode");
+    // AdminJS normally bundles during production initialize(). When a deployment
+    // sets ADMIN_JS_SKIP_BUNDLE=true, force a rebuild so a tracked or cached
+    // .adminjs bundle can never omit newly registered components.
+    if (
+      process.env.NODE_ENV !== "production" ||
+      process.env.ADMIN_JS_SKIP_BUNDLE === "true"
+    ) {
+      logger.info("Bundling AdminJS user components for non-watch startup");
       await componentsBundler.createEntry({
         content: generateAdminComponentEntry(admin, ADMIN_JS_TMP_DIR),
       });
