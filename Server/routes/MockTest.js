@@ -3,6 +3,8 @@
   import {
     GetMockTests,
     GetMockTestForExam,
+    SaveMockTestAnswers,
+    StartMockTestAttempt,
     SubmitMockTest,
     GetMyAttempts,
     GetAttemptResult,
@@ -18,6 +20,12 @@
 
   // Protected - submit test answers
   Router.post("/mocktest/:id/submit", authenticateAny, SubmitMockTest);
+
+  // Protected - persist answer selections before the individual deadline
+  Router.put("/mocktest/:id/answers", authenticateAny, SaveMockTestAnswers);
+
+  // Protected - start a server-timed attempt before the client timer begins
+  Router.post("/mocktest/:id/start", authenticateAny, StartMockTestAttempt);
 
   // Protected - get my attempts
   Router.get("/mocktest-attempts", authenticateAny, GetMyAttempts);

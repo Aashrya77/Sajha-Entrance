@@ -254,17 +254,6 @@ const validateMockTestPayload = ({ payload = {}, selectedQuestions = [] }) => {
     errors.endAt = "End time must be later than start time.";
   }
 
-  if (normalizedPayload.startAt && normalizedPayload.endAt) {
-    const durationFromSchedule = Math.round(
-      (normalizedPayload.endAt.getTime() - normalizedPayload.startAt.getTime()) / 60000
-    );
-
-    if (normalizedPayload.duration > durationFromSchedule) {
-      errors.duration =
-        "Duration cannot be longer than the scheduled start/end window.";
-    }
-  }
-
   return {
     normalizedPayload,
     errors,

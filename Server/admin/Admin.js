@@ -22,6 +22,7 @@ import {
   hasPermission,
   requireAdminPermission,
   refreshAdminSession,
+  requireSuperAdmin,
   syncAllAdminUserPermissions,
 } from "./utils/admin-auth.js";
 import { decorateAdminResource } from "./utils/admin-resource.js";
@@ -91,6 +92,7 @@ import MockTestCourseAdminResource from "./resources/mock-test-course.resource.j
 import MockTestSubjectAdminResource from "./resources/mock-test-subject.resource.js";
 import MockQuestionAdminResource from "./resources/mock-question.resource.js";
 import MockTestAdminResource from "./resources/mock-test.resource.js";
+import MockTestResultAdminResource from "./resources/mock-test-result.resource.js";
 import QuestionBankAdminResource from "./resources/question-bank.resource.js";
 import {
   CreateAdminResultExam,
@@ -131,6 +133,16 @@ import {
   UpdateAdminMockTestStatus,
   UpdateMockQuestion,
 } from "../controllers/AdminMockTest.js";
+import {
+  ExportMockTestInternalLeads,
+  ExportMockTestResult,
+  FinalizeMockTestResult,
+  GenerateMockTestResultPreview,
+  GetMockTestResult,
+  ListMockTestsForResults,
+  RegenerateMockTestResult,
+  UnlockMockTestResult,
+} from "../controllers/MockTestResult.js";
 import {
   CreateAdminQuestionBank,
   DeleteAdminQuestionBank,
@@ -2338,6 +2350,7 @@ const startAdminPanel = async () => {
         },
       },
     },
+    MockTestResultAdminResource,
     courseResource,
     mergeResourceOptions(NewsletterModel, {
       navigation: contentNavigation,
@@ -2680,6 +2693,54 @@ const startAdminPanel = async () => {
     "/api/results/bulk-upload/import",
     requireAdminPermission("results", "add"),
     ImportBulkUploadResults
+  );
+
+  adminRouter.get(
+    "/api/mock-test-results/tests",
+    requireAdminPermission("mock_test_results", "view"),
+    ListMockTestsForResults
+  );
+
+  adminRouter.get(
+    "/api/mock-test-results/:mockTestId",
+    requireAdminPermission("mock_test_results", "view"),
+    GetMockTestResult
+  );
+
+  adminRouter.post(
+    "/api/mock-test-results/:mockTestId/preview",
+    requireAdminPermission("mock_test_results", "add"),
+    GenerateMockTestResultPreview
+  );
+
+  adminRouter.post(
+    "/api/mock-test-results/:mockTestId/regenerate",
+    requireAdminPermission("mock_test_results", "edit"),
+    RegenerateMockTestResult
+  );
+
+  adminRouter.post(
+    "/api/mock-test-results/:mockTestId/finalize",
+    requireAdminPermission("mock_test_results", "edit"),
+    FinalizeMockTestResult
+  );
+
+  adminRouter.get(
+    "/api/mock-test-results/:mockTestId/export",
+    requireAdminPermission("mock_test_results", "view"),
+    ExportMockTestResult
+  );
+
+  adminRouter.get(
+    "/api/mock-test-results/:mockTestId/export-internal-leads",
+    requireAdminPermission("mock_test_results", "view"),
+    ExportMockTestInternalLeads
+  );
+
+  adminRouter.post(
+    "/api/mock-test-results/:mockTestId/unlock",
+    requireSuperAdmin,
+    UnlockMockTestResult
   );
 
   adminRouter.get(

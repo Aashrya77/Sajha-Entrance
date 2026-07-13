@@ -102,12 +102,18 @@ const MockTestExam = () => {
   const [answers, setAnswers] = useState([]);
   const [timeLeft, setTimeLeft] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const [starting, setStarting] = useState(false);
+  const [attemptId, setAttemptId] = useState("");
+  const [deadlineAtMs, setDeadlineAtMs] = useState(null);
+  const [serverClockOffsetMs, setServerClockOffsetMs] = useState(0);
   const [showConfirm, setShowConfirm] = useState(false);
   const [started, setStarted] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState(ALL_SUBJECTS);
   const [flaggedQuestions, setFlaggedQuestions] = useState([]);
   const [reviewFilter, setReviewFilter] = useState("all");
   const questionRefs = useRef(new Map());
+  const autosaveQueueRef = useRef(Promise.resolve());
+  const autoSubmitTriggeredRef = useRef(false);
 
   useEffect(() => {
     const fetchTest = async () => {
@@ -119,17 +125,50 @@ const MockTestExam = () => {
         if (response.data.success) {
           const data = response.data.data;
           setTestData(data);
-          setTimeLeft((Number(data.duration || 0) || 0) * 60);
+          const savedAnswers = new Map(
+            (data.activeAttempt?.answers || []).map((answer) => [
+              answer.questionIndex,
+              answer.selectedOption,
+            ])
+          );
           setAnswers(
-            (data.questions || []).map((question, index) => ({
-              questionIndex: Number(question?.sourceQuestionIndex ?? index),
-              selectedOption: -1,
-            }))
+            (data.questions || []).map((question, index) => {
+              const sourceQuestionIndex = Number(
+                question?.sourceQuestionIndex ?? index
+              );
+              return {
+                questionIndex: sourceQuestionIndex,
+                selectedOption: savedAnswers.get(sourceQuestionIndex) ?? -1,
+              };
+            })
           );
           setCurrentQuestion(0);
           setSelectedSubject(ALL_SUBJECTS);
           setFlaggedQuestions([]);
           setReviewFilter("all");
+          const activeAttempt = data.activeAttempt;
+          if (activeAttempt) {
+            const deadline = new Date(activeAttempt.deadlineAt).getTime();
+            const serverNow = new Date(activeAttempt.serverNow).getTime();
+            setAttemptId(String(activeAttempt.attemptId || ""));
+            setDeadlineAtMs(Number.isFinite(deadline) ? deadline : null);
+            setServerClockOffsetMs(
+              Number.isFinite(serverNow) ? serverNow - Date.now() : 0
+            );
+            setTimeLeft(
+              Number.isFinite(deadline) && Number.isFinite(serverNow)
+                ? Math.max(0, Math.ceil((deadline - serverNow) / 1000))
+                : 0
+            );
+            setStarted(true);
+          } else {
+            setAttemptId("");
+            setDeadlineAtMs(null);
+            setServerClockOffsetMs(0);
+            setTimeLeft((Number(data.duration || 0) || 0) * 60);
+            setStarted(false);
+          }
+          autoSubmitTriggeredRef.current = false;
           setPageError("");
         }
       } catch (error) {
@@ -146,6 +185,47 @@ const MockTestExam = () => {
     fetchTest();
   }, [id]);
 
+  const handleStart = async () => {
+    if (starting || !testData) return;
+    setStarting(true);
+    setPageError("");
+    try {
+      const response = await mockTestAPI.startMockTest(id);
+      if (response.data.success) {
+        const session = response.data.data;
+        const deadline = new Date(session.deadlineAt).getTime();
+        const serverNow = new Date(session.serverNow).getTime();
+        const savedAnswers = new Map(
+          (session.answers || []).map((answer) => [answer.questionIndex, answer.selectedOption])
+        );
+        setAttemptId(String(session.attemptId || ""));
+        setDeadlineAtMs(Number.isFinite(deadline) ? deadline : null);
+        setServerClockOffsetMs(Number.isFinite(serverNow) ? serverNow - Date.now() : 0);
+        setTimeLeft(
+          Number.isFinite(deadline) && Number.isFinite(serverNow)
+            ? Math.max(0, Math.ceil((deadline - serverNow) / 1000))
+            : 0
+        );
+        if (savedAnswers.size) {
+          setAnswers((previous) =>
+            previous.map((answer) => ({
+              ...answer,
+              selectedOption: savedAnswers.get(answer.questionIndex) ?? answer.selectedOption,
+            }))
+          );
+        }
+        autoSubmitTriggeredRef.current = false;
+        setStarted(true);
+      }
+    } catch (error) {
+      setPageError(
+        error.response?.data?.error || error.response?.data?.message || "Unable to start this mock test."
+      );
+    } finally {
+      setStarting(false);
+    }
+  };
+
   const handleSubmit = useCallback(async () => {
     if (submitting || !testData) {
       return;
@@ -154,10 +234,9 @@ const MockTestExam = () => {
     setSubmitting(true);
 
     try {
-      const elapsed = testData.duration * 60 - timeLeft;
       const response = await mockTestAPI.submitMockTest(id, {
         answers,
-        timeTaken: elapsed,
+        attemptId,
       });
 
       if (response.data.success) {
@@ -170,27 +249,27 @@ const MockTestExam = () => {
       alert(error.response?.data?.error || "Error submitting test. Please try again.");
       setSubmitting(false);
     }
-  }, [answers, id, navigate, submitting, testData, timeLeft]);
+  }, [answers, attemptId, id, navigate, submitting, testData]);
 
   useEffect(() => {
-    if (!started || !testData || timeLeft <= 0) {
+    if (!started || !testData || !Number.isFinite(deadlineAtMs)) {
       return undefined;
     }
 
-    const timer = setInterval(() => {
-      setTimeLeft((previous) => {
-        if (previous <= 1) {
-          clearInterval(timer);
-          handleSubmit();
-          return 0;
-        }
-
-        return previous - 1;
-      });
-    }, 1000);
+    const synchronizeTimer = () => {
+      const estimatedServerNow = Date.now() + serverClockOffsetMs;
+      const remaining = Math.max(0, Math.ceil((deadlineAtMs - estimatedServerNow) / 1000));
+      setTimeLeft(remaining);
+      if (remaining === 0 && !autoSubmitTriggeredRef.current) {
+        autoSubmitTriggeredRef.current = true;
+        void handleSubmit();
+      }
+    };
+    synchronizeTimer();
+    const timer = setInterval(synchronizeTimer, 1000);
 
     return () => clearInterval(timer);
-  }, [handleSubmit, started, testData, timeLeft]);
+  }, [deadlineAtMs, handleSubmit, serverClockOffsetMs, started, testData]);
 
   const questions = useMemo(
     () =>
@@ -275,7 +354,7 @@ const MockTestExam = () => {
   const unansweredCount = answers.length - answeredCount;
   const flaggedCount = flaggedQuestions.length;
 
-  const statusMeta = getStatusMeta(testData?.availabilityStatus || "live");
+  const statusMeta = getStatusMeta(started ? "live" : testData?.availabilityStatus || "live");
   const introMetrics = [
     { label: "Questions", value: testData?.totalQuestions ?? 0, icon: "fa-list-ol" },
     { label: "Full Marks", value: testData?.totalMarks ?? 0, icon: "fa-award" },
@@ -286,20 +365,45 @@ const MockTestExam = () => {
     selectedSubject === ALL_SUBJECTS ? "All Questions" : selectedSubject;
   const selectedReviewLabel =
     REVIEW_FILTERS.find((filter) => filter.value === reviewFilter)?.label || "All Questions";
+  const persistAnswers = useCallback(
+    (nextAnswers) => {
+      if (!started || !attemptId) return;
+      autosaveQueueRef.current = autosaveQueueRef.current
+        .catch(() => undefined)
+        .then(() =>
+          mockTestAPI.saveMockTestAnswers(id, {
+            attemptId,
+            answers: nextAnswers,
+          })
+        )
+        .catch((error) => {
+          if (error.response?.status === 409) {
+            autoSubmitTriggeredRef.current = true;
+            void handleSubmit();
+            return;
+          }
+          setPageError("Your latest answer could not be saved. Check your connection.");
+        });
+    },
+    [attemptId, handleSubmit, id, started]
+  );
+
   const selectOption = (question, optionIndex) => {
-    const sourceOptionIndex = Number(question.options?.[optionIndex]?.sourceOptionIndex ?? optionIndex);
-    setCurrentQuestion(question.index);
-    setAnswers((previous) =>
-      previous.map((answer) =>
-        answer.questionIndex === question.sourceQuestionIndex
-          ? {
-              ...answer,
-              selectedOption:
-                answer.selectedOption === sourceOptionIndex ? -1 : sourceOptionIndex,
-            }
-          : answer
-      )
+    const sourceOptionIndex = Number(
+      question.options?.[optionIndex]?.sourceOptionIndex ?? optionIndex
     );
+    setCurrentQuestion(question.index);
+    const nextAnswers = answers.map((answer) =>
+      answer.questionIndex === question.sourceQuestionIndex
+        ? {
+            ...answer,
+            selectedOption:
+              answer.selectedOption === sourceOptionIndex ? -1 : sourceOptionIndex,
+          }
+        : answer
+    );
+    setAnswers(nextAnswers);
+    persistAnswers(nextAnswers);
   };
 
   const jumpToQuestion = (questionIndex) => {
@@ -346,7 +450,7 @@ const MockTestExam = () => {
             ) : null}
             {testData?.endAt ? (
               <p className="mock-test-exam__state-meta">
-                Scheduled end: {formatDateTime(testData.endAt)}
+                Last allowed start: {formatDateTime(testData.endAt)}
               </p>
             ) : null}
           </div>
@@ -416,7 +520,8 @@ const MockTestExam = () => {
                   <li>Each question has four options. Select one answer per question.</li>
                   <li>Use the subject tabs and question panel to move quickly.</li>
                   <li>Click a selected option again if you want to deselect it.</li>
-                  <li>The exam auto-submits when the timer reaches zero.</li>
+                  <li>Your individual deadline is fixed when you start and is enforced by the server.</li>
+                  <li>Answers are saved during the attempt and finalized automatically at expiry.</li>
                 </ul>
               )}
             </div>
@@ -428,10 +533,11 @@ const MockTestExam = () => {
               <button
                 type="button"
                 className="mock-test-exam__primary-action mock-test-exam__primary-action--inline"
-                onClick={() => setStarted(true)}
+                onClick={handleStart}
+                disabled={starting}
               >
                 <i className="fa-solid fa-play"></i>
-                Start Test
+                {starting ? "Starting..." : "Start Test"}
               </button>
             </div>
           </div>

@@ -214,6 +214,20 @@ const refreshAdminSession = async (req, _res, next) => {
   }
 };
 
+const requireSuperAdmin = (req, res, next) => {
+  const currentAdmin = req.session?.adminUser;
+  if (!currentAdmin) {
+    return res.status(401).json({ success: false, error: "Authentication required." });
+  }
+  if (currentAdmin.role !== "super_admin") {
+    return res.status(403).json({
+      success: false,
+      error: "Only a super admin can unlock finalized results.",
+    });
+  }
+  return next();
+};
+
 export {
   authenticateAdminUser,
   ensureAdminUserSeed,
@@ -223,6 +237,7 @@ export {
   normalizeEmail,
   requireAdminPermission,
   refreshAdminSession,
+  requireSuperAdmin,
   syncAdminUserPermissions,
   syncAllAdminUserPermissions,
   toCurrentAdmin,

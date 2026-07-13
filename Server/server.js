@@ -35,6 +35,7 @@ import {
 import { resolvePublicBackendUrl } from "./utils/publicUrl.js";
 import { backfillLegacyResultExams } from "./services/resultService.js";
 import { syncMockTestIndexes } from "./services/mockTestIndexService.js";
+import { startMockTestAttemptExpiryWorker } from "./services/mockTestAttemptService.js";
 import { refreshYouTubeLibrarySchedule } from "./services/youtubeLibraryScheduler.js";
 import { startZoomRecordingAutoSync } from "./services/zoomRecordingScheduler.js";
 
@@ -246,6 +247,12 @@ const initializeStartupTasks = async () => {
     await syncMockTestIndexes();
   } catch (error) {
     logger.error("Mock test index sync error:", error.message);
+  }
+
+  try {
+    startMockTestAttemptExpiryWorker();
+  } catch (error) {
+    logger.error("Mock-test attempt expiry worker init error:", error.message);
   }
 
   try {

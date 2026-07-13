@@ -1389,7 +1389,7 @@ export default function MockTestWorkspace() {
           </Box>
 
           <Box style={fieldBoxStyle}>
-            <Label style={fieldLabelStyle}>Start Time</Label>
+            <Label style={fieldLabelStyle}>Availability Start Time</Label>
             <input
               type="datetime-local"
               value={form.startAt}
@@ -1399,7 +1399,7 @@ export default function MockTestWorkspace() {
           </Box>
 
           <Box style={fieldBoxStyle}>
-            <Label style={fieldLabelStyle}>End Time</Label>
+            <Label style={fieldLabelStyle}>Last Allowed Start Time</Label>
             <input
               type="datetime-local"
               value={form.endAt}
@@ -2406,7 +2406,7 @@ export default function MockTestWorkspace() {
                           <span style={badgeStyle("brand")}>{test.totalQuestions} questions</span>
                         </Box>
                         <Text style={{ color: "#64748b", fontSize: "13px" }}>
-                          Start: {formatDateTime(test.startAt)} | End: {formatDateTime(test.endAt)}
+                          Availability: {formatDateTime(test.startAt)} | Last start: {formatDateTime(test.endAt)}
                         </Text>
                       </Box>
 

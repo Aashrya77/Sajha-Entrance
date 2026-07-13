@@ -311,7 +311,59 @@ const MockTestAttemptSchema = new mongoose.Schema({
   },
   timeTaken: {
     type: Number,
-    default: 0,
+    default: null,
+  },
+  timeTakenSeconds: {
+    type: Number,
+    default: null,
+    min: 0,
+  },
+  status: {
+    type: String,
+    enum: [
+      "started",
+      "submitted",
+      "completed",
+      "abandoned",
+      "cancelled",
+      "invalidated",
+      "preview",
+      "disqualified",
+    ],
+    default: "started",
+    index: true,
+  },
+  startedAt: {
+    type: Date,
+    default: null,
+  },
+  deadlineAt: {
+    type: Date,
+    default: null,
+    index: true,
+  },
+  durationSeconds: {
+    type: Number,
+    default: null,
+    min: 0,
+  },
+  submittedAt: {
+    type: Date,
+    default: null,
+    index: true,
+  },
+  scoreCalculatedAt: {
+    type: Date,
+    default: null,
+  },
+  studentNameSnapshot: {
+    type: String,
+    default: "",
+    trim: true,
+  },
+  isTestAttempt: {
+    type: Boolean,
+    default: false,
   },
   attemptNumber: {
     type: Number,
@@ -320,7 +372,16 @@ const MockTestAttemptSchema = new mongoose.Schema({
   },
   completedAt: {
     type: Date,
-    default: Date.now,
+    default: null,
+  },
+  submissionType: {
+    type: String,
+    enum: ["manual", "auto"],
+    default: null,
+  },
+  answersUpdatedAt: {
+    type: Date,
+    default: null,
   },
 });
 
@@ -331,6 +392,13 @@ MockTestAttemptSchema.index({ student: 1, mockTest: 1, attemptNumber: 1 });
 MockTestAttemptSchema.index(
   { completedAt: 1 },
   { expireAfterSeconds: 7 * 24 * 60 * 60, name: "completedAt_7d_retention" }
+);
+MockTestAttemptSchema.index({ mockTest: 1, status: 1, submittedAt: 1 });
+MockTestAttemptSchema.index({ mockTest: 1, student: 1, status: 1 });
+MockTestAttemptSchema.index({ status: 1, deadlineAt: 1 });
+MockTestAttemptSchema.index(
+  { student: 1, mockTest: 1, status: 1 },
+  { unique: true, partialFilterExpression: { status: "started" } }
 );
 
 export const MockTestAttemptModel = mongoose.model(

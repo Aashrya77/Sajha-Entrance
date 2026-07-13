@@ -181,6 +181,8 @@ export const mockTestAPI = {
     return API.get(`/mocktests?${params.toString()}`);
   },
   getMockTestForExam: (id) => API.get(`/mocktest/${id}`),
+  startMockTest: (id) => API.post(`/mocktest/${id}/start`),
+  saveMockTestAnswers: (id, data) => API.put(`/mocktest/${id}/answers`, data),
   submitMockTest: (id, data) => API.post(`/mocktest/${id}/submit`, data),
   getMyAttempts: () => API.get('/mocktest-attempts'),
   getAttemptResult: (attemptId) => API.get(`/mocktest-attempt/${attemptId}`),

@@ -40,9 +40,19 @@ const MockTestResult = () => {
   };
 
   const formatTime = (seconds) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}m ${remainingSeconds}s`;
+    const safeSeconds = Math.max(0, Math.floor(Number(seconds) || 0));
+    const hours = Math.floor(safeSeconds / 3600);
+    const minutes = Math.floor((safeSeconds % 3600) / 60);
+    const remainingSeconds = safeSeconds % 60;
+    if (hours > 0) {
+      return `${hours}h ${String(minutes).padStart(2, "0")}m ${String(
+        remainingSeconds
+      ).padStart(2, "0")}s`;
+    }
+    if (minutes > 0) {
+      return `${minutes}m ${String(remainingSeconds).padStart(2, "0")}s`;
+    }
+    return `${remainingSeconds}s`;
   };
 
   if (loading) {

@@ -575,7 +575,7 @@ export default function MockTestScheduler() {
             </Box>
 
             <Box>
-              <Label>Start time</Label>
+              <Label>Availability start time</Label>
               <input
                 type="datetime-local"
                 value={form.startAt}
@@ -585,7 +585,7 @@ export default function MockTestScheduler() {
             </Box>
 
             <Box>
-              <Label>End time</Label>
+              <Label>Last allowed start time</Label>
               <input
                 type="datetime-local"
                 value={form.endAt}
@@ -880,7 +880,7 @@ export default function MockTestScheduler() {
                       <span style={badgeStyle("brand")}>{test.totalQuestions} questions</span>
                     </Box>
                     <Text style={{ color: "#64748b", fontSize: "13px" }}>
-                      Start: {formatDateTime(test.startAt)} | End: {formatDateTime(test.endAt)}
+                      Availability: {formatDateTime(test.startAt)} | Last start: {formatDateTime(test.endAt)}
                     </Text>
                   </Box>
 

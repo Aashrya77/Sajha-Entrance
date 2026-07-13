@@ -2,6 +2,8 @@ import MockTestCourseModel from "../models/MockTestCourse.js";
 import MockTestSubjectModel from "../models/MockTestSubject.js";
 import MockQuestionModel from "../models/MockQuestion.js";
 import MockTestModel, { MockTestAttemptModel } from "../models/MockTest.js";
+import MockTestResultModel from "../models/MockTestResult.js";
+import MockTestResultAuditModel from "../models/MockTestResultAudit.js";
 import { createLogger } from "../utils/logger.js";
 
 const logger = createLogger("mocktest-indexes");
@@ -30,6 +32,8 @@ const syncMockTestIndexes = async () => {
     MockQuestionModel,
     MockTestModel,
     MockTestAttemptModel,
+    MockTestResultModel,
+    MockTestResultAuditModel,
   ];
 
   for (const model of models) {

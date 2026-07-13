@@ -74,6 +74,16 @@ const getAvailabilityMeta = (test, now) => {
   const availabilityStatus = test?.availabilityStatus || "scheduled";
   const normalizedAvailabilityStatus = String(availabilityStatus).toLowerCase();
 
+  if (test?.canResume) {
+    return {
+      tone: "live",
+      label: "In Progress",
+      helper: test.activeAttempt?.deadlineAt
+        ? `Your deadline is ${formatDateTime(new Date(test.activeAttempt.deadlineAt))}`
+        : "Resume your active attempt",
+    };
+  }
+
   if (test?.hasCompletedAttempt) {
     return {
       tone: "completed",
@@ -121,6 +131,15 @@ const getAvailabilityMeta = (test, now) => {
 const buildMockTestActions = (test, isAuthenticated) => {
   const canStart = test.canStart && test.availabilityStatus === "live";
   const examHref = isAuthenticated ? `/mocktest/${test._id}` : "/student/login";
+
+  if (test.canResume) {
+    return [{
+      type: "link",
+      label: "Resume Test",
+      href: examHref,
+      modifier: "primary",
+    }];
+  }
 
   if (test.hasCompletedAttempt) {
     const resultHref = test.latestAttempt?.id

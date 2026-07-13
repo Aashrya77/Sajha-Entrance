@@ -105,6 +105,11 @@ const StudentSchema = new mongoose.Schema({
     enum: ["Unpaid", "Paid"],
     default: "Unpaid",
   },
+  isTestAccount: {
+    type: Boolean,
+    default: false,
+    index: true,
+  },
   passwordResetToken: {
     type: String,
     trim: true,

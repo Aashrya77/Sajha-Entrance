@@ -1,11 +1,21 @@
 import mongoose from "mongoose";
 import MockTestModel, { MockTestAttemptModel } from "../models/MockTest.js";
+import Student from "../models/Student.js";
 import {
   buildStudentMockTestSummary,
   resolveMockTestLifecycle,
   serializeQuestionForReview,
   serializeQuestionForStudent,
 } from "../services/mockTestService.js";
+import {
+  MockTestAttemptError,
+  ensureAttemptTiming,
+  finalizeExpiredAttempt,
+  finalizeExpiredMockTestAttempts,
+  finalizeStartedAttempt,
+  getConfiguredDurationSeconds,
+  normalizeAnswerSelections,
+} from "../services/mockTestAttemptService.js";
 
 const buildSubjectLookupFromMockTest = (mockTest) =>
   (mockTest?.subjectRefs || []).reduce((lookup, subjectRef, index) => {
@@ -137,6 +147,64 @@ const buildExamQuestions = (mockTest) => {
   return mockTest.shuffleQuestions ? shuffleItems(questions) : questions;
 };
 
+const serializeAttemptSession = (attempt, serverNow = new Date()) => ({
+  attemptId: attempt._id,
+  startedAt: attempt.startedAt,
+  deadlineAt: attempt.deadlineAt,
+  durationSeconds: attempt.durationSeconds,
+  attemptNumber: attempt.attemptNumber,
+  serverNow,
+  answers: (attempt.answers || []).map((answer) => ({
+    questionIndex: answer.questionIndex,
+    selectedOption: answer.selectedOption,
+  })),
+});
+
+const buildAttemptResultData = async ({ attempt, mockTest, attemptNumber }) => {
+  const { subjectLookup, questionOverrides } = await buildQuestionSubjectOverrides(mockTest);
+  const resultQuestions = (mockTest.questions || []).map((question, index) => {
+    const answer = (attempt.answers || []).find((entry) => entry.questionIndex === index);
+    const plainQuestion = toPlainQuestionSnapshot(question);
+    return serializeQuestionForReview(
+      {
+        ...plainQuestion,
+        subject:
+          plainQuestion?.subject ||
+          questionOverrides[String(plainQuestion?.sourceQuestionId)]?.subject ||
+          null,
+        subjectName:
+          plainQuestion?.subjectName ||
+          questionOverrides[String(plainQuestion?.sourceQuestionId)]?.subjectName ||
+          "",
+      },
+      answer,
+      index,
+      subjectLookup
+    );
+  });
+  return {
+    attemptId: attempt._id,
+    attemptNumber: attemptNumber || attempt.attemptNumber || 1,
+    testTitle: mockTest.title,
+    totalMarks: mockTest.totalMarks,
+    passMarks: mockTest.passMarks || 0,
+    totalScore: attempt.totalScore,
+    totalCorrect: attempt.totalCorrect,
+    totalWrong: attempt.totalWrong,
+    totalUnanswered: attempt.totalUnanswered,
+    totalQuestions: mockTest.questions.length,
+    percentage: attempt.percentage,
+    timeTaken: attempt.timeTakenSeconds ?? attempt.timeTaken,
+    duration: mockTest.duration,
+    startedAt: attempt.startedAt,
+    deadlineAt: attempt.deadlineAt,
+    submittedAt: attempt.submittedAt,
+    completedAt: attempt.completedAt,
+    submissionType: attempt.submissionType,
+    questions: resultQuestions,
+  };
+};
+
 const matchSearch = (mockTest, search = "") => {
   const normalizedSearch = String(search || "").trim().toLowerCase();
   if (!normalizedSearch) {
@@ -173,6 +241,13 @@ const normalizeMaxAttempts = (mockTest = {}) => {
   return Number.isFinite(parsedMaxAttempts)
     ? Math.max(0, Math.floor(parsedMaxAttempts))
     : 1;
+};
+
+const completedAttemptStatusFilter = {
+  $or: [
+    { status: { $in: ["submitted", "completed"] } },
+    { status: { $exists: false }, completedAt: { $ne: null } },
+  ],
 };
 
 const buildAttemptLimitState = ({ mockTest, lifecycle, attempts = [] }) => {
@@ -226,10 +301,110 @@ const fetchStudentAttemptsForTest = async (studentId, mockTestId) => {
   return MockTestAttemptModel.find({
     student: studentId,
     mockTest: mockTestId,
+    ...completedAttemptStatusFilter,
   })
     .sort({ completedAt: -1 })
     .lean()
     .exec();
+};
+
+// Create a server-timed attempt before the exam timer starts.
+const StartMockTestAttempt = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const studentId = req.student?.id;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(404).json({ success: false, error: "Invalid test ID" });
+    }
+    if (!mongoose.Types.ObjectId.isValid(studentId)) {
+      return res.status(403).json({ success: false, error: "A valid student account is required." });
+    }
+
+    const [mockTest, student] = await Promise.all([
+      MockTestModel.findById(id).exec(),
+      Student.findById(studentId).select("name isTestAccount").lean().exec(),
+    ]);
+    if (!mockTest) {
+      return res.status(404).json({ success: false, error: "Mock test not found" });
+    }
+    if (!student) {
+      return res.status(403).json({ success: false, error: "A valid student account is required." });
+    }
+
+    let existingStartedAttempt = await MockTestAttemptModel.findOne({
+      student: studentId,
+      mockTest: id,
+      status: "started",
+    }).exec();
+    if (existingStartedAttempt) {
+      const timing = await ensureAttemptTiming(existingStartedAttempt, mockTest);
+      const serverNow = new Date();
+      if (serverNow.getTime() >= timing.deadlineAt.getTime()) {
+        await finalizeExpiredAttempt({ attempt: existingStartedAttempt, mockTest, now: serverNow });
+        existingStartedAttempt = null;
+      } else {
+        return res.json({
+          success: true,
+          data: serializeAttemptSession(existingStartedAttempt, serverNow),
+        });
+      }
+    }
+
+    const lifecycle = resolveMockTestLifecycle(mockTest);
+    if (!lifecycle.isAccessible) {
+      return res.status(403).json({
+        success: false,
+        error: lifecycle.isUpcoming
+          ? "This mock test has not started yet."
+          : "The availability window for starting this mock test has ended.",
+      });
+    }
+
+    const previousAttempts = await fetchStudentAttemptsForTest(studentId, mockTest._id);
+    const attemptState = buildAttemptLimitState({ mockTest, lifecycle, attempts: previousAttempts });
+    if (!attemptState.canStartAttempt) {
+      return res.status(403).json({ success: false, error: getRetakeLimitMessage(attemptState) });
+    }
+
+    try {
+      const startedAt = new Date();
+      const durationSeconds = getConfiguredDurationSeconds(mockTest);
+      const deadlineAt = new Date(startedAt.getTime() + durationSeconds * 1000);
+      const attempt = await MockTestAttemptModel.create({
+        student: studentId,
+        mockTest: id,
+        attemptNumber: previousAttempts.length + 1,
+        status: "started",
+        startedAt,
+        deadlineAt,
+        durationSeconds,
+        studentNameSnapshot: student.name,
+        isTestAttempt: Boolean(student.isTestAccount),
+      });
+      return res.json({
+        success: true,
+        data: serializeAttemptSession(attempt, new Date()),
+      });
+    } catch (error) {
+      if (error?.code === 11000) {
+        const concurrentAttempt = await MockTestAttemptModel.findOne({
+          student: studentId,
+          mockTest: id,
+          status: "started",
+        }).lean();
+        if (concurrentAttempt) {
+          await ensureAttemptTiming(concurrentAttempt, mockTest);
+          return res.json({
+            success: true,
+            data: serializeAttemptSession(concurrentAttempt, new Date()),
+          });
+        }
+      }
+      throw error;
+    }
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
 };
 
 const getRetakeLimitMessage = (attemptState) => {
@@ -301,10 +476,18 @@ const GetMockTests = async (req, res) => {
       );
     const studentId = req.student?.id;
     const visibleTestIds = visibleEntries.map(({ mockTest }) => mockTest._id);
+    if (studentId) {
+      await finalizeExpiredMockTestAttempts({ studentId, limit: 0 });
+    }
     const attempts = studentId
       ? await MockTestAttemptModel.find({
           student: studentId,
           mockTest: { $in: visibleTestIds },
+          $or: [
+            { status: "started" },
+            { status: { $in: ["submitted", "completed"] } },
+            { status: { $exists: false }, completedAt: { $ne: null } },
+          ],
         })
           .sort({ completedAt: -1 })
           .lean()
@@ -320,15 +503,25 @@ const GetMockTests = async (req, res) => {
       return lookup;
     }, new Map());
     const visibleTests = visibleEntries.map(({ mockTest, lifecycle, summary }) => {
+      const testAttempts = attemptsByTestId.get(String(mockTest._id)) || [];
+      const activeAttempt = testAttempts.find((attempt) => attempt.status === "started") || null;
       const attemptState = buildAttemptLimitState({
         mockTest,
         lifecycle,
-        attempts: attemptsByTestId.get(String(mockTest._id)) || [],
+        attempts: testAttempts.filter((attempt) => attempt.status !== "started"),
       });
 
       return {
         ...summary,
-        canStart: attemptState.canStartAttempt,
+        canStart: Boolean(activeAttempt) || attemptState.canStartAttempt,
+        canResume: Boolean(activeAttempt),
+        activeAttempt: activeAttempt
+          ? {
+              id: activeAttempt._id,
+              startedAt: activeAttempt.startedAt,
+              deadlineAt: activeAttempt.deadlineAt,
+            }
+          : null,
         hasCompletedAttempt: attemptState.hasCompletedAttempt,
         latestAttempt: attemptState.latestAttempt,
         canRetake: attemptState.canRetake,
@@ -365,15 +558,31 @@ const GetMockTestForExam = async (req, res) => {
 
     const lifecycle = resolveMockTestLifecycle(mockTest);
     const summary = buildStudentMockTestSummary(mockTest, lifecycle);
+    let activeAttempt = req.student?.id
+      ? await MockTestAttemptModel.findOne({
+          student: req.student.id,
+          mockTest: mockTest._id,
+          status: "started",
+        }).exec()
+      : null;
+    if (activeAttempt) {
+      const timing = await ensureAttemptTiming(activeAttempt, mockTest);
+      const serverNow = new Date();
+      if (serverNow.getTime() >= timing.deadlineAt.getTime()) {
+        await finalizeExpiredAttempt({ attempt: activeAttempt, mockTest, now: serverNow });
+        activeAttempt = null;
+      }
+    }
+    const canResume = Boolean(activeAttempt);
 
-    if (!lifecycle.isStudentVisible) {
+    if (!lifecycle.isStudentVisible && !canResume) {
       return res.status(404).json({
         success: false,
         error: "This mock test is not available to students right now.",
       });
     }
 
-    if (lifecycle.isUpcoming) {
+    if (lifecycle.isUpcoming && !canResume) {
       return res.status(403).json({
         success: false,
         error: "This mock test has not started yet.",
@@ -381,7 +590,7 @@ const GetMockTestForExam = async (req, res) => {
       });
     }
 
-    if (!lifecycle.isAccessible) {
+    if (!lifecycle.isAccessible && !canResume) {
       return res.status(403).json({
         success: false,
         error: "This mock test is no longer accessible.",
@@ -396,7 +605,7 @@ const GetMockTestForExam = async (req, res) => {
       attempts: studentAttempts,
     });
 
-    if (req.student?.id && !attemptState.canStartAttempt) {
+    if (req.student?.id && !canResume && !attemptState.canStartAttempt) {
       return res.status(403).json({
         success: false,
         error: getRetakeLimitMessage(attemptState),
@@ -440,7 +649,13 @@ const GetMockTestForExam = async (req, res) => {
       success: true,
       data: {
         ...summary,
-        canStart: req.student?.id ? attemptState.canStartAttempt : summary.canStart,
+        canStart: req.student?.id
+          ? canResume || attemptState.canStartAttempt
+          : summary.canStart,
+        canResume,
+        activeAttempt: activeAttempt
+          ? serializeAttemptSession(activeAttempt, new Date())
+          : null,
         hasCompletedAttempt: attemptState.hasCompletedAttempt,
         latestAttempt: attemptState.latestAttempt,
         canRetake: attemptState.canRetake,
@@ -456,157 +671,125 @@ const GetMockTestForExam = async (req, res) => {
   }
 };
 
-// Submit mock test answers and get instant result.
-const SubmitMockTest = async (req, res) => {
-  
- console.log("SUBMIT MOCK TEST HIT");
+// Persist answer selections while an authoritative server-timed attempt is active.
+const SaveMockTestAnswers = async (req, res) => {
   try {
     const { id } = req.params;
-    const { answers, timeTaken } = req.body;
+    const { answers, attemptId } = req.body;
     const studentId = req.student.id;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(404).json({ success: false, error: "Invalid test ID" });
+    if (!mongoose.Types.ObjectId.isValid(id) || !mongoose.Types.ObjectId.isValid(attemptId)) {
+      return res.status(404).json({ success: false, error: "Invalid attempt" });
     }
-
-    const mockTest = await MockTestModel.findById(id).exec();
-    if (!mockTest) {
-      return res.status(404).json({ success: false, error: "Mock test not found" });
+    const [mockTest, attempt] = await Promise.all([
+      MockTestModel.findById(id).exec(),
+      MockTestAttemptModel.findOne({ _id: attemptId, student: studentId, mockTest: id }).exec(),
+    ]);
+    if (!mockTest || !attempt) {
+      return res.status(404).json({ success: false, error: "Attempt not found" });
     }
-
-    const lifecycle = resolveMockTestLifecycle(mockTest);
-    if (!lifecycle.isAccessible) {
-      return res.status(403).json({
+    if (attempt.status !== "started") {
+      return res.status(409).json({
         success: false,
-        error: lifecycle.isUpcoming
-          ? "This mock test has not started yet."
-          : "This mock test is no longer accessible.",
+        error: "This attempt has already been finalized.",
+        code: "ATTEMPT_FINALIZED",
       });
     }
-
-    const previousAttempts = await fetchStudentAttemptsForTest(studentId, mockTest._id);
-    const attemptState = buildAttemptLimitState({
-      mockTest,
-      lifecycle,
-      attempts: previousAttempts,
-    });
-
-    if (!attemptState.canStartAttempt) {
-      return res.status(403).json({
+    const timing = await ensureAttemptTiming(attempt, mockTest);
+    const serverNow = new Date();
+    if (serverNow.getTime() >= timing.deadlineAt.getTime()) {
+      await finalizeExpiredAttempt({ attempt, mockTest, now: serverNow });
+      return res.status(409).json({
         success: false,
-        error: getRetakeLimitMessage(attemptState),
+        error: "The individual attempt deadline has passed.",
+        code: "ATTEMPT_DEADLINE_PASSED",
       });
     }
-
-    let totalScore = 0;
-    let totalCorrect = 0;
-    let totalWrong = 0;
-    let totalUnanswered = 0;
-
-    const gradedAnswers = (mockTest.questions || []).map((question, index) => {
-      const studentAnswer = Array.isArray(answers)
-        ? answers.find((entry) => entry.questionIndex === index)
-        : null;
-
-      if (
-        !studentAnswer ||
-        studentAnswer.selectedOption === null ||
-        studentAnswer.selectedOption === undefined ||
-        studentAnswer.selectedOption === -1
-      ) {
-        totalUnanswered += 1;
-        return {
-          questionIndex: index,
-          questionId: question?.sourceQuestionId || null,
-          selectedOption: -1,
-          isCorrect: false,
-          marksObtained: 0,
-        };
-      }
-
-      const isCorrect = Number(studentAnswer.selectedOption) === Number(question.correctOption);
-      if (isCorrect) {
-        totalCorrect += 1;
-        totalScore += Number(question.marks || 0) || 0;
-      } else {
-        totalWrong += 1;
-        totalScore -= Number(question.negativeMarks || 0) || 0;
-      }
-
-      return {
-        questionIndex: index,
-        questionId: question?.sourceQuestionId || null,
-        selectedOption: Number(studentAnswer.selectedOption),
-        isCorrect,
-        marksObtained: isCorrect
-          ? Number(question.marks || 0) || 0
-          : -(Number(question.negativeMarks || 0) || 0),
-      };
-    });
-
-    const safeScore = Math.max(0, totalScore);
-    const percentage =
-      mockTest.totalMarks > 0
-        ? Math.round((safeScore / mockTest.totalMarks) * 100 * 100) / 100
-        : 0;
-
-    const attempt = await MockTestAttemptModel.create({
-      student: studentId,
-      mockTest: id,
-      attemptNumber: previousAttempts.length + 1,
-      answers: gradedAnswers,
-      totalScore: safeScore,
-      totalCorrect,
-      totalWrong,
-      totalUnanswered,
-      percentage,
-      timeTaken: Number(timeTaken || 0) || 0,
-    });
-
-    const { subjectLookup, questionOverrides } = await buildQuestionSubjectOverrides(mockTest);
-
-    const resultQuestions = (mockTest.questions || []).map((question, index) => {
-      const plainQuestion = toPlainQuestionSnapshot(question);
-
-      return serializeQuestionForReview(
-        {
-          ...plainQuestion,
-          subject:
-            plainQuestion?.subject ||
-            questionOverrides[String(plainQuestion?.sourceQuestionId)]?.subject ||
-            null,
-          subjectName:
-            plainQuestion?.subjectName ||
-            questionOverrides[String(plainQuestion?.sourceQuestionId)]?.subjectName ||
-            "",
-        },
-        gradedAnswers[index],
-        index,
-        subjectLookup
-      );
-    });
-
-    res.json({
+    const selections = normalizeAnswerSelections(answers, mockTest.questions.length).map(
+      (answer) => ({
+        ...answer,
+        questionId: mockTest.questions[answer.questionIndex]?.sourceQuestionId || null,
+      })
+    );
+    const updatedAttempt = await MockTestAttemptModel.findOneAndUpdate(
+      {
+        _id: attempt._id,
+        student: studentId,
+        mockTest: id,
+        status: "started",
+        deadlineAt: { $gt: serverNow },
+      },
+      { $set: { answers: selections, answersUpdatedAt: serverNow } },
+      { new: true }
+    ).exec();
+    if (!updatedAttempt) {
+      return res.status(409).json({
+        success: false,
+        error: "The attempt could not accept answer changes.",
+        code: "ATTEMPT_NOT_ACTIVE",
+      });
+    }
+    return res.json({
       success: true,
       data: {
-        attemptId: attempt._id,
-        attemptNumber: attempt.attemptNumber,
-        testTitle: mockTest.title,
-        totalMarks: mockTest.totalMarks,
-        passMarks: mockTest.passMarks || 0,
-        totalScore: safeScore,
-        totalCorrect,
-        totalWrong,
-        totalUnanswered,
-        totalQuestions: mockTest.questions.length,
-        percentage,
-        timeTaken: Number(timeTaken || 0) || 0,
-        duration: mockTest.duration,
-        questions: resultQuestions,
+        attemptId: updatedAttempt._id,
+        savedAt: updatedAttempt.answersUpdatedAt,
+        deadlineAt: updatedAttempt.deadlineAt,
       },
     });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    const status = error instanceof MockTestAttemptError ? error.statusCode : 500;
+    return res.status(status).json({ success: false, error: error.message, code: error.code });
+  }
+};
+
+// Submit against the individual attempt deadline; the general window only controls starts.
+const SubmitMockTest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { answers, attemptId } = req.body;
+    const studentId = req.student.id;
+    if (!mongoose.Types.ObjectId.isValid(id) || !mongoose.Types.ObjectId.isValid(attemptId)) {
+      return res.status(404).json({ success: false, error: "Invalid attempt" });
+    }
+    const [mockTest, currentAttempt] = await Promise.all([
+      MockTestModel.findById(id).exec(),
+      MockTestAttemptModel.findOne({ _id: attemptId, student: studentId, mockTest: id }).exec(),
+    ]);
+    if (!mockTest || !currentAttempt) {
+      return res.status(404).json({ success: false, error: "Attempt not found" });
+    }
+    if (["submitted", "completed"].includes(currentAttempt.status)) {
+      return res.json({
+        success: true,
+        data: await buildAttemptResultData({ attempt: currentAttempt, mockTest }),
+      });
+    }
+    if (currentAttempt.status !== "started") {
+      return res.status(409).json({
+        success: false,
+        error: "This attempt is not active.",
+        code: "ATTEMPT_NOT_ACTIVE",
+      });
+    }
+    const timing = await ensureAttemptTiming(currentAttempt, mockTest);
+    const serverNow = new Date();
+    const attempt =
+      serverNow.getTime() >= timing.deadlineAt.getTime()
+        ? await finalizeExpiredAttempt({ attempt: currentAttempt, mockTest, now: serverNow })
+        : await finalizeStartedAttempt({
+            attempt: currentAttempt,
+            mockTest,
+            answers,
+            submissionType: "manual",
+            now: serverNow,
+          });
+    return res.json({
+      success: true,
+      data: await buildAttemptResultData({ attempt, mockTest }),
+    });
+  } catch (error) {
+    const status = error instanceof MockTestAttemptError ? error.statusCode : 500;
+    return res.status(status).json({ success: false, error: error.message, code: error.code });
   }
 };
 
@@ -615,7 +798,10 @@ const GetMyAttempts = async (req, res) => {
   try {
     const studentId = req.student.id;
 
-    const attempts = await MockTestAttemptModel.find({ student: studentId })
+    const attempts = await MockTestAttemptModel.find({
+      student: studentId,
+      ...completedAttemptStatusFilter,
+    })
       .populate("mockTest", "title courseName course totalMarks duration status startAt endAt")
       .sort({ completedAt: -1 })
       .lean()
@@ -645,6 +831,7 @@ const GetAttemptResult = async (req, res) => {
     const attempt = await MockTestAttemptModel.findOne({
       _id: attemptId,
       student: studentId,
+      ...completedAttemptStatusFilter,
     })
       .populate("mockTest")
       .lean()
@@ -700,7 +887,7 @@ const GetAttemptResult = async (req, res) => {
         totalUnanswered: attempt.totalUnanswered,
         totalQuestions: mockTest.questions.length,
         percentage: attempt.percentage,
-        timeTaken: attempt.timeTaken,
+        timeTaken: attempt.timeTakenSeconds ?? attempt.timeTaken,
         duration: mockTest.duration,
         completedAt: attempt.completedAt,
         questions: resultQuestions,
@@ -714,8 +901,10 @@ const GetAttemptResult = async (req, res) => {
 export {
   GetAttemptResult,
   GetMockTestForExam,
+  StartMockTestAttempt,
   GetMockTests,
   GetMyAttempts,
+  SaveMockTestAnswers,
   SubmitMockTest,
 };
 
