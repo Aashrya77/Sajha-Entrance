@@ -9,6 +9,7 @@ import { trackPageView, isAnalyticsEnabled } from './analytics';
 import Navbar from './components/Navbar/Navbar';
 import Footer from './components/Footer/Footer';
 import Loader from './components/Loader/Loader';
+import RouteRobotsMeta from './components/Seo/RouteRobotsMeta';
 import { booksData } from './data/booksData';
 
 const Home = React.lazy(() => import('./pages/Home/Home'));
@@ -236,6 +237,7 @@ function App() {
   return (
     <div className="App">
       <ScrollToTop />
+      <RouteRobotsMeta />
       {!hideSiteChrome && <Navbar notice={notice} studentData={studentData} isAuthenticated={isAuthenticated} cartCount={cartItems.reduce((total, item) => total + item.quantity, 0)} onLogout={handleStudentLogout} />}
       <React.Suspense fallback={<PageLoader />}>
       <Routes>

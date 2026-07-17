@@ -22,6 +22,7 @@ import InquiryRoutes from "./routes/Inquiry.js";
 import YouTubeLibraryRoutes from "./routes/YouTubeLibrary.js";
 import QuestionBankRoutes from "./routes/QuestionBank.js";
 import ActivityRoutes from "./routes/Activity.js";
+import SeoRoutes from "./routes/Seo.js";
 
 import { adminBrandAssets } from "./admin/config/branding.js";
 import { ADMIN_ROOT_PATH } from "./admin/config/paths.js";
@@ -92,6 +93,10 @@ app.use(
 app.use(cookieParser());
 
 // ================= STATIC FILES =================
+// Register crawl-control endpoints before static files, AdminJS, API routes,
+// and any deployment-level SPA fallback.
+app.use(SeoRoutes);
+
 app.use(express.static(publicDirectory, staticFileOptions));
 
 const adminStaticDirectory = path.join(publicDirectory, "admin");

@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+Disallow: /api/
+Disallow: /sajha-admin
+
+Sitemap: https://sajhaentrance.org/sitemap.xml

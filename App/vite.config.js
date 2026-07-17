@@ -50,6 +50,10 @@ export default defineConfig(({ mode }) => {
           target: proxyTarget,
           changeOrigin: true,
         },
+        '/sitemap.xml': {
+          target: proxyTarget,
+          changeOrigin: true,
+        },
         [adminProxyPath]: {
           target: proxyTarget,
           changeOrigin: true
