@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { ArrowLeft, Download } from "lucide-react";
 import { questionBankAPI } from "../../api/services";
 import { resolveBackendPath } from "../../api/config";
 import "./PastQuestions.css";
@@ -73,7 +74,7 @@ const PastQuestionDetail = () => {
     <main className="past-question-detail">
       <div className="container">
         <Link to="/past-questions" className="past-question-detail__back">
-          <i className="fa-solid fa-arrow-left" aria-hidden="true" />
+          <ArrowLeft size={17} aria-hidden="true" />
           Back to Past Questions
         </Link>
 
@@ -86,7 +87,7 @@ const PastQuestionDetail = () => {
           <h1>{question.title}</h1>
           {question.description ? <p>{question.description}</p> : null}
           <a className="resource-preview__download" href={downloadUrl}>
-            <i className="fa-solid fa-download" aria-hidden="true" />
+            <Download size={17} aria-hidden="true" />
             Download PDF
           </a>
         </section>

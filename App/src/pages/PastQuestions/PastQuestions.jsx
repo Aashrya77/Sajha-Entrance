@@ -1,5 +1,18 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import {
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  FileImage,
+  FileText,
+  FolderOpen,
+  Layers,
+  List,
+  Search,
+  X,
+} from "lucide-react";
 import { questionBankAPI } from "../../api/services";
 import { resolveBackendPath } from "../../api/config";
 import "./PastQuestions.css";
@@ -82,12 +95,11 @@ const QuestionCard = ({ question, compact = false }) => (
         className="question-card__image"
       />
       <span className="question-card__resource">
-        <i
-          className={`fa-solid ${
-            question.resourceType === "PDF" ? "fa-file-pdf" : "fa-images"
-          }`}
-          aria-hidden="true"
-        ></i>
+        {question.resourceType === "PDF" ? (
+          <FileText size={14} aria-hidden="true" />
+        ) : (
+          <FileImage size={14} aria-hidden="true" />
+        )}
         {question.resourceType}
       </span>
     </div>
@@ -100,7 +112,7 @@ const QuestionCard = ({ question, compact = false }) => (
       <div className="question-card__footer">
         <span className="question-card__type">{question.questionType}</span>
         <span className="question-card__views">
-          <i className="fa-solid fa-eye" aria-hidden="true"></i>
+          <Eye size={14} aria-hidden="true" />
           {formatNumber(question.viewsCount)}
         </span>
       </div>
@@ -216,17 +228,17 @@ const PastQuestions = () => {
             </div>
             <div className="past-questions-page__stats" aria-label="Question bank summary">
               <span>
-                <i className="fa-solid fa-layer-group" aria-hidden="true"></i>
+                <Layers size={20} aria-hidden="true" />
                 <strong>{formatNumber(totalQuestions)}</strong>
                 <small>Resources</small>
               </span>
               <span>
-                <i className="fa-regular fa-file-lines" aria-hidden="true"></i>
+                <FileText size={20} aria-hidden="true" />
                 <strong>{filterOptions.exams.length}</strong>
                 <small>Exams</small>
               </span>
               <span>
-                <i className="fa-solid fa-list" aria-hidden="true"></i>
+                <List size={20} aria-hidden="true" />
                 <strong>{filterOptions.questionTypes.length}</strong>
                 <small>Types</small>
               </span>
@@ -242,7 +254,7 @@ const PastQuestions = () => {
             onSubmit={(event) => event.preventDefault()}
           >
             <label className="past-questions-page__search">
-              <i className="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+              <Search size={18} aria-hidden="true" />
               <input
                 type="search"
                 value={filters.search}
@@ -303,7 +315,7 @@ const PastQuestions = () => {
               className="past-questions-page__clear"
               onClick={clearFilters}
             >
-              <i className="fa-solid fa-xmark" aria-hidden="true"></i>
+              <X size={16} aria-hidden="true" />
               Clear Filters
             </button>
           ) : null}
@@ -313,7 +325,7 @@ const PastQuestions = () => {
           <section className="past-questions-page__popular" aria-label="Popular exam categories">
             <div className="past-questions-page__section-head">
               <h2>
-                <i className="fa-solid fa-layer-group" aria-hidden="true"></i>
+                <Layers size={20} aria-hidden="true" />
                 Popular Exam Categories
               </h2>
             </div>
@@ -340,7 +352,7 @@ const PastQuestions = () => {
         <section className="past-questions-page__results">
           <div className="past-questions-page__section-head past-questions-page__section-head--split">
             <h2>
-              <i className="fa-solid fa-file-lines" aria-hidden="true"></i>
+              <FileText size={20} aria-hidden="true" />
               Question Collections
             </h2>
             <span>{formatNumber(totalQuestions)} found</span>
@@ -348,7 +360,7 @@ const PastQuestions = () => {
 
           {error ? (
             <div className="past-questions-page__state past-questions-page__state--error" role="alert">
-              <i className="fa-solid fa-circle-exclamation" aria-hidden="true"></i>
+              <AlertCircle size={34} aria-hidden="true" />
               <h3>Could not load questions</h3>
               <p>{error}</p>
             </div>
@@ -369,7 +381,7 @@ const PastQuestions = () => {
                     disabled={page <= 1}
                     onClick={() => setPage((currentPage) => Math.max(currentPage - 1, 1))}
                   >
-                    <i className="fa-solid fa-chevron-left" aria-hidden="true"></i>
+                    <ChevronLeft size={17} aria-hidden="true" />
                     Previous
                   </button>
                   <span>
@@ -383,14 +395,14 @@ const PastQuestions = () => {
                     }
                   >
                     Next
-                    <i className="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                    <ChevronRight size={17} aria-hidden="true" />
                   </button>
                 </nav>
               ) : null}
             </>
           ) : (
             <div className="past-questions-page__state">
-              <i className="fa-solid fa-folder-open" aria-hidden="true"></i>
+              <FolderOpen size={38} aria-hidden="true" />
               <h3>No Questions Available</h3>
               <p>Try another exam, type, or year.</p>
             </div>

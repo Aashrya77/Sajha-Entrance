@@ -84,7 +84,8 @@
   line-height: 1.25;
 }
 
-.past-questions-page__stats i {
+.past-questions-page__stats i,
+.past-questions-page__stats svg {
   color: #ff7422;
   font-size: 1.05rem;
   line-height: 1;
@@ -240,7 +241,8 @@
   line-height: 1.25;
 }
 
-.past-questions-page__section-head h2 i {
+.past-questions-page__section-head h2 i,
+.past-questions-page__section-head h2 svg {
   color: #ff7422;
 }
 
@@ -548,7 +550,9 @@
 }
 
 .past-questions-page__state i,
-.resource-preview__state i {
+.past-questions-page__state svg,
+.resource-preview__state i,
+.resource-preview__state svg {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -585,7 +589,9 @@
 }
 
 .past-questions-page__state--error i,
-.resource-preview__state--error i {
+.past-questions-page__state--error svg,
+.resource-preview__state--error i,
+.resource-preview__state--error svg {
   background: #fff1f2;
   color: #ff7422;
 }
@@ -1133,7 +1139,8 @@
     text-align: center;
   }
 
-  .past-questions-page__stats i {
+  .past-questions-page__stats i,
+  .past-questions-page__stats svg {
     font-size: 0.95rem;
   }
 
