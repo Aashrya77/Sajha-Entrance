@@ -1,5 +1,4 @@
 import Course from "../models/Course.js";
-import College from "../models/College.js";
 import Advertisement from "../models/Advertisement.js";
 import Popup from "../models/Popup.js";
 import mongoose from "mongoose";
@@ -104,20 +103,17 @@ const CourseDetail = async (req, res) => {
 
 const GetCourses = async (req, res) => {
   try {
-    const notice = await getPublicNotice();
-    const courses = await Course.find().sort({ title: 1 }).exec();
-    const advertisement = await Advertisement.findOne().sort({ _id: -1 }).exec();
-    const popup = await Popup.findOne({ isActive: true }).exec();
-    const colleges = await College.aggregate([{ $sample: { size: 6 } }]).exec();
+    const courses = await Course.find()
+      .select("title fullForm scholarshipAvailable universityName duration colleges.collegeDetails")
+      .sort({ title: 1 })
+      .lean();
+
+    res.set("Cache-Control", "public, max-age=300, stale-while-revalidate=900");
     
     res.json({
       success: true,
       data: {
         courses,
-        colleges,
-        notice,
-        advertisement,
-        popup
       }
     });
   } catch (error) {

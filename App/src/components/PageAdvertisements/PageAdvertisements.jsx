@@ -47,6 +47,8 @@ const PageAdvertisements = ({ page }) => {
               src={imageUrl}
               alt={advertisement.advertisementName || 'Advertisement'}
               className="page-advertisements__image"
+              loading="lazy"
+              decoding="async"
             />
           );
 

@@ -301,8 +301,13 @@ const resolveMockTestLifecycle = (mockTest, now = new Date()) => {
     }
   }
 
+  // Listing queries intentionally omit the large embedded questions array. The
+  // denormalized count lets lifecycle checks stay cheap without changing their
+  // meaning for older documents that have not been backfilled yet.
+  const hasQuestions =
+    Number(mockTest?.questionCount || 0) > 0 || Boolean(mockTest?.questions?.length);
   const isStudentVisible =
-    Boolean(mockTest?.questions?.length) &&
+    hasQuestions &&
     STUDENT_VISIBLE_STATUSES.has(safeStatus) &&
     studentState !== "archived" &&
     studentState !== "draft";

@@ -1189,6 +1189,7 @@ export default function MockTestWorkspace() {
 
   return (
     <Box
+      className="sajha-admin-custom-page"
       style={{
         maxWidth: "1480px",
         margin: "0 auto",
@@ -1534,6 +1535,7 @@ export default function MockTestWorkspace() {
       </Box>
 
       <Box
+        className="sajha-admin-responsive-sidebar-layout"
         style={{
           display: "grid",
           gridTemplateColumns: "280px minmax(0, 1fr)",
@@ -1744,6 +1746,7 @@ export default function MockTestWorkspace() {
             ) : (
               <>
                 <Box
+                  className="sajha-admin-responsive-split"
                   style={{
                     display: "grid",
                     gridTemplateColumns: "minmax(0, 1.15fr) minmax(320px, 0.85fr)",
@@ -2357,6 +2360,7 @@ export default function MockTestWorkspace() {
               </Box>
 
               <input
+                className="sajha-admin-responsive-control"
                 type="text"
                 placeholder="Search mock tests"
                 value={testSearch}

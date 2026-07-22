@@ -891,6 +891,27 @@ img[src*="/media/"] {
   display: block;
 }
 
+/* Custom admin actions use inline layout styles, so these named hooks provide
+   one consistent responsive contract across every workspace/tab. */
+.sajha-admin-custom-page {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.sajha-admin-custom-page > *,
+.sajha-admin-responsive-split > *,
+.sajha-admin-responsive-sidebar-layout > *,
+.sajha-admin-responsive-fields > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.sajha-admin-responsive-control {
+  max-width: 100% !important;
+}
+
 [data-css="logged-in"] {
   min-width: 0;
   max-width: 100%;
@@ -1037,6 +1058,17 @@ img[src*="/media/"] {
 }
 
 @media (max-width: 991px) {
+  .sajha-admin-responsive-split,
+  .sajha-admin-responsive-sidebar-layout {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .sajha-admin-responsive-sidebar-layout > :first-child {
+    position: static !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
   [data-css="sidebar"] {
     width: min(88vw, 320px) !important;
     box-shadow: 12px 0 28px rgba(15, 23, 42, 0.08);
@@ -1098,6 +1130,28 @@ img[src*="/media/"] {
 }
 
 @media (max-width: 640px) {
+  .sajha-admin-custom-page {
+    padding: 18px 14px 28px !important;
+    gap: 16px !important;
+  }
+
+  .sajha-admin-custom-page > * {
+    padding: 18px !important;
+  }
+
+  .sajha-admin-responsive-fields {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .sajha-admin-responsive-control {
+    width: 100% !important;
+  }
+
+  .sajha-admin-custom-page .adminjs_ButtonGroup,
+  .sajha-admin-custom-page [style*="display: flex"] {
+    max-width: 100%;
+  }
+
   .adminjs_ActionHeader .adminjs_ButtonGroup {
     justify-content: flex-start;
   }
@@ -1196,6 +1250,15 @@ img[src*="/media/"] {
 }
 
 @media (max-width: 480px) {
+  .sajha-admin-custom-page {
+    padding: 14px 10px 22px !important;
+  }
+
+  .sajha-admin-custom-page > * {
+    padding: 16px !important;
+    border-radius: 16px !important;
+  }
+
   .adminjs_Table table {
     min-width: 560px;
   }

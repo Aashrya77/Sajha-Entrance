@@ -623,6 +623,7 @@ export default function MockQuestionStudio(props) {
 
   return (
     <Box
+      className="sajha-admin-custom-page"
       style={{
         maxWidth: "1460px",
         margin: "0 auto",
@@ -734,6 +735,7 @@ export default function MockQuestionStudio(props) {
       </Box>
 
       <Box
+        className="sajha-admin-responsive-split"
         style={{
           display: "grid",
           gridTemplateColumns: "minmax(0, 1.45fr) minmax(340px, 0.95fr)",

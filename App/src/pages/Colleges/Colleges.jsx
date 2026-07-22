@@ -10,14 +10,13 @@ import {
   SlidersHorizontal,
   X,
 } from 'lucide-react';
-import { collegeAPI, courseAPI } from '../../api/services';
+import { collegeAPI } from '../../api/services';
 import { getImageFieldUrl } from '../../utils/imageHelper';
 import Loader from '../../components/Loader/Loader';
 import PageAdvertisements from '../../components/PageAdvertisements/PageAdvertisements';
 
 const Colleges = () => {
   const [colleges, setColleges] = useState([]);
-  const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [nextPage, setNextPage] = useState(0);
@@ -70,20 +69,13 @@ const Colleges = () => {
         setLoading(true);
       }
 
-      const [collegesRes, coursesRes] = await Promise.all([
-        collegeAPI.getAllColleges(page, search, location),
-        courseAPI.getAllCourses()
-      ]);
+      const collegesRes = await collegeAPI.getAllColleges(page, search, location);
       
       if (collegesRes.data.success) {
         const nextColleges = collegesRes.data.data.colleges || [];
         setColleges((current) => (append ? [...current, ...nextColleges] : nextColleges));
         setNextPage(collegesRes.data.data.nextPage || 0);
         setNoResult(collegesRes.data.data.noResult || false);
-      }
-      
-      if (coursesRes.data.success) {
-        setCourses(coursesRes.data.data.courses || []);
       }
       
       setLoading(false);
@@ -268,6 +260,8 @@ const Colleges = () => {
                               src={getImageFieldUrl(college, 'collegeLogo', 'colleges')}
                               alt="college-banner"
                               className="college-banner-image"
+                              loading="lazy"
+                              decoding="async"
                             />
                           ) : (
                             <div className="college-banner-placeholder">

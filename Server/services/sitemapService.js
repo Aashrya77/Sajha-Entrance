@@ -121,7 +121,11 @@ export const DYNAMIC_SITEMAP_SOURCES = [
   {
     name: "past questions",
     model: QuestionBankModel,
-    filter: { isPublished: true },
+    filter: {
+      isPublished: true,
+      resourceType: "PDF",
+      pdfUrl: { $nin: ["", null] },
+    },
     projection: "slug createdAt",
     toEntry: (record) =>
       createSitemapEntry(

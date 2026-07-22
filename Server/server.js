@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
+import compression from "compression";
 import fs from "fs";
 import path from "path";
 
@@ -91,6 +92,9 @@ app.use(
 );
 
 app.use(cookieParser());
+// Mock-test exams and other data-heavy JSON responses contain highly
+// compressible text. Compress them before they cross production networks.
+app.use(compression());
 
 // ================= STATIC FILES =================
 // Register crawl-control endpoints before static files, AdminJS, API routes,

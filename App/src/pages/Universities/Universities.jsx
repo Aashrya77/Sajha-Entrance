@@ -171,6 +171,8 @@ const Universities = () => {
                             <img
                               src={getImageFieldUrl(uni, 'universityLogo', 'universities')}
                               alt={uni.universityName}
+                              loading="lazy"
+                              decoding="async"
                               style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain', padding: '16px' }}
                             />
                           </div>

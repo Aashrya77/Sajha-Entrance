@@ -90,6 +90,17 @@ test("3. student cannot start after availability end", () => {
   assert.equal(lifecycle.hasEnded, true);
 });
 
+test("list projections can determine visibility without loading embedded questions", () => {
+  const projectedTest = availabilityTest({ questions: undefined, questionCount: 50 });
+  const lifecycle = resolveMockTestLifecycle(
+    projectedTest,
+    new Date("2026-07-13T09:00:00.000Z")
+  );
+
+  assert.equal(lifecycle.isStudentVisible, true);
+  assert.equal(lifecycle.isAccessible, true);
+});
+
 test("4. a 9:55 start creates an 11:55 deadline for a two-hour test", () => {
   const startedAt = new Date("2026-07-13T09:55:00.000Z");
   assert.equal(calculateAttemptDeadline(startedAt, 7200).toISOString(), "2026-07-13T11:55:00.000Z");

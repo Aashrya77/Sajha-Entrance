@@ -264,10 +264,6 @@ const buildPublicPreviewUrl = (question, resourceKind, index = null) => {
 };
 
 const buildPublicDownloadUrl = (question, resourceKind, index = null) => {
-  if (!question.allowDownload) {
-    return "";
-  }
-
   const encodedSlug = encodeURIComponent(question.slug);
   if (resourceKind === "pdf") {
     return `/api/question-bank/${encodedSlug}/download/pdf`;
@@ -302,7 +298,7 @@ const serializeQuestionBank = (question = {}, { includeResources = true } = {}) 
     resourceType: plainQuestion.resourceType,
     pdfUrl: includeResources && hasPdf ? buildPublicPreviewUrl(plainQuestion, "pdf") : "",
     imageUrls,
-    allowDownload: Boolean(plainQuestion.allowDownload),
+    allowDownload: hasPdf,
     downloadUrl:
       includeResources && hasPdf
         ? buildPublicDownloadUrl(plainQuestion, "pdf")
@@ -323,7 +319,9 @@ const serializeQuestionBank = (question = {}, { includeResources = true } = {}) 
 };
 
 const buildQuestionBankQuery = (queryParams = {}, includeDrafts = false) => {
-  const query = includeDrafts ? {} : { isPublished: true };
+  const query = includeDrafts
+    ? {}
+    : { isPublished: true, resourceType: "PDF", pdfUrl: { $nin: ["", null] } };
   const search = String(queryParams.search || "").trim();
   const exam = String(queryParams.exam || "").trim();
   const questionType = String(queryParams.type || queryParams.questionType || "").trim();
@@ -354,7 +352,11 @@ const buildQuestionBankQuery = (queryParams = {}, includeDrafts = false) => {
 };
 
 const getQuestionBankFiltersPayload = async () => {
-  const years = await QuestionBankModel.distinct("year", { isPublished: true });
+  const years = await QuestionBankModel.distinct("year", {
+    isPublished: true,
+    resourceType: "PDF",
+    pdfUrl: { $nin: ["", null] },
+  });
 
   return {
     exams: QUESTION_BANK_EXAMS,
@@ -369,7 +371,13 @@ const getQuestionBankFiltersPayload = async () => {
 
 const getPopularExamCategories = async () =>
   QuestionBankModel.aggregate([
-    { $match: { isPublished: true } },
+    {
+      $match: {
+        isPublished: true,
+        resourceType: "PDF",
+        pdfUrl: { $nin: ["", null] },
+      },
+    },
     {
       $group: {
         _id: "$exam",
@@ -435,7 +443,12 @@ const GetQuestionBankDetail = async (req, res) => {
       return res.status(404).json({ success: false, error: "Question not found." });
     }
 
-    const question = await QuestionBankModel.findOne({ slug, isPublished: true })
+    const question = await QuestionBankModel.findOne({
+      slug,
+      isPublished: true,
+      resourceType: "PDF",
+      pdfUrl: { $nin: ["", null] },
+    })
       .lean()
       .exec();
 
@@ -443,68 +456,11 @@ const GetQuestionBankDetail = async (req, res) => {
       return res.status(404).json({ success: false, error: "Question not found." });
     }
 
-    const viewer = resolveQuestionViewer(req, res);
-    let viewsCount = Number(question.viewsCount || 0);
-
-    try {
-      const viewedAt = new Date();
-      const viewResult = await QuestionBankViewModel.updateOne(
-        {
-          question: question._id,
-          viewerKey: viewer.viewerKey,
-        },
-        {
-          $set: {
-            lastViewedAt: viewedAt,
-          },
-          $setOnInsert: {
-            question: question._id,
-            student: viewer.student,
-            viewerKey: viewer.viewerKey,
-            viewerType: viewer.viewerType,
-            ipHash: hashValue(req.ip || req.headers["x-forwarded-for"] || ""),
-            userAgent: String(req.get("user-agent") || "").slice(0, 500),
-          },
-        },
-        { upsert: true, setDefaultsOnInsert: true }
-      );
-
-      if (Number(viewResult?.upsertedCount || 0) > 0) {
-        const updatedQuestion = await QuestionBankModel.findByIdAndUpdate(
-          question._id,
-          { $inc: { viewsCount: 1 } },
-          { new: true }
-        )
-          .select("viewsCount")
-          .lean();
-
-        viewsCount = Number(updatedQuestion?.viewsCount || viewsCount + 1);
-      }
-    } catch (viewError) {
-      if (viewError?.code === 11000) {
-        await QuestionBankViewModel.updateOne(
-          { question: question._id, viewerKey: viewer.viewerKey },
-          { $set: { lastViewedAt: new Date() } }
-        );
-      } else {
-        throw viewError;
-      }
-    }
-
-    const relatedQuestions = await QuestionBankModel.find({
-      _id: { $ne: question._id },
-      isPublished: true,
-      exam: question.exam,
-    })
-      .sort({ displayOrder: 1, viewsCount: -1, createdAt: -1 })
-      .limit(6)
-      .lean();
-
     return res.json({
       success: true,
       data: {
-        question: serializeQuestionBank({ ...question, viewsCount }),
-        relatedQuestions: relatedQuestions.map((entry) => serializeQuestionBank(entry)),
+        question: serializeQuestionBank(question),
+        relatedQuestions: [],
       },
     });
   } catch (error) {
@@ -610,10 +566,6 @@ const serveQuestionResource = async (req, res, { resourceKind, download = false 
     const question = await findPublishedQuestionBySlug(req.params.slug);
     if (!question) {
       return res.status(404).json({ success: false, error: "Question not found." });
-    }
-
-    if (download && !question.allowDownload) {
-      return res.status(403).json({ success: false, error: "Download is disabled." });
     }
 
     if (resourceKind === "pdf") {

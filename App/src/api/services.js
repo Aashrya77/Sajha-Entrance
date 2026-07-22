@@ -61,11 +61,12 @@ export const courseAPI = {
 
 // College API
 export const collegeAPI = {
-  getAllColleges: (page = 1, search = '', location = '') => {
+  getAllColleges: (page = 1, search = '', location = '', includeContent = false) => {
     const params = new URLSearchParams();
     params.append('page', page);
     if (search) params.append('searchCollege', search);
     if (location) params.append('location', location);
+    if (includeContent) params.append('includeContent', 'true');
     return API.get(`/colleges?${params.toString()}`);
   },
   getCollegeById: (id) => API.get(`/college/${id}`),
@@ -73,11 +74,12 @@ export const collegeAPI = {
 
 // University API
 export const universityAPI = {
-  getAllUniversities: (page = 1, search = '', location = '') => {
+  getAllUniversities: (page = 1, search = '', location = '', includeContent = false) => {
     const params = new URLSearchParams();
     params.append('page', page);
     if (search) params.append('searchUniversity', search);
     if (location) params.append('location', location);
+    if (includeContent) params.append('includeContent', 'true');
     return API.get(`/universities?${params.toString()}`);
   },
   getUniversityById: (id) => API.get(`/university/${id}`),
@@ -200,10 +202,7 @@ export const questionBankAPI = {
     if (params.limit) query.append('limit', params.limit);
     return API.get(`/question-bank?${query.toString()}`);
   },
-  getQuestionBySlug: (slug) =>
-    API.get(`/question-bank/${slug}`, {
-      headers: getQuestionViewerHeaders(),
-    }),
+  getQuestionBySlug: (slug) => API.get(`/question-bank/${encodeURIComponent(slug)}`),
 };
 
 // Book Payment API

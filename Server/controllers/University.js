@@ -54,80 +54,46 @@ const UniversityDetail = async (req, res) => {
 
 const GetUniversities = async (req, res) => {
   try {
-    const universitiesLength = (await University.find().exec()).length;
     const limit = 9;
-    const page = parseInt(req.query.page) || 1;
+    const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
     const startIndex = (page - 1) * limit;
-    const endIndex = page * limit;
-    let previousPage = 0;
-    let nextPage = 0;
-
-    if (endIndex < universitiesLength) {
-      nextPage = page + 1;
+    const escapeRegex = (value) => String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const search = String(req.query.searchUniversity || "").trim().slice(0, 100);
+    const location = String(req.query.location || "").trim().slice(0, 100);
+    const filter = {
+      ...(search ? { universityName: { $regex: escapeRegex(search), $options: "i" } } : {}),
+      ...(location ? { universityAddress: { $regex: escapeRegex(location), $options: "i" } } : {}),
+    };
+    const includeContent = req.query.includeContent === "true";
+    const projection = `universityName universityAddress type establishedYear universityLogo coursesOffered affiliatedColleges${
+      includeContent ? " admissionNotice admissionCloseDate scholarshipInfo createdAt updatedAt" : ""
+    }`;
+    let universityQuery = University.find(filter)
+      .select(projection)
+      .sort({ universityName: 1 })
+      .skip(startIndex)
+      .limit(limit);
+    if (includeContent) {
+      universityQuery = universityQuery.populate("coursesOffered", "title fullForm");
     }
+    const [universitiesLength, universities] = await Promise.all([
+      University.countDocuments(filter),
+      universityQuery.lean(),
+    ]);
+    const nextPage = startIndex + universities.length < universitiesLength ? page + 1 : 0;
+    const previousPage = page > 1 ? page - 1 : 0;
+    const noResult = universities.length === 0;
 
-    if (startIndex > 0) {
-      previousPage = page - 1;
-    }
-
-    const search = req.query.searchUniversity;
-    const location = req.query.location;
-
-    const notice = await getPublicNotice();
-    const advertisement = await Advertisement.findOne().sort({ _id: -1 }).exec();
-    const popup = await Popup.findOne({ isActive: true }).exec();
-
-    let universities = [];
-    let noResult = false;
-
-    if (!search && !location) {
-      universities = await University.find()
-        .skip(startIndex)
-        .limit(limit)
-        .populate("coursesOffered")
-        .populate("affiliatedColleges")
-        .exec();
-    } else if (location && search) {
-      universities = await University.find({
-        universityName: { $regex: search, $options: "i" },
-        universityAddress: { $regex: location, $options: "i" },
-      })
-        .populate("coursesOffered")
-        .populate("affiliatedColleges")
-        .exec();
-      nextPage = 0;
-      noResult = universities.length === 0;
-    } else if (search) {
-      universities = await University.find({
-        universityName: { $regex: search, $options: "i" },
-      })
-        .populate("coursesOffered")
-        .populate("affiliatedColleges")
-        .exec();
-      nextPage = 0;
-      noResult = universities.length === 0;
-    } else if (location) {
-      universities = await University.find({
-        universityAddress: { $regex: location, $options: "i" },
-      })
-        .populate("coursesOffered")
-        .populate("affiliatedColleges")
-        .exec();
-      nextPage = 0;
-      noResult = universities.length === 0;
-    }
+    res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
 
     res.json({
       success: true,
       data: {
         universities: normalizeCollectionMedia(universities, mediaFieldMaps.university),
-        notice,
-        advertisement: normalizeMediaFields(advertisement, mediaFieldMaps.advertisement),
         previousPage,
         nextPage,
         search,
         location,
-        popup: normalizeMediaFields(popup, mediaFieldMaps.popup),
         noResult,
       }
     });

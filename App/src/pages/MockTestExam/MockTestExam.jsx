@@ -189,6 +189,18 @@ const MockTestExam = () => {
     if (starting || !testData) return;
     setStarting(true);
     setPageError("");
+
+    let enteredFullscreen = false;
+
+    if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+      try {
+        await document.documentElement.requestFullscreen();
+        enteredFullscreen = true;
+      } catch {
+        // Fullscreen can be denied by the browser or the student. The test can still start.
+      }
+    }
+
     try {
       const response = await mockTestAPI.startMockTest(id);
       if (response.data.success) {
@@ -216,8 +228,13 @@ const MockTestExam = () => {
         }
         autoSubmitTriggeredRef.current = false;
         setStarted(true);
+      } else if (enteredFullscreen && document.fullscreenElement && document.exitFullscreen) {
+        await document.exitFullscreen().catch(() => undefined);
       }
     } catch (error) {
+      if (enteredFullscreen && document.fullscreenElement && document.exitFullscreen) {
+        await document.exitFullscreen().catch(() => undefined);
+      }
       setPageError(
         error.response?.data?.error || error.response?.data?.message || "Unable to start this mock test."
       );
@@ -528,7 +545,7 @@ const MockTestExam = () => {
 
             <div className="mock-test-exam__intro-actions">
               <p className="mock-test-exam__intro-action-note">
-                The timer begins right after you start the test.
+                The timer begins right after you start the test, and your browser will enter fullscreen.
               </p>
               <button
                 type="button"

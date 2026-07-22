@@ -5,6 +5,23 @@
   color: #111827;
 }
 
+.past-question-detail__pdf-frame {
+  display: block;
+  width: 100%;
+  height: min(82vh, 1000px);
+  min-height: 620px;
+  border: 1px solid #d9e1ea;
+  border-radius: 12px;
+  background: #f5f7fa;
+}
+
+@media (max-width: 640px) {
+  .past-question-detail__pdf-frame {
+    height: 72vh;
+    min-height: 480px;
+  }
+}
+
 .past-questions-page {
   padding: 118px 0 64px;
 }

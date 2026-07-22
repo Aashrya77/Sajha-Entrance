@@ -30,7 +30,7 @@ const formatPercentage = (value) => {
   return `${Number.isInteger(percentage) ? percentage : percentage.toFixed(1)}%`;
 };
 
-const MockTestResults = () => {
+const MockTestResults = ({ embedded = false, onBrowseTests }) => {
   const [attempts, setAttempts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -65,11 +65,27 @@ const MockTestResults = () => {
   }, [attempts]);
 
   if (loading) {
-    return <div className="container mt-5 pt-5 d-flex justify-content-center"><Loader /></div>;
+    return (
+      <div className={embedded ? 'test-results-page__embedded-loader' : 'container mt-5 pt-5 d-flex justify-content-center'}>
+        <Loader />
+      </div>
+    );
   }
 
+  const browseTestsAction = (label, showArrow = false) =>
+    embedded ? (
+      <button type="button" className="test-results-primary-action" onClick={onBrowseTests}>
+        {label} {showArrow ? <ArrowRight size={17} /> : <Plus size={18} aria-hidden="true" />}
+      </button>
+    ) : (
+      <Link to="/mocktests" className="test-results-primary-action">
+        {showArrow ? null : <Plus size={18} aria-hidden="true" />}
+        {label} {showArrow ? <ArrowRight size={17} /> : null}
+      </Link>
+    );
+
   return (
-    <main className="test-results-page">
+    <main className={`test-results-page${embedded ? ' test-results-page--embedded' : ''}`}>
       <div className="test-results-page__glow" aria-hidden="true" />
       <div className="container test-results-page__container">
         <header className="test-results-header">
@@ -83,10 +99,7 @@ const MockTestResults = () => {
               Review your recent attempts and track your preparation progress.
             </p>
           </div>
-          <Link to="/mocktests" className="test-results-primary-action">
-            <Plus size={18} aria-hidden="true" />
-            Take New Test
-          </Link>
+          {browseTestsAction('Take New Test')}
         </header>
 
         {attempts.length === 0 ? (
@@ -94,9 +107,7 @@ const MockTestResults = () => {
             <span className="test-results-empty__icon"><ClipboardList size={34} /></span>
             <h2>No test results yet</h2>
             <p>Complete your first mock test to start tracking your performance.</p>
-            <Link to="/mocktests" className="test-results-primary-action">
-              Browse Mock Tests <ArrowRight size={17} />
-            </Link>
+            {browseTestsAction('Browse Mock Tests', true)}
           </section>
         ) : (
           <>

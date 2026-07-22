@@ -118,6 +118,7 @@ export const ADMIN_PERMISSION_RESOURCES = [
   createPermissionResource("dashboard", "Dashboard", ["view"]),
   createPermissionResource("admin_users", "Admin Users"),
   createPermissionResource("admin_notifications", "Admin Notifications", ["view", "edit"]),
+  createPermissionResource("seo_hashtags", "SEO Hashtags"),
   createPermissionResource("blogs", "Blogs"),
   createPermissionResource("notices", "Notices"),
   createPermissionResource("advertisements", "Advertisements"),
@@ -180,6 +181,9 @@ export const ADMIN_RESOURCE_ACCESS = {
     customActionPermissions: {
       markAsRead: "edit",
     },
+  },
+  SeoHashtag: {
+    permissionResource: "seo_hashtags",
   },
   Blog: {
     permissionResource: "blogs",

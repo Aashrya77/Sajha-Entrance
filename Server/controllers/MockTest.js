@@ -11,7 +11,6 @@ import {
   MockTestAttemptError,
   ensureAttemptTiming,
   finalizeExpiredAttempt,
-  finalizeExpiredMockTestAttempts,
   finalizeStartedAttempt,
   getConfiguredDurationSeconds,
   normalizeAnswerSelections,
@@ -250,6 +249,44 @@ const completedAttemptStatusFilter = {
   ],
 };
 
+// Keep list-card reads independent of the embedded question snapshots. A
+// single test can contain hundreds of rich-text questions and image URLs.
+const MOCK_TEST_LIST_FIELDS = [
+  "title",
+  "slug",
+  "description",
+  "instructions",
+  "admissionTest",
+  "course",
+  "courseName",
+  "subjectNames",
+  "totalMarks",
+  "passMarks",
+  "duration",
+  "allowRetake",
+  "maxAttempts",
+  "questionCount",
+  "status",
+  "isActive",
+  "manualStatusOverride",
+  "startAt",
+  "endAt",
+  "publishedAt",
+  "examDate",
+  "createdAt",
+].join(" ");
+
+const MOCK_TEST_LIST_ATTEMPT_FIELDS = [
+  "mockTest",
+  "status",
+  "attemptNumber",
+  "startedAt",
+  "deadlineAt",
+  "completedAt",
+  "totalScore",
+  "percentage",
+].join(" ");
+
 const buildAttemptLimitState = ({ mockTest, lifecycle, attempts = [] }) => {
   const maxAttempts = normalizeMaxAttempts(mockTest);
   const attemptCount = attempts.length;
@@ -455,6 +492,7 @@ const GetMockTests = async (req, res) => {
         { status: { $exists: false }, isActive: true },
       ],
     })
+      .select(MOCK_TEST_LIST_FIELDS)
       .sort({ startAt: 1, createdAt: -1 })
       .lean()
       .exec();
@@ -476,19 +514,18 @@ const GetMockTests = async (req, res) => {
       );
     const studentId = req.student?.id;
     const visibleTestIds = visibleEntries.map(({ mockTest }) => mockTest._id);
-    if (studentId) {
-      await finalizeExpiredMockTestAttempts({ studentId, limit: 0 });
-    }
+    const serverNow = new Date();
     const attempts = studentId
       ? await MockTestAttemptModel.find({
           student: studentId,
           mockTest: { $in: visibleTestIds },
           $or: [
-            { status: "started" },
+            { status: "started", deadlineAt: { $gt: serverNow } },
             { status: { $in: ["submitted", "completed"] } },
             { status: { $exists: false }, completedAt: { $ne: null } },
           ],
         })
+          .select(MOCK_TEST_LIST_ATTEMPT_FIELDS)
           .sort({ completedAt: -1 })
           .lean()
           .exec()
@@ -802,6 +839,7 @@ const GetMyAttempts = async (req, res) => {
       student: studentId,
       ...completedAttemptStatusFilter,
     })
+      .select("-answers")
       .populate("mockTest", "title courseName course totalMarks duration status startAt endAt")
       .sort({ completedAt: -1 })
       .lean()

@@ -273,8 +273,8 @@ const Admission = () => {
 
       try {
         const [collegesResult, universitiesResult] = await Promise.allSettled([
-          fetchAllPages((page) => collegeAPI.getAllColleges(page, '', ''), 'colleges'),
-          fetchAllPages((page) => universityAPI.getAllUniversities(page, '', ''), 'universities'),
+          fetchAllPages((page) => collegeAPI.getAllColleges(page, '', '', true), 'colleges'),
+          fetchAllPages((page) => universityAPI.getAllUniversities(page, '', '', true), 'universities'),
         ]);
 
         if (ignore) {

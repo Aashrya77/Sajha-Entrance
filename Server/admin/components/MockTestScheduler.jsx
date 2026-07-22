@@ -402,6 +402,7 @@ export default function MockTestScheduler() {
 
   return (
     <Box
+      className="sajha-admin-custom-page"
       style={{
         maxWidth: "1460px",
         margin: "0 auto",
@@ -468,6 +469,7 @@ export default function MockTestScheduler() {
       </Box>
 
       <Box
+        className="sajha-admin-responsive-split"
         style={{
           display: "grid",
           gridTemplateColumns: "minmax(0, 1.2fr) minmax(340px, 0.8fr)",
@@ -518,6 +520,7 @@ export default function MockTestScheduler() {
             <Box>
               <Label>Mock test title</Label>
               <input
+                className="sajha-admin-responsive-control"
                 type="text"
                 value={form.title}
                 onChange={(event) => updateForm({ title: event.target.value })}
@@ -830,8 +833,9 @@ export default function MockTestScheduler() {
             </Text>
           </Box>
 
-          <input
-            type="text"
+              <input
+                className="sajha-admin-responsive-control"
+                type="text"
             placeholder="Search mock tests"
             value={testSearch}
             onChange={(event) => setTestSearch(event.target.value)}

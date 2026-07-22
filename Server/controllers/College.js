@@ -1,5 +1,4 @@
 import College from "../models/College.js";
-import Course from "../models/Course.js";
 import Advertisement from "../models/Advertisement.js";
 import Popup from "../models/Popup.js";
 import mongoose from "mongoose";
@@ -47,78 +46,46 @@ const CollegeDetail = async (req, res) => {
 
 const GetColleges = async (req, res) => {
   try {
-    const collegesLength = (await College.find().exec()).length;
     const limit = 10;
-    const page = parseInt(req.query.page) || 1;
+    const page = Math.max(Number.parseInt(req.query.page, 10) || 1, 1);
     const startIndex = (page - 1) * limit;
-    const endIndex = page * limit;
-    let previousPage = 0;
-    let nextPage = 0;
-
-    if (endIndex < collegesLength) {
-      nextPage = page + 1;
+    const escapeRegex = (value) => String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const search = String(req.query.searchCollege || "").trim().slice(0, 100);
+    const location = String(req.query.location || "").trim().slice(0, 100);
+    const filter = {
+      ...(search ? { collegeName: { $regex: escapeRegex(search), $options: "i" } } : {}),
+      ...(location ? { collegeAddress: { $regex: escapeRegex(location), $options: "i" } } : {}),
+    };
+    const includeContent = req.query.includeContent === "true";
+    const projection = `collegeName collegeAddress universityName collegeLogo collegeLogoMimeType collegeLogoFilename coursesOffered${
+      includeContent ? " admissionNotice admissionCloseDate scholarshipInfo createdAt updatedAt" : ""
+    }`;
+    let collegeQuery = College.find(filter)
+      .select(projection)
+      .sort({ collegeName: 1 })
+      .skip(startIndex)
+      .limit(limit);
+    if (includeContent) {
+      collegeQuery = collegeQuery.populate("coursesOffered", "title fullForm");
     }
+    const [collegesLength, colleges] = await Promise.all([
+      College.countDocuments(filter),
+      collegeQuery.lean(),
+    ]);
+    const nextPage = startIndex + colleges.length < collegesLength ? page + 1 : 0;
+    const previousPage = page > 1 ? page - 1 : 0;
+    const noResult = colleges.length === 0;
 
-    if (startIndex > 0) {
-      previousPage = page - 1;
-    }
-
-    const search = req.query.searchCollege;
-    const location = req.query.location;
-
-    const courses = await Course.find().limit(6).exec();
-    const notice = await getPublicNotice();
-    const advertisement = await Advertisement.findOne().sort({ _id: -1 }).exec();
-    const popup = await Popup.findOne({ isActive: true }).exec();
-
-    let colleges = [];
-    let noResult = false;
-
-    if (!search && !location) {
-      colleges = await College.find()
-        .skip(startIndex)
-        .limit(limit)
-        .populate("coursesOffered")
-        .exec();
-    } else if (location && search) {
-      colleges = await College.find({
-        collegeName: { $regex: search, $options: "i" },
-        collegeAddress: { $regex: location, $options: "i" },
-      })
-        .populate("coursesOffered")
-        .exec();
-      nextPage = 0;
-      noResult = colleges.length === 0;
-    } else if (search) {
-      colleges = await College.find({
-        collegeName: { $regex: search, $options: "i" },
-      })
-        .populate("coursesOffered")
-        .exec();
-      nextPage = 0;
-      noResult = colleges.length === 0;
-    } else if (location) {
-      colleges = await College.find({
-        collegeAddress: { $regex: location, $options: "i" },
-      })
-        .populate("coursesOffered")
-        .exec();
-      nextPage = 0;
-      noResult = colleges.length === 0;
-    }
+    res.set("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
 
     res.json({
       success: true,
       data: {
         colleges: normalizeCollectionMedia(colleges, mediaFieldMaps.college),
-        notice,
-        advertisement: normalizeMediaFields(advertisement, mediaFieldMaps.advertisement),
-        courses,
         previousPage,
         nextPage,
         search,
         location,
-        popup: normalizeMediaFields(popup, mediaFieldMaps.popup),
         noResult,
       }
     });

@@ -7,6 +7,7 @@ import {
   SITEMAP_ORIGIN,
 } from "../services/sitemapService.js";
 import { createLogger } from "../utils/logger.js";
+import SeoHashtag from "../models/SeoHashtag.js";
 
 export const ROBOTS_TXT = [
   "User-agent: *",
@@ -24,6 +25,23 @@ export const createSeoRouter = ({
   routeLogger = createLogger("seo"),
 } = {}) => {
   const router = express.Router();
+
+  router.get("/api/seo/hashtags", async (_req, res) => {
+    try {
+      const records = await SeoHashtag.find({ isActive: true })
+        .sort({ hashtag: 1 })
+        .select({ hashtag: 1, _id: 0 })
+        .lean();
+      const hashtags = records.map((record) => record.hashtag);
+
+      return res
+        .set("Cache-Control", "public, max-age=300, stale-if-error=86400")
+        .json({ success: true, hashtags });
+    } catch (error) {
+      routeLogger.error("SEO hashtag loading failed:", error.message);
+      return res.status(503).json({ success: false, hashtags: [] });
+    }
+  });
 
   router.get("/robots.txt", (_req, res) => {
     res

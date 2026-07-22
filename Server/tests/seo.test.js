@@ -86,7 +86,11 @@ test("published past-question sitemap source excludes drafts", () => {
     (source) => source.name === "past questions"
   );
 
-  assert.deepEqual(pastQuestionSource?.filter, { isPublished: true });
+  assert.deepEqual(pastQuestionSource?.filter, {
+    isPublished: true,
+    resourceType: "PDF",
+    pdfUrl: { $nin: ["", null] },
+  });
   assert.equal(
     pastQuestionSource.toEntry({
       slug: "public-question",

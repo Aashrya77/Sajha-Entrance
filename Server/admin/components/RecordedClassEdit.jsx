@@ -170,7 +170,10 @@ const RecordedClassEditComponent = ({ property, record, onChange }) => {
           </Text>
         </Box>
 
-        <Box style={{ display: "grid", gap: "12px", gridTemplateColumns: "repeat(2, 1fr)" }}>
+        <Box
+          className="sajha-admin-responsive-fields"
+          style={{ display: "grid", gap: "12px", gridTemplateColumns: "repeat(2, 1fr)" }}
+        >
           <Box>
             <label
               htmlFor="recorded-class-video-id"

@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { mockTestAPI } from "../../api/services";
 import Loader from "../../components/Loader/Loader";
 import PageAdvertisements from "../../components/PageAdvertisements/PageAdvertisements";
+import MockTestResults from "../MockTestResults/MockTestResults";
 import "./MockTests.css";
 
 const formatDateTime = (value) =>
@@ -183,6 +184,7 @@ const buildMockTestActions = (test, isAuthenticated) => {
 };
 
 const MockTests = ({ isAuthenticated }) => {
+  const navigate = useNavigate();
   const [mockTests, setMockTests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -257,10 +259,11 @@ const MockTests = ({ isAuthenticated }) => {
               key={tab.key}
               type="button"
               onClick={() => {
-                setActiveTab(tab.key);
-                if (tab.key === "results") {
-                  window.location.href = isAuthenticated ? "/mocktest-results" : "/student/login";
+                if (tab.key === "results" && !isAuthenticated) {
+                  navigate("/student/login");
+                  return;
                 }
+                setActiveTab(tab.key);
               }}
               className={`mock-tests-page__tab ${
                 activeTab === tab.key ? "mock-tests-page__tab--active" : ""
@@ -412,7 +415,10 @@ const MockTests = ({ isAuthenticated }) => {
             )}
           </>
         )}
-        <PageAdvertisements page="mock-tests" />
+        {activeTab === "results" && isAuthenticated ? (
+          <MockTestResults embedded onBrowseTests={() => setActiveTab("mocktest")} />
+        ) : null}
+        {activeTab === "mocktest" ? <PageAdvertisements page="mock-tests" /> : null}
       </div>
     </div>
   );

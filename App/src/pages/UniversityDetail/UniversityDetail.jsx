@@ -4,6 +4,13 @@ import { universityAPI } from '../../api/services';
 import { getImageFieldUrl, getImageList } from '../../utils/imageHelper';
 import Loader from '../../components/Loader/Loader';
 import InquiryButton from '../../components/InquiryForm/InquiryButton';
+import {
+  ArrowLeft, ArrowRight, BadgeCheck, Banknote, BookOpen, Building2, CalendarDays,
+  Check, Clock, FileText, Globe, GraduationCap, Image,
+  Info, Mail, MapPin, Phone, School, Star, Tag, User,
+} from 'lucide-react';
+import '../CollegeDetail/CollegeDetail.css';
+import './UniversityDetail.css';
 
 const UniversityDetail = () => {
   const { id } = useParams();
@@ -82,10 +89,10 @@ const UniversityDetail = () => {
   const galleryImages = getImageList(university, 'gallery', 'universities');
 
   return (
-    <div className="college-profile">
-      <div className="container-fluid pt-3 ps-4 position-absolute" style={{ zIndex: 10, top: '120px' }}>
+    <div className="college-profile university-detail-page">
+      <div className="university-back-link-wrap container-fluid">
         <Link to="/universities" className="cd-breadcrumb-link" style={{ background: 'rgba(0,0,0,0.5)', padding: '8px 15px', borderRadius: '20px', backdropFilter: 'blur(5px)' }}>
-          <i className="fa-solid fa-arrow-left me-2"></i>All Universities
+          <ArrowLeft size={16} aria-hidden="true" /> All Universities
         </Link>
       </div>
       {/* Cover Image Section */}
@@ -104,32 +111,33 @@ const UniversityDetail = () => {
                 src={logoImageUrl}
                 alt={`${university.universityName} logo`}
                 className="college-logo-image"
+                decoding="async"
               />
             ) : (
               <div className="college-logo-placeholder">
-                <i className="fa-solid fa-building-columns college-placeholder-icon"></i>
+                <Building2 className="college-placeholder-icon" aria-hidden="true" />
               </div>
             )}
           </div>
           <div className="college-info-header">
             <div className="college-name-row">
               <h1 className="college-profile-name">{university.universityName}</h1>
-              <i className="fa-solid fa-circle-check verified-badge"></i>
+              <BadgeCheck className="verified-badge" aria-hidden="true" />
             </div>
             <div className="college-details-row">
               <div className="detail-item">
-                <i className="fa-solid fa-map-marker-alt detail-icon"></i>
+                <MapPin className="detail-icon" aria-hidden="true" />
                 <span className="detail-text">{university.universityAddress}</span>
               </div>
               {university.type && (
                 <div className="detail-item">
-                  <i className="fa-solid fa-tag detail-icon"></i>
+                  <Tag className="detail-icon" aria-hidden="true" />
                   <span className="detail-text">{university.type} University</span>
                 </div>
               )}
               {university.establishedYear && (
                 <div className="detail-item">
-                  <i className="fa-solid fa-calendar detail-icon"></i>
+                  <CalendarDays className="detail-icon" aria-hidden="true" />
                   <span className="detail-text">Established {university.establishedYear}</span>
                 </div>
               )}
@@ -152,7 +160,7 @@ const UniversityDetail = () => {
                       className={`college-nav-link ${activeSection === 'admission' ? 'active' : ''}`}
                       onClick={(e) => scrollToSection(e, 'admission')}
                     >
-                      <i className="fa-solid fa-graduation-cap"></i> Admission
+                      <GraduationCap size={18} aria-hidden="true" /> Admission
                     </a>
                   </li>
                   <li className="college-nav-item">
@@ -161,7 +169,7 @@ const UniversityDetail = () => {
                       className={`college-nav-link ${activeSection === 'about' ? 'active' : ''}`}
                       onClick={(e) => scrollToSection(e, 'about')}
                     >
-                      <i className="fa-solid fa-circle-info"></i> About
+                      <Info size={18} aria-hidden="true" /> About
                     </a>
                   </li>
                   <li className="college-nav-item">
@@ -170,7 +178,7 @@ const UniversityDetail = () => {
                       className={`college-nav-link ${activeSection === 'programs' ? 'active' : ''}`}
                       onClick={(e) => scrollToSection(e, 'programs')}
                     >
-                      <i className="fa-solid fa-book"></i> Programs 
+                      <BookOpen size={18} aria-hidden="true" /> Programs
                       {courses && courses.length > 0 && (
                         <span className="nav-badge">{courses.length}</span>
                       )}
@@ -182,7 +190,7 @@ const UniversityDetail = () => {
                       className={`college-nav-link ${activeSection === 'colleges' ? 'active' : ''}`}
                       onClick={(e) => scrollToSection(e, 'colleges')}
                     >
-                      <i className="fa-solid fa-school"></i> Colleges
+                      <School size={18} aria-hidden="true" /> Colleges
                       {colleges && colleges.length > 0 && (
                         <span className="nav-badge">{colleges.length}</span>
                       )}
@@ -194,7 +202,7 @@ const UniversityDetail = () => {
                       className={`college-nav-link ${activeSection === 'features' ? 'active' : ''}`}
                       onClick={(e) => scrollToSection(e, 'features')}
                     >
-                      <i className="fa-solid fa-star"></i> Features
+                      <Star size={18} aria-hidden="true" /> Features
                     </a>
                   </li>
                   <li className="college-nav-item">
@@ -203,7 +211,7 @@ const UniversityDetail = () => {
                       className={`college-nav-link ${activeSection === 'guidelines' ? 'active' : ''}`}
                       onClick={(e) => scrollToSection(e, 'guidelines')}
                     >
-                      <i className="fa-solid fa-file-alt"></i> Guidelines
+                      <FileText size={18} aria-hidden="true" /> Guidelines
                     </a>
                   </li>
                   <li className="college-nav-item">
@@ -212,7 +220,7 @@ const UniversityDetail = () => {
                       className={`college-nav-link ${activeSection === 'scholarship' ? 'active' : ''}`}
                       onClick={(e) => scrollToSection(e, 'scholarship')}
                     >
-                      <i className="fa-solid fa-money-bill"></i> Scholarship
+                      <Banknote size={18} aria-hidden="true" /> Scholarship
                     </a>
                   </li>
                   <li className="college-nav-item">
@@ -221,7 +229,7 @@ const UniversityDetail = () => {
                       className={`college-nav-link ${activeSection === 'gallery' ? 'active' : ''}`}
                       onClick={(e) => scrollToSection(e, 'gallery')}
                     >
-                      <i className="fa-solid fa-images"></i> Gallery
+                      <Image size={18} aria-hidden="true" /> Gallery
                     </a>
                   </li>
                   <li className="college-nav-item">
@@ -230,7 +238,7 @@ const UniversityDetail = () => {
                       className={`college-nav-link ${activeSection === 'chancellor' ? 'active' : ''}`}
                       onClick={(e) => scrollToSection(e, 'chancellor')}
                     >
-                      <i className="fa-solid fa-user-tie"></i> Chancellor
+                      <User size={18} aria-hidden="true" /> Chancellor
                     </a>
                   </li>
                 </ul>
@@ -250,7 +258,7 @@ const UniversityDetail = () => {
                       <Link to="/contact" className="college-btn-apply">Apply Now</Link>
                       {university.admissionCloseDate && (
                         <span className="college-admission-deadline">
-                          <i className="fa-solid fa-clock"></i>
+                          <Clock size={16} aria-hidden="true" />
                           Closes: {formatDate(university.admissionCloseDate)}
                         </span>
                       )}
@@ -280,18 +288,18 @@ const UniversityDetail = () => {
                           <div className="college-course-card-content">
                             <h3 className="college-course-title">{course.fullForm || course.title}</h3>
                             <div className="college-course-detail">
-                              <i className="fa-solid fa-building-columns"></i>
+                              <Building2 size={16} aria-hidden="true" />
                               <span>{course.universityName || 'University Affiliation'}</span>
                             </div>
                             <div className="college-course-detail">
-                              <i className="fa-solid fa-clock"></i>
+                              <Clock size={16} aria-hidden="true" />
                               <span>{course.duration || 'Duration'}</span>
                             </div>
                           </div>
                           <div className="college-course-card-footer">
                             <div className="college-course-action">
                               <span>Learn More</span>
-                              <i className="fa-solid fa-arrow-right"></i>
+                              <ArrowRight size={16} aria-hidden="true" />
                             </div>
                           </div>
                         </Link>
@@ -345,9 +353,11 @@ const UniversityDetail = () => {
                                     src={getImageFieldUrl(college, 'collegeLogo', 'colleges')}
                                     alt={college.collegeName}
                                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                    loading="lazy"
+                                    decoding="async"
                                   />
                                 ) : (
-                                  <i className="fa-solid fa-school" style={{ color: '#aaa', fontSize: '20px' }}></i>
+                                  <School size={20} color="#aaa" aria-hidden="true" />
                                 )}
                               </div>
                               <div>
@@ -355,7 +365,7 @@ const UniversityDetail = () => {
                                   {college.collegeName}
                                 </div>
                                 <div style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>
-                                  <i className="fa-solid fa-location-dot" style={{ marginRight: '4px' }}></i>
+                                  <MapPin size={13} style={{ marginRight: '4px' }} aria-hidden="true" />
                                   {college.collegeAddress || 'Location N/A'}
                                 </div>
                               </div>
@@ -377,7 +387,7 @@ const UniversityDetail = () => {
                       <ul style={{paddingLeft: '20px'}}>
                         {university.keyFeatures.map((feature, index) => (
                           <li key={index} style={{marginBottom: '12px'}}>
-                            <i className="fa-solid fa-check" style={{color: '#ff9800', marginRight: '8px'}}></i>
+                            <Check size={16} style={{color: '#ff9800', marginRight: '8px'}} aria-hidden="true" />
                             {feature}
                           </li>
                         ))}
@@ -435,7 +445,7 @@ const UniversityDetail = () => {
                 {university.type && (
                   <div className="college-contact-item">
                     <div className="college-contact-icon">
-                      <i className="fa-solid fa-tag"></i>
+                      <Tag size={18} aria-hidden="true" />
                     </div>
                     <div className="college-contact-content">
                       <div className="college-contact-label">Type</div>
@@ -447,7 +457,7 @@ const UniversityDetail = () => {
                 {university.universityAddress && (
                   <div className="college-contact-item">
                     <div className="college-contact-icon">
-                      <i className="fa-solid fa-map-marker-alt"></i>
+                      <MapPin size={18} aria-hidden="true" />
                     </div>
                     <div className="college-contact-content">
                       <div className="college-contact-label">Address</div>
@@ -459,7 +469,7 @@ const UniversityDetail = () => {
                 {university.universityPhone && (
                   <div className="college-contact-item">
                     <div className="college-contact-icon">
-                      <i className="fa-solid fa-phone"></i>
+                      <Phone size={18} aria-hidden="true" />
                     </div>
                     <div className="college-contact-content">
                       <div className="college-contact-label">Phone</div>
@@ -473,7 +483,7 @@ const UniversityDetail = () => {
                 {university.universityEmail && (
                   <div className="college-contact-item">
                     <div className="college-contact-icon">
-                      <i className="fa-solid fa-envelope"></i>
+                      <Mail size={18} aria-hidden="true" />
                     </div>
                     <div className="college-contact-content">
                       <div className="college-contact-label">Email</div>
@@ -487,7 +497,7 @@ const UniversityDetail = () => {
                 {university.website && (
                   <div className="college-contact-item">
                     <div className="college-contact-icon">
-                      <i className="fa-solid fa-globe"></i>
+                      <Globe size={18} aria-hidden="true" />
                     </div>
                     <div className="college-contact-content">
                       <div className="college-contact-label">Website</div>

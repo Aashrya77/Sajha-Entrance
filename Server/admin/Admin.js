@@ -79,6 +79,7 @@ import UniversityModel, { UniversityFileModel } from "../models/University.js";
 import MockTestModel, { MockTestAttemptModel } from "../models/MockTest.js";
 import BookOrderModel from "../models/BookOrder.js";
 import InquiryModel from "../models/Inquiry.js";
+import SeoHashtagAdminResource from "./resources/seo-hashtag.resource.js";
 import BlogAdminResource from "./resources/blog.resource.js";
 import AdvertisementAdminResource from "./resources/advertisement.resource.js";
 import NoticeAdminResource from "./resources/notice.resource.js";
@@ -2259,6 +2260,7 @@ const startAdminPanel = async () => {
   const rawResources = [
     AdminUserAdminResource,
     AdminNotificationAdminResource,
+    SeoHashtagAdminResource,
     BlogAdminResource,
     mergeResourceOptions(NoticeAdminResource, {
       navigation: contentNavigation,
