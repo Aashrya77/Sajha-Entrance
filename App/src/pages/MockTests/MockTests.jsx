@@ -1,5 +1,15 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import {
+  BarChart3,
+  CalendarDays,
+  Clock3,
+  FileQuestion,
+  FileText,
+  Search,
+  Trophy,
+  X,
+} from "lucide-react";
 import { mockTestAPI } from "../../api/services";
 import Loader from "../../components/Loader/Loader";
 import PageAdvertisements from "../../components/PageAdvertisements/PageAdvertisements";
@@ -252,8 +262,8 @@ const MockTests = ({ isAuthenticated }) => {
       <div className="container">
         <div className="mock-tests-page__tabs">
           {[
-            { key: "mocktest", label: "Mock Test", icon: "fa-file-lines" },
-            { key: "results", label: "Results", icon: "fa-chart-bar" },
+            { key: "mocktest", label: "Mock Test", Icon: FileText },
+            { key: "results", label: "Results", Icon: BarChart3 },
           ].map((tab) => (
             <button
               key={tab.key}
@@ -269,7 +279,7 @@ const MockTests = ({ isAuthenticated }) => {
                 activeTab === tab.key ? "mock-tests-page__tab--active" : ""
               }`.trim()}
             >
-              <i className={`fa-solid ${tab.icon} mock-tests-page__tab-icon`}></i>
+              <tab.Icon className="mock-tests-page__tab-icon" size={18} aria-hidden="true" />
               {tab.label}
             </button>
           ))}
@@ -281,9 +291,7 @@ const MockTests = ({ isAuthenticated }) => {
               onSubmit={handleSearch}
               className="mock-tests-page__search"
             >
-              <i
-                className="fa-solid fa-magnifying-glass mock-tests-page__search-icon"
-              ></i>
+              <Search className="mock-tests-page__search-icon" size={18} aria-hidden="true" />
               <input
                 type="text"
                 placeholder="Search by mock test, course, or subject"
@@ -300,7 +308,7 @@ const MockTests = ({ isAuthenticated }) => {
                   }}
                   className="mock-tests-page__search-clear"
                 >
-                  <i className="fa-solid fa-xmark"></i>
+                  <X size={18} aria-hidden="true" />
                 </button>
               ) : null}
             </form>
@@ -313,7 +321,7 @@ const MockTests = ({ isAuthenticated }) => {
 
             {filteredTests.length === 0 ? (
               <div className="mock-tests-page__state mock-tests-page__state--empty">
-                <i className="fa-solid fa-file-circle-xmark mock-tests-page__state-icon"></i>
+                <FileQuestion className="mock-tests-page__state-icon" size={38} aria-hidden="true" />
                 <h3 className="mock-tests-page__state-title">No mock tests found</h3>
                 <p>Try adjusting your search or check back later.</p>
               </div>
@@ -331,7 +339,7 @@ const MockTests = ({ isAuthenticated }) => {
                     >
                       <div className="mock-tests-page__card-head">
                         <span className="mock-tests-page__exam-icon" aria-hidden="true">
-                          <i className="fa-regular fa-file-lines"></i>
+                          <FileText size={24} />
                         </span>
 
                         <div className="mock-tests-page__card-title-group">
@@ -349,28 +357,28 @@ const MockTests = ({ isAuthenticated }) => {
                       <div className="mock-tests-page__meta-grid">
                         {[
                           {
-                            iconClass: "fa-regular fa-calendar",
+                            Icon: CalendarDays,
                             label: "Date",
                             value: formatDate(examDate),
                           },
                           {
-                            iconClass: "fa-regular fa-clock",
+                            Icon: Clock3,
                             label: "Duration",
                             value: formatDuration(test.duration),
                           },
                           {
-                            iconClass: "fa-regular fa-file-lines",
+                            Icon: FileText,
                             label: "Questions",
                             value: formatCount(test.totalQuestions, "Question", "Questions"),
                           },
                           {
-                            iconClass: "fa-solid fa-trophy",
+                            Icon: Trophy,
                             label: "Marks",
                             value: formatCount(test.totalMarks, "Mark", "Marks"),
                           },
                         ].map((item) => (
                           <div className="mock-tests-page__meta-item" key={item.label}>
-                            <i className={item.iconClass} aria-hidden="true"></i>
+                            <item.Icon size={17} aria-hidden="true" />
                             <span className="mock-tests-page__meta-copy">
                               <strong>{item.label}</strong>
                               <span>{item.value}</span>
@@ -381,7 +389,7 @@ const MockTests = ({ isAuthenticated }) => {
 
                       <div className="mock-tests-page__card-footer">
                         <div className="mock-tests-page__helper">
-                          <i className="fa-regular fa-clock" aria-hidden="true"></i>
+                          <Clock3 size={16} aria-hidden="true" />
                           {availability.helper}
                         </div>
 
