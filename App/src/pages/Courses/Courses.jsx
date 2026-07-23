@@ -134,7 +134,7 @@ const Courses = () => {
                 const gradient = COURSE_GRADIENTS[index % Object.keys(COURSE_GRADIENTS).length];
                 return (
                   <div key={course._id} className="col-12 col-sm-6 col-lg-4">
-                    <Link to={`/course/${course._id}`} className="cp-card-link">
+                    <Link to={`/course/${course.slug || course._id}`} className="cp-card-link">
                       <div className="cp-card">
                       
                         <div className="cp-card-body">

@@ -26,6 +26,8 @@
   "scripts": {
     "start": "vite",
     "dev": "vite",
+    "sitemap": "node scripts/generateSitemap.mjs",
+    "prebuild": "npm run sitemap",
     "build": "vite build",
     "preview": "vite preview"
   },

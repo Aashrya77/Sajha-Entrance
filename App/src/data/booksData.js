@@ -1,6 +1,7 @@
 export const booksData = [
   {
     id: 1,
+    slug: "complete-bsc-csit-entrance-preparation-guide",
     title: "Complete BSc.CSIT Entrance Preparation Guide Book",
     price: 1208,
     originalPrice: 1510,
@@ -22,6 +23,7 @@ export const booksData = [
   
   {
     id: 2,
+    slug: "complete-bit-entrance-preparation-guide",
     title: "Complete BIT Entrance Preparation Guide Book",
     price: 926,
     originalPrice: 1090,
@@ -42,6 +44,7 @@ export const booksData = [
   },
   {
     id: 3,
+    slug: "complete-bca-cmat-entrance-preparation-guide",
     title: "Complete BCA& CMAT Entrance Preparation Guide Book",
     price: 892,
     originalPrice: 1190,

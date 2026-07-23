@@ -3,8 +3,8 @@ import Course from "../models/Course.js";
 import College from "../models/College.js";
 import Advertisement from "../models/Advertisement.js";
 import Popup from "../models/Popup.js";
-import mongoose from "mongoose";
 import { getPublicNotice } from "../utils/notice.js";
+import { buildPublicIdentifierFilter } from "../utils/slug.js";
 import {
   mediaFieldMaps,
   normalizeCollectionMedia,
@@ -13,15 +13,11 @@ import {
 
 const UniversityDetail = async (req, res) => {
   try {
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      return res.status(404).json({ success: false, error: "Invalid university ID" });
-    }
-    
     const notice = await getPublicNotice();
     const advertisement = await Advertisement.findOne().sort({ _id: -1 }).exec();
     const popup = await Popup.findOne({ isActive: true }).exec();
     
-    const universityData = await University.findOne({ _id: req.params.id })
+    const universityData = await University.findOne(buildPublicIdentifierFilter(req.params.id))
       .populate("coursesOffered")
       .populate("affiliatedColleges")
       .exec();
@@ -65,7 +61,7 @@ const GetUniversities = async (req, res) => {
       ...(location ? { universityAddress: { $regex: escapeRegex(location), $options: "i" } } : {}),
     };
     const includeContent = req.query.includeContent === "true";
-    const projection = `universityName universityAddress type establishedYear universityLogo coursesOffered affiliatedColleges${
+    const projection = `universityName slug universityAddress type establishedYear universityLogo coursesOffered affiliatedColleges${
       includeContent ? " admissionNotice admissionCloseDate scholarshipInfo createdAt updatedAt" : ""
     }`;
     let universityQuery = University.find(filter)

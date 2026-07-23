@@ -88,33 +88,33 @@ export const DYNAMIC_SITEMAP_SOURCES = [
     name: "colleges",
     model: CollegeModel,
     filter: {},
-    projection: "_id createdAt updatedAt",
+    projection: "_id slug createdAt updatedAt",
     toEntry: (record) =>
-      createSitemapEntry(`/college/${encodePathSegment(record._id)}`, record.updatedAt || record.createdAt),
+      createSitemapEntry(`/college/${encodePathSegment(record.slug || record._id)}`, record.updatedAt || record.createdAt),
   },
   {
     name: "courses",
     model: CourseModel,
     filter: {},
-    projection: "_id",
-    toEntry: (record) => createSitemapEntry(`/course/${encodePathSegment(record._id)}`),
+    projection: "_id slug",
+    toEntry: (record) => createSitemapEntry(`/course/${encodePathSegment(record.slug || record._id)}`),
   },
   {
     name: "blogs",
     model: BlogModel,
     filter: {},
-    projection: "_id createdAt",
+    projection: "_id slug createdAt",
     toEntry: (record) =>
-      createSitemapEntry(`/blog/${encodePathSegment(record._id)}`, record.createdAt),
+      createSitemapEntry(`/blog/${encodePathSegment(record.slug || record._id)}`, record.createdAt),
   },
   {
     name: "universities",
     model: UniversityModel,
     filter: {},
-    projection: "_id createdAt updatedAt",
+    projection: "_id slug createdAt updatedAt",
     toEntry: (record) =>
       createSitemapEntry(
-        `/university/${encodePathSegment(record._id)}`,
+        `/university/${encodePathSegment(record.slug || record._id)}`,
         record.updatedAt || record.createdAt
       ),
   },
@@ -123,8 +123,10 @@ export const DYNAMIC_SITEMAP_SOURCES = [
     model: QuestionBankModel,
     filter: {
       isPublished: true,
-      resourceType: "PDF",
-      pdfUrl: { $nin: ["", null] },
+      $or: [
+        { resourceType: "PDF", pdfUrl: { $nin: ["", null] } },
+        { resourceType: "Images", "imageUrls.0": { $exists: true } },
+      ],
     },
     projection: "slug createdAt",
     toEntry: (record) =>

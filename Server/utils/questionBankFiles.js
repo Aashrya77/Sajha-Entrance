@@ -2,6 +2,11 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 import { fileURLToPath } from "url";
+import {
+  deleteQuestionBankCloudinaryFile,
+  isCloudinaryQuestionBankEnabled,
+  uploadQuestionBankBuffer,
+} from "./cloudinaryQuestionBank.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -95,6 +100,11 @@ const saveQuestionBankResourceFile = async (file, prefix = "resource") => {
 
   const originalName = file.originalname || file.originalFilename || file.name || "";
   const key = buildQuestionBankUploadKey(prefix, originalName, getUploadExtension(file));
+
+  if (isCloudinaryQuestionBankEnabled()) {
+    return uploadQuestionBankBuffer(buffer, key);
+  }
+
   const targetPath = resolveQuestionBankStoragePath(key);
 
   if (!targetPath) {
@@ -107,6 +117,16 @@ const saveQuestionBankResourceFile = async (file, prefix = "resource") => {
 
 const deleteQuestionBankResourceFile = async (key = "") => {
   const targetPath = resolveQuestionBankStoragePath(key);
+
+  if (
+    isCloudinaryQuestionBankEnabled() &&
+    (/^https:\/\/res\.cloudinary\.com\//i.test(key) ||
+      !targetPath ||
+      !fs.existsSync(targetPath))
+  ) {
+    await deleteQuestionBankCloudinaryFile(key);
+    return;
+  }
 
   if (targetPath && fs.existsSync(targetPath)) {
     await fs.promises.unlink(targetPath);

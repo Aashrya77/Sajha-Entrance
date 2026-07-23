@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { addSlugField } from "../utils/slug.js";
 
 const BlogSchema = new mongoose.Schema({
   blogTitle: String,
@@ -13,6 +14,8 @@ const BlogSchema = new mongoose.Schema({
     default: Date.now,
   },
 });
+
+addSlugField(BlogSchema, "blogTitle");
 
 const BlogModel = mongoose.model("Blog", BlogSchema);
 

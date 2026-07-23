@@ -156,10 +156,10 @@
   text-decoration: line-through;
 }
 
-.add-to-cart-btn {
+.book-inquire-btn {
   width: 100%;
   padding: 8px;
-  background-color: #f85606;
+  background-color: #25d366;
   color: white;
   border: none;
   border-radius: 4px;
@@ -169,20 +169,21 @@
   transition: all 0.3s ease;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
 }
 
-.add-to-cart-btn:hover:not(:disabled) {
-  background-color: #d64906;
+.book-inquire-btn:hover {
+  background-color: #1eaf55;
+  color: white;
   transform: translateY(-2px);
 }
 
-.add-to-cart-btn:active:not(:disabled) {
+.book-inquire-btn:active {
   transform: translateY(0);
-}
-
-.add-to-cart-btn:disabled {
-  background-color: #ccc;
-  cursor: not-allowed;
 }
 
 /* Responsive Design */
@@ -204,7 +205,7 @@
     font-size: 13px;
   }
 
-  .add-to-cart-btn {
+  .book-inquire-btn {
     padding: 8px;
     font-size: 13px;
   }

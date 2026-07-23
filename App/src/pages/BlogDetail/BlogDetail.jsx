@@ -21,6 +21,10 @@ const BlogDetail = () => {
       const response = await blogAPI.getBlogById(id);
       if (response.data.success) {
         setBlogData(response.data.data);
+        const canonicalSlug = response.data.data?.blogData?.slug;
+        if (canonicalSlug && canonicalSlug !== id) {
+          navigate(`/blog/${canonicalSlug}`, { replace: true });
+        }
       }
       setLoading(false);
     } catch (error) {
@@ -142,7 +146,7 @@ const BlogDetail = () => {
                   <h4 className="mb-3">Related Blogs</h4>
                   {relatedBlogs.map((relatedBlog) => (
                     <div key={relatedBlog._id} className="related-blog-item mb-3">
-                      <Link to={`/blog/${relatedBlog._id}`} className="text-decoration-none">
+                      <Link to={`/blog/${relatedBlog.slug || relatedBlog._id}`} className="text-decoration-none">
                         <div className="card">
                           {relatedBlog.blogImage && (
                             <div style={{ width: '100%', aspectRatio: '5/3', overflow: 'hidden', background: '#f5f5f5' }}>

@@ -22,7 +22,6 @@
 *,
 *::before,
 *::after {
-  font-family: var(--font-sans);
   margin: 0;
 }
 
@@ -31,9 +30,30 @@ html {
 }
 
 body {
+  font-family: var(--font-sans);
   font-size: var(--font-size-base);
   font-weight: 400;
   line-height: 1.5;
+}
+
+/* Font Awesome draws icons with ::before. Keep the global text font from
+   replacing the bundled icon fonts. */
+.fa-solid::before,
+.fas::before {
+  font-family: "Font Awesome 6 Free";
+  font-weight: 900;
+}
+
+.fa-regular::before,
+.far::before {
+  font-family: "Font Awesome 6 Free";
+  font-weight: 400;
+}
+
+.fa-brands::before,
+.fab::before {
+  font-family: "Font Awesome 6 Brands";
+  font-weight: 400;
 }
 
 h1, h2, h3, h4, h5, h6 {

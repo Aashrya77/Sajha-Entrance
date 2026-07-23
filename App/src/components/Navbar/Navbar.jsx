@@ -17,14 +17,13 @@ import {
   Menu,
   Newspaper,
   PhoneCall,
-  ShoppingCart,
   Trophy,
   UserPlus,
   X,
 } from 'lucide-react';
 import ProfileDropdown from './ProfileDropdown';
 
-const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0, onLogout }) => {
+const Navbar = ({ notice, studentData, isAuthenticated, onLogout }) => {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMoreOpen, setIsMoreOpen] = useState(false);
@@ -220,15 +219,7 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0, onLogout 
             </div>
 
             <div className="navbar-mobile-actions">
-              <Link to="/cart" className="navbar-mobile-quick-link navbar-mobile-quick-link--cart text-decoration-none">
-                <span className="navbar-mobile-quick-link__icon">
-                  <ShoppingCart size={18} strokeWidth={2.2} aria-hidden="true" />
-                  {cartCount > 0 && (
-                    <span className="navbar-mobile-cart-count">{cartCount}</span>
-                  )}
-                </span>
-                <span className="navbar-mobile-quick-link__label">Cart</span>
-              </Link>
+              {/* Cart hidden while book purchases are handled through WhatsApp inquiries. */}
 
               {isAuthenticated && studentData ? (
                 <ProfileDropdown
@@ -339,14 +330,7 @@ const Navbar = ({ notice, studentData, isAuthenticated, cartCount = 0, onLogout 
               )}
             </ul>
             <div className="d-flex align-items-center d-none d-lg-flex" style={{gap: '8px'}}>
-              <Link to="/cart" className="btn btn-link text-decoration-none position-relative" style={{color: '#333', fontSize: '18px', padding: '4px 8px'}}>
-                <ShoppingCart size={19} strokeWidth={2.2} aria-hidden="true" />
-                {cartCount > 0 && (
-                  <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style={{fontSize: '9px'}}>
-                    {cartCount}
-                  </span>
-                )}
-              </Link>
+              {/* Cart hidden while book purchases are handled through WhatsApp inquiries. */}
               {isAuthenticated && studentData ? (
                 <ProfileDropdown
                   username={studentDisplayName}

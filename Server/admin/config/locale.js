@@ -13,6 +13,7 @@ const adminNavigationLabels = Object.freeze({
   "Exam Results": "Exam Results",
   "Mock Test Management": "Mock Test Management",
   "Book Orders": "Book Orders",
+  "Book Store": "Book Store",
   Inquiries: "Inquiries",
 });
 
@@ -20,6 +21,7 @@ const adminResourceLabels = Object.freeze({
   AdminUser: "Admin Users",
   AdminNotification: "Notifications",
   Blog: "Blogs",
+  Book: "Books",
   Notice: "Notices",
   Advertisement: "Advertisements",
   College: "Colleges",

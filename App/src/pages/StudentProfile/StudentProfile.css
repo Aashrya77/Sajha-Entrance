@@ -1891,23 +1891,28 @@
 
 .payment-banner__cta,
 .locked-content-card__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   border: 0;
   border-radius: 8px;
-  background: var(--dashboard-orange);
+  background: #25d366;
   color: #ffffff;
   font-size: 0.82rem;
   font-weight: 800;
   padding: 0.72rem 1rem;
+  text-decoration: none;
   white-space: nowrap;
   transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
 }
 
 .payment-banner__cta:hover,
 .locked-content-card__cta:hover {
-  background: var(--dashboard-orange-strong);
+  background: #1eaf55;
   color: #ffffff;
   transform: translateY(-1px);
-  box-shadow: 0 10px 22px rgba(255, 116, 34, 0.22);
+  box-shadow: 0 10px 22px rgba(37, 211, 102, 0.24);
 }
 
 .student-overview-grid {

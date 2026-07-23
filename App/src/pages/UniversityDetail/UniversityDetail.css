@@ -78,6 +78,10 @@
   max-width: 100%;
 }
 
+.university-detail-page .college-details-wrapper {
+  margin-top: 56px;
+}
+
 @media (max-width: 767.98px) {
   .university-back-link-wrap {
     top: 14px;
@@ -175,10 +179,6 @@
   .university-detail-page .college-details-wrapper > .container-fluid {
     width: 100%;
     padding-inline: 12px;
-  }
-
-  .university-detail-page .college-details-wrapper .row {
-    --bs-gutter-x: 0;
   }
 
   .university-detail-page .college-main-content {

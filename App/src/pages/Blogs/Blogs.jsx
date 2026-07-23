@@ -43,7 +43,7 @@ const Blogs = () => {
   const openShareModal = (e, blog) => {
     e.preventDefault();
     e.stopPropagation(); // Prevents the Link click
-    const blogUrl = `${window.location.origin}/blog/${blog._id}`;
+    const blogUrl = `${window.location.origin}/blog/${blog.slug || blog._id}`;
     setShareModal({
       isOpen: true,
       blogId: blog._id,
@@ -113,7 +113,7 @@ const Blogs = () => {
         <div className="row g-4 mt-2">
           {blogs.map((blog) => (
             <div key={blog._id} className="col-12 col-sm-6 col-lg-4 col-xl-3">
-              <Link to={`/blog/${blog._id}`} className="blog-card-link">
+              <Link to={`/blog/${blog.slug || blog._id}`} className="blog-card-link">
                 <div className="blog-card">
                   <div className="blog-card-image">
                     <img 

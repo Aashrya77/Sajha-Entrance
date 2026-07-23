@@ -42,4 +42,8 @@ export const PUBLIC_EVENTS = [
   },
 ];
 
-export const PUBLIC_BOOK_IDS = [1, 2, 3];
+export const PUBLIC_BOOK_IDS = [
+  "complete-bsc-csit-entrance-preparation-guide",
+  "complete-bit-entrance-preparation-guide",
+  "complete-bca-cmat-entrance-preparation-guide",
+];

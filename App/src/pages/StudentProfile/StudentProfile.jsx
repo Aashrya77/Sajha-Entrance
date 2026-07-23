@@ -35,6 +35,22 @@ const LIBRARY_VIEW_ROUTES = {
   playlists: `${LIBRARY_BASE_PATH}/playlists`,
 };
 
+const buildPaymentInquiryUrl = (profile = {}) => {
+  const whatsappNumber = String(
+    import.meta.env.VITE_WHATSAPP_NUMBER || '9779860688212'
+  ).replace(/\D/g, '');
+  const message = [
+    'Hello Sajha Entrance, I would like to complete my course payment.',
+    profile.name ? `Student: ${profile.name}` : '',
+    profile.course ? `Course: ${profile.course}` : '',
+    profile.phone ? `Phone: ${profile.phone}` : '',
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  return `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+};
+
 const buildEditForm = (profile = {}) => ({
   name: profile.name || '',
   phone: profile.phone || '',
@@ -822,13 +838,15 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
                   recorded classes for your course.
                 </p>
               </div>
-              <button
-                type="button"
+              <a
                 className="payment-banner__cta"
-                onClick={() => navigate('/courses')}
+                href={buildPaymentInquiryUrl(profile)}
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                Complete Payment Now
-              </button>
+                <i className="fa-brands fa-whatsapp" aria-hidden="true"></i>
+                Complete Payment on WhatsApp
+              </a>
             </div>
           )}
 
@@ -1024,13 +1042,15 @@ const StudentProfile = ({ studentData, setStudentData, setIsAuthenticated }) => 
                   <p>
                     Complete payment to access Zoom recordings and course materials for your course.
                   </p>
-                  <button
-                    type="button"
+                  <a
                     className="primary-btn locked-content-card__cta"
-                    onClick={() => navigate('/courses')}
+                    href={buildPaymentInquiryUrl(profile)}
+                    target="_blank"
+                    rel="noopener noreferrer"
                   >
-                    Complete Payment
-                  </button>
+                    <i className="fa-brands fa-whatsapp" aria-hidden="true"></i>
+                    Complete Payment on WhatsApp
+                  </a>
                 </article>
               )}
             </div>

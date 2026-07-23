@@ -318,7 +318,7 @@ const LandingPage = ({ landingAds = [], topCollegeSection }) => {
                     {category === 'College' && searchResults.map((college) => (
                       <Link 
                         key={college._id} 
-                        to={`/college/${college._id}`}
+                        to={`/college/${college.slug || college._id}`}
                         className="search-result-card"
                         onClick={clearSearch}
                       >
@@ -344,7 +344,7 @@ const LandingPage = ({ landingAds = [], topCollegeSection }) => {
                     {category === 'University' && searchResults.map((university) => (
                       <Link 
                         key={university._id} 
-                        to={`/university/${university._id}`}
+                        to={`/university/${university.slug || university._id}`}
                         className="search-result-card"
                         onClick={clearSearch}
                       >
@@ -369,7 +369,7 @@ const LandingPage = ({ landingAds = [], topCollegeSection }) => {
                     {category === 'Course' && searchResults.map((course) => (
                       <Link 
                         key={course._id} 
-                        to={`/course/${course._id}`}
+                        to={`/course/${course.slug || course._id}`}
                         className="search-result-card"
                         onClick={clearSearch}
                       >

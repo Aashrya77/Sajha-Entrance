@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { Schema } from "mongoose";
+import { addSlugField } from "../utils/slug.js";
 
 const CourseScheme = new mongoose.Schema({
   title: String,
@@ -58,6 +59,8 @@ const CourseScheme = new mongoose.Schema({
     },
   ],
 });
+
+addSlugField(CourseScheme, "title");
 
 const CourseModel = mongoose.model("Course", CourseScheme);
 

@@ -155,7 +155,7 @@ const Universities = () => {
                 const gradient = UNI_GRADIENTS[index % Object.keys(UNI_GRADIENTS).length];
                 return (
                   <div key={uni._id} className="col-12 col-sm-6 col-lg-4">
-                    <Link to={`/university/${uni._id}`} className="cp-card-link">
+                    <Link to={`/university/${uni.slug || uni._id}`} className="cp-card-link">
                       <div className="cp-card">
                         {/* University Logo Banner */}
                         {uni.universityLogo && (

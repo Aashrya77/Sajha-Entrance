@@ -3,6 +3,7 @@ import path from "path";
 import crypto from "crypto";
 import multer from "multer";
 import mongoose from "mongoose";
+import { Readable } from "stream";
 
 import {
   MAX_QUESTION_BANK_IMAGE_SIZE_BYTES,
@@ -31,6 +32,7 @@ import {
 } from "../utils/media.js";
 import { slugifyText } from "../utils/slug.js";
 import QuestionBankViewModel from "../models/QuestionBankView.js";
+import { getCloudinaryQuestionBankUrl } from "../utils/cloudinaryQuestionBank.js";
 
 const THUMBNAIL_FOLDER = path.join(mediaRootDirectory, MEDIA_TYPES.questionBank);
 const QUESTION_VIEWER_COOKIE = "sajha_question_viewer_id";
@@ -298,9 +300,9 @@ const serializeQuestionBank = (question = {}, { includeResources = true } = {}) 
     resourceType: plainQuestion.resourceType,
     pdfUrl: includeResources && hasPdf ? buildPublicPreviewUrl(plainQuestion, "pdf") : "",
     imageUrls,
-    allowDownload: hasPdf,
+    allowDownload: Boolean(plainQuestion.allowDownload),
     downloadUrl:
-      includeResources && hasPdf
+      includeResources && plainQuestion.allowDownload && hasPdf
         ? buildPublicDownloadUrl(plainQuestion, "pdf")
         : downloadUrls[0] || "",
     downloadUrls,
@@ -321,7 +323,13 @@ const serializeQuestionBank = (question = {}, { includeResources = true } = {}) 
 const buildQuestionBankQuery = (queryParams = {}, includeDrafts = false) => {
   const query = includeDrafts
     ? {}
-    : { isPublished: true, resourceType: "PDF", pdfUrl: { $nin: ["", null] } };
+    : {
+        isPublished: true,
+        $or: [
+          { resourceType: "PDF", pdfUrl: { $nin: ["", null] } },
+          { resourceType: "Images", "imageUrls.0": { $exists: true } },
+        ],
+      };
   const search = String(queryParams.search || "").trim();
   const exam = String(queryParams.exam || "").trim();
   const questionType = String(queryParams.type || queryParams.questionType || "").trim();
@@ -354,8 +362,10 @@ const buildQuestionBankQuery = (queryParams = {}, includeDrafts = false) => {
 const getQuestionBankFiltersPayload = async () => {
   const years = await QuestionBankModel.distinct("year", {
     isPublished: true,
-    resourceType: "PDF",
-    pdfUrl: { $nin: ["", null] },
+    $or: [
+      { resourceType: "PDF", pdfUrl: { $nin: ["", null] } },
+      { resourceType: "Images", "imageUrls.0": { $exists: true } },
+    ],
   });
 
   return {
@@ -374,8 +384,10 @@ const getPopularExamCategories = async () =>
     {
       $match: {
         isPublished: true,
-        resourceType: "PDF",
-        pdfUrl: { $nin: ["", null] },
+        $or: [
+          { resourceType: "PDF", pdfUrl: { $nin: ["", null] } },
+          { resourceType: "Images", "imageUrls.0": { $exists: true } },
+        ],
       },
     },
     {
@@ -446,8 +458,10 @@ const GetQuestionBankDetail = async (req, res) => {
     const question = await QuestionBankModel.findOne({
       slug,
       isPublished: true,
-      resourceType: "PDF",
-      pdfUrl: { $nin: ["", null] },
+      $or: [
+        { resourceType: "PDF", pdfUrl: { $nin: ["", null] } },
+        { resourceType: "Images", "imageUrls.0": { $exists: true } },
+      ],
     })
       .lean()
       .exec();
@@ -496,6 +510,42 @@ const sendQuestionBankAsset = async (
     allowSingleMatchFallback = false,
   } = {}
 ) => {
+  const originalKey = String(key || "").trim();
+  const cloudinaryUrl = getCloudinaryQuestionBankUrl(originalKey);
+  const isStoredCloudinaryUrl = /^https:\/\/res\.cloudinary\.com\//i.test(originalKey);
+
+  const sendRemoteAsset = async (url) => {
+    const response = await fetch(url);
+    if (!response.ok || !response.body) {
+      return res.status(response.status === 404 ? 404 : 502).json({
+        success: false,
+        error:
+          response.status === 404
+            ? "Resource file not found."
+            : "Unable to fetch the resource file.",
+      });
+    }
+
+    const fallbackFilename =
+      fallbackFilenames.find(Boolean) ||
+      decodeURIComponent(new URL(url).pathname.split("/").pop() || "past-question.pdf");
+    const filename = path.basename(fallbackFilename).replace(/"/g, "");
+    const disposition = download ? "attachment" : "inline";
+
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    res.setHeader("Content-Type", response.headers.get("content-type") || "application/pdf");
+    res.setHeader("Content-Disposition", `${disposition}; filename="${filename}"`);
+    const contentLength = response.headers.get("content-length");
+    if (contentLength) res.setHeader("Content-Length", contentLength);
+
+    Readable.fromWeb(response.body).on("error", (error) => res.destroy(error)).pipe(res);
+    return undefined;
+  };
+
+  if (isStoredCloudinaryUrl) {
+    return sendRemoteAsset(originalKey);
+  }
+
   const normalizedKey = normalizeStorageKey(key);
   const derivedKey = deriveQuestionBankKeyFromUrl(normalizedKey);
   const candidateKey = derivedKey || normalizedKey;
@@ -539,6 +589,10 @@ const sendQuestionBankAsset = async (
   }
 
   if (!filePath || !fs.existsSync(filePath)) {
+    if (cloudinaryUrl) {
+      return sendRemoteAsset(cloudinaryUrl);
+    }
+
     return res.status(404).json({ success: false, error: "Resource file not found." });
   }
 
@@ -566,6 +620,13 @@ const serveQuestionResource = async (req, res, { resourceKind, download = false 
     const question = await findPublishedQuestionBySlug(req.params.slug);
     if (!question) {
       return res.status(404).json({ success: false, error: "Question not found." });
+    }
+
+    if (download && !question.allowDownload) {
+      return res.status(403).json({
+        success: false,
+        error: "Downloading is disabled for this resource.",
+      });
     }
 
     if (resourceKind === "pdf") {

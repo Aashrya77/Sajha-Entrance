@@ -1,14 +1,14 @@
 import React, { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { bookPaymentAPI } from '../../api/services';
+import { buildBookInquiryUrl } from '../../utils/bookInquiry';
 import './BookDetail.css';
 
-const BookDetail = ({ books, addToCart }) => {
+const BookDetail = ({ books }) => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const book = books.find(b => b.id === parseInt(id));
+  const book = books.find((candidate) => candidate.slug === id || candidate.id === Number(id));
   const [quantity, setQuantity] = useState(1);
-  const [addedToCart, setAddedToCart] = useState(false);
   const [showBuyNow, setShowBuyNow] = useState(false);
   const [buyLoading, setBuyLoading] = useState(false);
   const [buyError, setBuyError] = useState('');
@@ -20,6 +20,12 @@ const BookDetail = ({ books, addToCart }) => {
     phone: '',
     address: '',
   });
+
+  React.useEffect(() => {
+    if (book?.slug && id !== book.slug) {
+      navigate(`/book/${book.slug}`, { replace: true });
+    }
+  }, [book, id, navigate]);
 
   if (!book) {
     return (
@@ -40,12 +46,6 @@ const BookDetail = ({ books, addToCart }) => {
     } else if (type === 'decrease' && quantity > 1) {
       setQuantity(prev => prev - 1);
     }
-  };
-
-  const handleAddToCart = () => {
-    addToCart(book, quantity);
-    setAddedToCart(true);
-    setTimeout(() => setAddedToCart(false), 2000);
   };
 
   const renderStars = (rating) => {
@@ -149,13 +149,15 @@ const BookDetail = ({ books, addToCart }) => {
             </div>
 
             <div className="action-buttons">
-              <button 
-                className="btn btn-add-cart" 
-                onClick={handleAddToCart}
-                disabled={!book.inStock}
+              <a
+                className="btn btn-book-inquire"
+                href={buildBookInquiryUrl(book, quantity)}
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                {addedToCart ? '✓ Added to Cart' : 'Add to Cart'}
-              </button>
+                <i className="fa-brands fa-whatsapp" aria-hidden="true"></i>
+                Inquire Now
+              </a>
               <button 
                 className="btn btn-buy-now"
                 disabled={!book.inStock}

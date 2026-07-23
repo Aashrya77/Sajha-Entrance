@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
   ArrowRight,
@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { collegeAPI } from '../../api/services';
 import { getImageFieldUrl, getImageList } from '../../utils/imageHelper';
+import { resolveGoogleMapEmbedUrl } from '../../utils/googleMaps';
 import './CollegeDetail.css';
 import Loader from '../../components/Loader/Loader';
 import InquiryButton from '../../components/InquiryForm/InquiryButton';
@@ -35,6 +36,7 @@ const CollegeMetaItem = ({ icon: Icon, children }) => (
 
 const CollegeDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [collegeData, setCollegeData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState('programs');
@@ -72,6 +74,10 @@ const CollegeDetail = () => {
       const response = await collegeAPI.getCollegeById(id);
       if (response.data.success) {
         setCollegeData(response.data.data);
+        const canonicalSlug = response.data.data?.collegeData?.slug;
+        if (canonicalSlug && canonicalSlug !== id) {
+          navigate(`/college/${canonicalSlug}`, { replace: true });
+        }
       }
       setLoading(false);
     } catch (error) {
@@ -208,9 +214,9 @@ const CollegeDetail = () => {
       {/* 3-Column Layout Section */}
       <div className="college-details-wrapper">
         <div className="container-fluid">
-          <div className="row g-4">
+          <div className="college-detail-grid">
             {/* Left Sidebar Navigation */}
-            <div className="col-lg-2 d-none d-lg-block">
+            <div className="college-detail-grid__nav d-none d-lg-block">
               <nav className="college-sidebar-nav sticky-top">
                 <ul className="college-nav-list">
                   {navSections.map((section) => {
@@ -235,7 +241,7 @@ const CollegeDetail = () => {
             </div>
 
             {/* Main Content */}
-            <div className="col-12 col-lg-7">
+            <div className="college-detail-grid__main">
               <div className="college-main-content">
                 {/* Offered Programs Section */}
                 {courses && courses.length > 0 && (
@@ -245,7 +251,7 @@ const CollegeDetail = () => {
                     </div>
                     <div className="college-courses-grid">
                       {courses.map(course => (
-                        <Link key={course._id} to={`/course/${course._id}`} className="college-course-card">
+                        <Link key={course._id} to={`/course/${course.slug || course._id}`} className="college-course-card">
                           <div className="college-course-card-content">
                             <h3 className="college-course-title">{course.fullForm || course.title}</h3>
                             <div className="college-course-detail">
@@ -357,7 +363,7 @@ const CollegeDetail = () => {
             </div>
 
             {/* Right Sidebar - Contact Info */}
-            <div className="col-12 col-lg-3">
+            <div className="college-detail-grid__aside">
               {/* Contact Info Card */}
               <div className="college-contact-sidebar">
                 <h3 className="college-contact-title">Contact Info</h3>
@@ -453,12 +459,13 @@ const CollegeDetail = () => {
               )}
 
               {/* Location Map */}
-              {college.googleMapUrl && (
+              {resolveGoogleMapEmbedUrl(college.googleMapUrl) && (
                 <div className="college-location-map" style={{marginTop: '20px'}}>
                   <iframe 
-                    src={college.googleMapUrl} 
-                    allowFullScreen="" 
+                    src={resolveGoogleMapEmbedUrl(college.googleMapUrl)}
+                    allowFullScreen
                     loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
                     title="College Location"
                   ></iframe>
                 </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { courseAPI } from '../../api/services';
 import Loader from '../../components/Loader/Loader';
 import InquiryButton from '../../components/InquiryForm/InquiryButton';
@@ -13,6 +13,7 @@ const TABS = [
 
 const CourseDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [courseData, setCourseData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('about');
@@ -26,6 +27,10 @@ const CourseDetail = () => {
       const response = await courseAPI.getCourseById(id);
       if (response.data.success) {
         setCourseData(response.data.data);
+        const canonicalSlug = response.data.data?.courseData?.slug;
+        if (canonicalSlug && canonicalSlug !== id) {
+          navigate(`/course/${canonicalSlug}`, { replace: true });
+        }
       }
       setLoading(false);
     } catch (error) {
@@ -148,7 +153,7 @@ const CourseDetail = () => {
                     {colleges.map((college) => (
                       <Link
                         key={college.collegeDetails?._id}
-                        to={`/college/${college.collegeDetails?._id}`}
+                        to={`/college/${college.collegeDetails?.slug || college.collegeDetails?._id}`}
                         className="cd-college-card"
                       >
                         <div className="cd-college-icon">

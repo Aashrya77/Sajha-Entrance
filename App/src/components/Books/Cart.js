@@ -98,12 +98,12 @@ const Cart = ({ cartItems, removeFromCart, updateQuantity, clearCart }) => {
         <div className="cart-items-section">
           {cartItems.map(item => (
             <div key={item.id} className="cart-item">
-              <div className="cart-item-image" onClick={() => navigate(`/book/${item.id}`)}>
+              <div className="cart-item-image" onClick={() => navigate(`/book/${item.slug || item.id}`)}>
                 <img src={item.image} alt={item.title} />
               </div>
 
               <div className="cart-item-details">
-                <h3 className="cart-item-title" onClick={() => navigate(`/book/${item.id}`)}>
+                <h3 className="cart-item-title" onClick={() => navigate(`/book/${item.slug || item.id}`)}>
                   {item.title}
                 </h3>
                

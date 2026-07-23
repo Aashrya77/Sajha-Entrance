@@ -120,6 +120,7 @@ export const ADMIN_PERMISSION_RESOURCES = [
   createPermissionResource("admin_notifications", "Admin Notifications", ["view", "edit"]),
   createPermissionResource("seo_hashtags", "SEO Hashtags"),
   createPermissionResource("blogs", "Blogs"),
+  createPermissionResource("books", "Books"),
   createPermissionResource("notices", "Notices"),
   createPermissionResource("advertisements", "Advertisements"),
   createPermissionResource("colleges", "Colleges"),
@@ -187,6 +188,9 @@ export const ADMIN_RESOURCE_ACCESS = {
   },
   Blog: {
     permissionResource: "blogs",
+  },
+  Book: {
+    permissionResource: "books",
   },
   Notice: {
     permissionResource: "notices",

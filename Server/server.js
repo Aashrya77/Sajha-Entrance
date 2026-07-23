@@ -19,6 +19,7 @@ import UniversityRoutes from "./routes/University.js";
 import MockTestRoutes from "./routes/MockTest.js";
 import BlogUploadRoutes from "./routes/BlogUpload.js";
 import BookPaymentRoutes from "./routes/BookPayment.js";
+import BookRoutes from "./routes/Book.js";
 import InquiryRoutes from "./routes/Inquiry.js";
 import YouTubeLibraryRoutes from "./routes/YouTubeLibrary.js";
 import QuestionBankRoutes from "./routes/QuestionBank.js";
@@ -40,6 +41,8 @@ import { syncMockTestIndexes } from "./services/mockTestIndexService.js";
 import { startMockTestAttemptExpiryWorker } from "./services/mockTestAttemptService.js";
 import { refreshYouTubeLibrarySchedule } from "./services/youtubeLibraryScheduler.js";
 import { startZoomRecordingAutoSync } from "./services/zoomRecordingScheduler.js";
+import { backfillPublicSlugs } from "./services/publicSlugService.js";
+import { seedInitialBooks } from "./services/bookSeedService.js";
 
 dotenv.config();
 
@@ -216,6 +219,7 @@ const registerApiRoutes = (router) => {
   router.use("/api", MockTestRoutes);
   router.use("/api", BlogUploadRoutes);
   router.use("/api", BookPaymentRoutes);
+  router.use("/api", BookRoutes);
   router.use("/api", InquiryRoutes);
   router.use("/api", ActivityRoutes);
   router.use("/api/youtube-library", YouTubeLibraryRoutes);
@@ -294,6 +298,18 @@ const startServer = async () => {
     logger.info("MongoDB connected");
 
     runtimeState.startupStatus = "initializing";
+
+    // Slugs must exist before public lists, sitemap generation, or AdminJS
+    // starts serving links.
+    const migratedSlugs = await backfillPublicSlugs();
+    if (migratedSlugs > 0) {
+      logger.info(`Generated ${migratedSlugs} public URL slugs`);
+    }
+
+    const seededBooks = await seedInitialBooks();
+    if (seededBooks > 0) {
+      logger.info(`Added ${seededBooks} initial bookstore products`);
+    }
 
     // 1. AdminJS first
     await initializeAdminPanel();

@@ -1,8 +1,8 @@
 import BlogModel from "../models/Blog.js";
 import Advertisement from "../models/Advertisement.js";
 import Popup from "../models/Popup.js";
-import mongoose from "mongoose";
 import { getPublicNotice } from "../utils/notice.js";
+import { buildPublicIdentifierFilter } from "../utils/slug.js";
 import {
   mediaFieldMaps,
   normalizeCollectionMedia,
@@ -68,13 +68,9 @@ const GetBlogs = async (req, res) => {
 
 const GetBlogData = async (req, res) => {
   try {
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      return res.status(404).json({ success: false, error: "Invalid blog ID" });
-    }
-    
     const notice = await getPublicNotice();
     const popup = await Popup.findOne({ isActive: true }).exec();
-    const blogData = await BlogModel.findOne({ _id: req.params.id }).exec();
+    const blogData = await BlogModel.findOne(buildPublicIdentifierFilter(req.params.id)).exec();
     
     if (!blogData) {
       return res.status(404).json({ success: false, error: "Blog not found" });

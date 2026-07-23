@@ -88,8 +88,10 @@ test("published past-question sitemap source excludes drafts", () => {
 
   assert.deepEqual(pastQuestionSource?.filter, {
     isPublished: true,
-    resourceType: "PDF",
-    pdfUrl: { $nin: ["", null] },
+    $or: [
+      { resourceType: "PDF", pdfUrl: { $nin: ["", null] } },
+      { resourceType: "Images", "imageUrls.0": { $exists: true } },
+    ],
   });
   assert.equal(
     pastQuestionSource.toEntry({
@@ -239,14 +241,14 @@ test("frontend-owned SEO IDs stay synchronized with the sitemap constants", () =
   const eventEndDates = [
     ...eventSource.matchAll(/^\s+endAt: ['"]([^'"]+)['"],$/gm),
   ].map((match) => match[1]);
-  const bookIds = [...bookSource.matchAll(/^\s+id:\s*(\d+),$/gm)].map((match) =>
-    Number(match[1])
-  );
+  const bookSlugs = [
+    ...bookSource.matchAll(/^\s+slug:\s*["']([^"']+)["'],$/gm),
+  ].map((match) => match[1]);
 
   assert.deepEqual(newsIds, PUBLIC_NEWS_ITEMS.map((item) => item.id));
   assert.deepEqual(newsDates, PUBLIC_NEWS_ITEMS.map((item) => item.createdAt));
   assert.deepEqual(eventIds, PUBLIC_EVENTS.map((item) => item.id));
   assert.deepEqual(eventStartDates, PUBLIC_EVENTS.map((item) => item.startAt));
   assert.deepEqual(eventEndDates, PUBLIC_EVENTS.map((item) => item.endAt));
-  assert.deepEqual(bookIds, PUBLIC_BOOK_IDS);
+  assert.deepEqual(bookSlugs, PUBLIC_BOOK_IDS);
 });

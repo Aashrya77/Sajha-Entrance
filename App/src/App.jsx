@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
-import { noticeAPI, authAPI, activityAPI } from './api/services';
+import { noticeAPI, authAPI, activityAPI, bookAPI } from './api/services';
 import { ADMIN_ROOT_PATH } from './api/config';
 import config from './config';
 import { trackPageView, isAnalyticsEnabled } from './analytics';
@@ -103,6 +103,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [popup, setPopup] = useState(null);
   const [cartItems, setCartItems] = useState([]);
+  const [books, setBooks] = useState(booksData);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -145,6 +146,18 @@ function App() {
     fetchNotice();
     // Check authentication
     checkAuth();
+
+    bookAPI
+      .getAllBooks()
+      .then((response) => {
+        const fetchedBooks = response.data?.data?.books;
+        if (Array.isArray(fetchedBooks)) {
+          setBooks(fetchedBooks);
+        }
+      })
+      .catch(() => {
+        // Keep the bundled catalog available if the API is temporarily offline.
+      });
   }, []);
 
   const sendPresenceHeartbeat = useCallback(() => {
@@ -281,8 +294,8 @@ function App() {
         <Route path="/events/:id" element={<Event />} />
         <Route path="/scholarships" element={<Scholarship />} />
         <Route path="/results" element={<Results />} />
-        <Route path="/books" element={<BookList books={booksData} addToCart={addToCart} />} />
-        <Route path="/book/:id" element={<BookDetail books={booksData} addToCart={addToCart} />} />
+        <Route path="/books" element={<BookList books={books} />} />
+        <Route path="/book/:id" element={<BookDetail books={books} />} />
         <Route path="/cart" element={<Cart cartItems={cartItems} removeFromCart={removeFromCart} updateQuantity={updateQuantity} clearCart={clearCart} />} />
         <Route path="/student/login" element={<StudentLogin setStudentData={setStudentData} setIsAuthenticated={setIsAuthenticated} />} />
         <Route path="/student/register" element={<StudentRegister />} />

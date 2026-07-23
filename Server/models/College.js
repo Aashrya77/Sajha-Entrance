@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { Schema } from "mongoose";
+import { addSlugField } from "../utils/slug.js";
 
 export const CollegeSchema = new mongoose.Schema({
   // Basic Information
@@ -98,6 +99,8 @@ export const CollegeSchema = new mongoose.Schema({
     default: Date.now
   }
 });
+
+addSlugField(CollegeSchema, "collegeName");
 
 // Update the updatedAt field before saving
 CollegeSchema.pre('save', function(next) {

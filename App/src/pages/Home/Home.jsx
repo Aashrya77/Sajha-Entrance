@@ -75,7 +75,7 @@ const Home = () => {
           <div className="row g-4 home-section-grid">
             {courses.map((course) => (
               <div key={course._id} className="col-12 col-sm-6 col-lg-3">
-                <Link to={`/course/${course._id}`} className="course-card-link">
+                <Link to={`/course/${course.slug || course._id}`} className="course-card-link">
                   <div className="course-card-modern course-card-compact">
                     <div className="course-card-content">
                       <div className="course-title-section">
@@ -123,7 +123,7 @@ const Home = () => {
           <div className="row g-4 home-section-grid">
             {colleges.map((college) => (
               <div key={college._id} className="col-12 col-sm-6 col-lg-3">
-                <Link to={`/college/${college._id}`} className="college-card-link">
+                <Link to={`/college/${college.slug || college._id}`} className="college-card-link">
                   <div className="college-card-modern">
                     {/* College Banner */}
                     <div className="college-banner">

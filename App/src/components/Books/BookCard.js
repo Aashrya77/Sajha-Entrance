@@ -1,17 +1,17 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { buildBookInquiryUrl } from '../../utils/bookInquiry';
 import './BookCard.css';
 
-const BookCard = ({ book, addToCart }) => {
+const BookCard = ({ book }) => {
   const navigate = useNavigate();
 
   const handleCardClick = () => {
-    navigate(`/book/${book.id}`);
+    navigate(`/book/${book.slug || book.id}`);
   };
 
-  const handleAddToCart = (e) => {
+  const handleInquiry = (e) => {
     e.stopPropagation();
-    addToCart(book);
   };
 
   const renderStars = (rating) => {
@@ -64,13 +64,16 @@ const BookCard = ({ book, addToCart }) => {
           )}
         </div>
 
-        <button 
-          className="add-to-cart-btn" 
-          onClick={handleAddToCart}
-          disabled={!book.inStock}
+        <a
+          className="book-inquire-btn"
+          href={buildBookInquiryUrl(book)}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={handleInquiry}
         >
-          {book.inStock ? 'Add to Cart' : 'Out of Stock'}
-        </button>
+          <i className="fa-brands fa-whatsapp" aria-hidden="true"></i>
+          Inquire Now
+        </a>
       </div>
     </div>
   );

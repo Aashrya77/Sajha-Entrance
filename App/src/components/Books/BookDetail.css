@@ -255,7 +255,7 @@
   margin-top: 20px;
 }
 
-.btn-add-cart,
+.btn-book-inquire,
 .btn-buy-now {
   flex: 1;
   padding: 15px 30px;
@@ -269,15 +269,21 @@
   letter-spacing: 0.5px;
 }
 
-.btn-add-cart {
-  background-color: #ffa726;
+.btn-book-inquire {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  background-color: #25d366;
   color: white;
+  text-decoration: none;
 }
 
-.btn-add-cart:hover:not(:disabled) {
-  background-color: #fb8c00;
+.btn-book-inquire:hover {
+  background-color: #1eaf55;
+  color: white;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(255, 167, 38, 0.4);
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.32);
 }
 
 .btn-buy-now {
@@ -291,7 +297,6 @@
   box-shadow: 0 4px 12px rgba(248, 86, 6, 0.4);
 }
 
-.btn-add-cart:disabled,
 .btn-buy-now:disabled {
   background-color: #ccc;
   cursor: not-allowed;
@@ -417,7 +422,7 @@
     font-size: 24px;
   }
 
-  .btn-add-cart,
+  .btn-book-inquire,
   .btn-buy-now {
     padding: 12px 20px;
     font-size: 14px;

@@ -188,7 +188,9 @@ const normalizeAdmission = (record, kind) => {
     closeDate: record.admissionCloseDate || null,
     publishedAt: record.createdAt || record.updatedAt || null,
     dateLine: buildDateLine(record.createdAt || record.updatedAt, record.admissionCloseDate),
-    link: kind === 'college' ? `/college/${record._id}` : `/university/${record._id}`,
+    link: kind === 'college'
+      ? `/college/${record.slug || record._id}`
+      : `/university/${record.slug || record._id}`,
   };
 };
 

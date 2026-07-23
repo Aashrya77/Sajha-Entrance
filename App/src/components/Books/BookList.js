@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import BookCard from './BookCard';
 import './BookList.css';
 
-const BookList = ({ books, addToCart }) => {
+const BookList = ({ books }) => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const categories = ['All', ...new Set(books.map(book => book.category))];
 
@@ -36,7 +36,7 @@ const BookList = ({ books, addToCart }) => {
 
       <div className="books-grid">
         {filteredBooks.map(book => (
-          <BookCard key={book.id} book={book} addToCart={addToCart} />
+          <BookCard key={book.id} book={book} />
         ))}
       </div>
 

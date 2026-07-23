@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { universityAPI } from '../../api/services';
 import { getImageFieldUrl, getImageList } from '../../utils/imageHelper';
+import { resolveGoogleMapEmbedUrl } from '../../utils/googleMaps';
 import Loader from '../../components/Loader/Loader';
 import InquiryButton from '../../components/InquiryForm/InquiryButton';
 import {
@@ -14,6 +15,7 @@ import './UniversityDetail.css';
 
 const UniversityDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [universityData, setUniversityData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState('admission');
@@ -46,6 +48,10 @@ const UniversityDetail = () => {
       const response = await universityAPI.getUniversityById(id);
       if (response.data.success) {
         setUniversityData(response.data.data);
+        const canonicalSlug = response.data.data?.universityData?.slug;
+        if (canonicalSlug && canonicalSlug !== id) {
+          navigate(`/university/${canonicalSlug}`, { replace: true });
+        }
       }
       setLoading(false);
     } catch (error) {
@@ -149,9 +155,9 @@ const UniversityDetail = () => {
       {/* 3-Column Layout Section */}
       <div className="college-details-wrapper">
         <div className="container-fluid">
-          <div className="row g-4">
+          <div className="college-detail-grid">
             {/* Left Sidebar Navigation */}
-            <div className="col-md-2 d-none d-md-block">
+            <div className="college-detail-grid__nav d-none d-lg-block">
               <nav className="college-sidebar-nav sticky-top">
                 <ul className="college-nav-list">
                   <li className="college-nav-item">
@@ -246,7 +252,7 @@ const UniversityDetail = () => {
             </div>
 
             {/* Main Content */}
-            <div className="col-md-7">
+            <div className="college-detail-grid__main">
               <div className="college-main-content">
                 {/* Admission Notice Bar */}
                 {university.admissionNotice && (
@@ -284,7 +290,7 @@ const UniversityDetail = () => {
                     </div>
                     <div className="college-courses-grid">
                       {courses.map(course => (
-                        <Link key={course._id} to={`/course/${course._id}`} className="college-course-card">
+                        <Link key={course._id} to={`/course/${course.slug || course._id}`} className="college-course-card">
                           <div className="college-course-card-content">
                             <h3 className="college-course-title">{course.fullForm || course.title}</h3>
                             <div className="college-course-detail">
@@ -317,7 +323,7 @@ const UniversityDetail = () => {
                     <div className="row g-3">
                       {colleges.map(college => (
                         <div key={college._id} className="col-12 col-sm-6">
-                          <Link to={`/college/${college._id}`} style={{ textDecoration: 'none' }}>
+                          <Link to={`/college/${college.slug || college._id}`} style={{ textDecoration: 'none' }}>
                             <div style={{
                               background: '#fff',
                               borderRadius: '12px',
@@ -437,7 +443,7 @@ const UniversityDetail = () => {
             </div>
 
             {/* Right Sidebar - Contact Info */}
-            <div className="col-md-3">
+            <div className="college-detail-grid__aside">
               {/* Contact Info Card */}
               <div className="college-contact-sidebar">
                 <h3 className="college-contact-title">Contact Info</h3>
@@ -533,12 +539,13 @@ const UniversityDetail = () => {
               )}
 
               {/* Location Map */}
-              {university.googleMapUrl && (
+              {resolveGoogleMapEmbedUrl(university.googleMapUrl) && (
                 <div className="college-location-map" style={{marginTop: '20px'}}>
                   <iframe 
-                    src={university.googleMapUrl} 
-                    allowFullScreen="" 
+                    src={resolveGoogleMapEmbedUrl(university.googleMapUrl)}
+                    allowFullScreen
                     loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
                     title="University Location"
                   ></iframe>
                 </div>

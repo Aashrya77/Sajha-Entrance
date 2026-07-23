@@ -89,6 +89,9 @@ export const mediaFieldMaps = Object.freeze({
   questionBank: {
     thumbnailUrl: MEDIA_TYPES.questionBank,
   },
+  book: {
+    image: "book",
+  },
 });
 
 export const getMediaPublicPath = (type, value = "") => {

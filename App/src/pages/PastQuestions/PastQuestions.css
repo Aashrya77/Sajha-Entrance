@@ -997,8 +997,8 @@
 
 .resource-preview__image-page img {
   display: block;
-  width: var(--question-image-width);
-  max-width: var(--question-image-max-width);
+  width: 100%;
+  max-width: 1100px;
   height: auto;
   margin: 0 auto;
   border-radius: 6px;
@@ -1006,11 +1006,23 @@
 }
 
 .resource-preview__image-page figcaption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-top: 10px;
   color: #667085;
   font-size: 12px;
   font-weight: 900;
   line-height: 1.2;
+}
+
+.resource-preview__image-page figcaption a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #d85b12;
+  text-decoration: none;
 }
 
 @media (max-width: 1199.98px) {

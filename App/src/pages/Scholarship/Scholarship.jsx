@@ -179,7 +179,9 @@ const normalizeScholarship = (record, kind) => {
     metaLine: buildMetaLine(record, kind),
     kindLabel: kind === 'college' ? 'College' : 'University',
     kind,
-    link: kind === 'college' ? `/college/${record._id}` : `/university/${record._id}`,
+    link: kind === 'college'
+      ? `/college/${record.slug || record._id}`
+      : `/university/${record.slug || record._id}`,
     logoUrl:
       kind === 'college'
         ? getImageFieldUrl(record, 'collegeLogo', 'colleges')

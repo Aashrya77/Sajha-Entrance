@@ -251,7 +251,7 @@ const Colleges = () => {
               <div className="row g-4 mt-4" >
                 {colleges.map((college) => (
                   <div key={college._id} className="col-12 col-md-6 col-lg-4 col-xl-3">
-                    <Link to={`/college/${college._id}`} className="college-card-link">
+                    <Link to={`/college/${college.slug || college._id}`} className="college-card-link">
                       <div className="college-card-modern">
                         {/* College Banner */}
                         <div className="college-banner">

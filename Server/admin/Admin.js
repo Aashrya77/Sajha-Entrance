@@ -75,7 +75,7 @@ import YouTubeVideo from "../models/YouTubeVideo.js";
 import ResultExam from "../models/ResultExam.js";
 import StudentResult from "../models/StudentResult.js";
 import Payment from "../models/Payment.js";
-import UniversityModel, { UniversityFileModel } from "../models/University.js";
+import UniversityModel from "../models/University.js";
 import MockTestModel, { MockTestAttemptModel } from "../models/MockTest.js";
 import BookOrderModel from "../models/BookOrder.js";
 import InquiryModel from "../models/Inquiry.js";
@@ -87,6 +87,7 @@ import PopupAdminResource from "./resources/popup.resource.js";
 import LandingAdAdminResource from "./resources/landing-ad.resource.js";
 import TopCollegeSectionAdminResource from "./resources/top-college-section.resource.js";
 import CollegeAdminResource from "./resources/college.resource.js";
+import UniversityAdminResource from "./resources/university.resource.js";
 import AdminUserAdminResource from "./resources/admin-user.resource.js";
 import AdminNotificationAdminResource from "./resources/admin-notification.resource.js";
 import MockTestCourseAdminResource from "./resources/mock-test-course.resource.js";
@@ -95,6 +96,7 @@ import MockQuestionAdminResource from "./resources/mock-question.resource.js";
 import MockTestAdminResource from "./resources/mock-test.resource.js";
 import MockTestResultAdminResource from "./resources/mock-test-result.resource.js";
 import QuestionBankAdminResource from "./resources/question-bank.resource.js";
+import BookAdminResource from "./resources/book.resource.js";
 import {
   CreateAdminResultExam,
   DeleteResultExamSet,
@@ -983,6 +985,10 @@ const startAdminPanel = async () => {
     options: {
       navigation: contentNavigation,
       properties: {
+        slug: {
+          label: "Public URL slug",
+          isVisible: { list: false, filter: false, show: true, edit: false },
+        },
         descriptionFormatted: {
           label: "Formatted Description",
           components: richTextEditComponent,
@@ -2262,6 +2268,7 @@ const startAdminPanel = async () => {
     AdminNotificationAdminResource,
     SeoHashtagAdminResource,
     BlogAdminResource,
+    BookAdminResource,
     mergeResourceOptions(NoticeAdminResource, {
       navigation: contentNavigation,
     }),
@@ -2296,7 +2303,7 @@ const startAdminPanel = async () => {
         },
       },
     }),
-    mergeResourceOptions(UniversityFileModel, {
+    mergeResourceOptions(UniversityAdminResource, {
       navigation: contentNavigation,
     }),
     LandingAdAdminResource,

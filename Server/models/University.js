@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { Schema } from "mongoose";
+import { addSlugField } from "../utils/slug.js";
 
 export const UniversitySchema = new mongoose.Schema({
   // Basic Information
@@ -23,7 +24,13 @@ export const UniversitySchema = new mongoose.Schema({
 
   // Media
   universityLogo: String,
+  universityLogoMimeType: String,
+  universityLogoFilename: String,
+  universityLogoSize: Number,
   universityCover: String,
+  universityCoverMimeType: String,
+  universityCoverFilename: String,
+  universityCoverSize: Number,
 
   // Content Management
   admissionNotice: {
@@ -59,8 +66,14 @@ export const UniversitySchema = new mongoose.Schema({
     default: ""
   },
   chancellorImage: String,
+  chancellorImageMimeType: String,
+  chancellorImageFilename: String,
+  chancellorImageSize: Number,
   keyFeatures: [String],
   gallery: [String],
+  galleryMimeType: [String],
+  galleryFilename: [String],
+  gallerySize: [Number],
   googleMapUrl: {
     type: String,
     default: ""
@@ -96,6 +109,8 @@ export const UniversitySchema = new mongoose.Schema({
     default: Date.now
   }
 });
+
+addSlugField(UniversitySchema, "universityName");
 
 // Update the updatedAt field before saving
 UniversitySchema.pre('save', function(next) {

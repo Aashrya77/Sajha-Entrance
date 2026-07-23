@@ -53,6 +53,11 @@ export const advertisementAPI = {
   getForPage: (page) => API.get(`/advertisements?page=${encodeURIComponent(page)}`),
 };
 
+export const bookAPI = {
+  getAllBooks: () => publicAPI.get('/books'),
+  getBookById: (id) => publicAPI.get(`/book/${encodeURIComponent(id)}`),
+};
+
 // Course API
 export const courseAPI = {
   getAllCourses: () => API.get('/courses'),

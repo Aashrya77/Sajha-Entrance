@@ -1,8 +1,8 @@
 import Course from "../models/Course.js";
 import Advertisement from "../models/Advertisement.js";
 import Popup from "../models/Popup.js";
-import mongoose from "mongoose";
 import { getPublicNotice } from "../utils/notice.js";
+import { buildPublicIdentifierFilter } from "../utils/slug.js";
 
 // Helper function to format plain text content
 function formatContent(text) {
@@ -64,15 +64,11 @@ function formatContent(text) {
 
 const CourseDetail = async (req, res) => {
   try {
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      return res.status(404).json({ success: false, error: "Invalid course ID" });
-    }
-    
     const notice = await getPublicNotice();
     const advertisement = await Advertisement.findOne().sort({ _id: -1 }).exec();
     const popup = await Popup.findOne({ isActive: true }).exec();
     
-    const courseData = await Course.findOne({ _id: req.params.id })
+    const courseData = await Course.findOne(buildPublicIdentifierFilter(req.params.id))
       .populate("colleges.collegeDetails")
       .exec();
       
@@ -104,7 +100,7 @@ const CourseDetail = async (req, res) => {
 const GetCourses = async (req, res) => {
   try {
     const courses = await Course.find()
-      .select("title fullForm scholarshipAvailable universityName duration colleges.collegeDetails")
+      .select("title slug fullForm scholarshipAvailable universityName duration colleges.collegeDetails")
       .sort({ title: 1 })
       .lean();
 
