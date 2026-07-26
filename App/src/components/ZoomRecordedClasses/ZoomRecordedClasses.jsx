@@ -182,6 +182,9 @@ const RecordingCard = ({ recording, onOpen, progress = 0 }) => (
 );
 
 const RecordingPlayer = ({ recording, onClose, progress = 0, onProgress }) => {
+  const [playbackError, setPlaybackError] = useState('');
+  const [playbackAttempt, setPlaybackAttempt] = useState(0);
+
   useEffect(() => {
     if (!recording) {
       return undefined;
@@ -197,9 +200,19 @@ const RecordingPlayer = ({ recording, onClose, progress = 0, onProgress }) => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose, recording]);
 
+  useEffect(() => {
+    setPlaybackError('');
+    setPlaybackAttempt(0);
+  }, [recording?.id]);
+
   if (!recording) {
     return null;
   }
+
+  const retryPlayback = () => {
+    setPlaybackError('');
+    setPlaybackAttempt((attempt) => attempt + 1);
+  };
 
   return (
     <div
@@ -238,11 +251,15 @@ const RecordingPlayer = ({ recording, onClose, progress = 0, onProgress }) => {
 
         <div className="zoom-recording-player__video">
           <video
-            key={recording.id}
+            key={`${recording.id}-${playbackAttempt}`}
             src={zoomRecordingAPI.streamUrl(recording.id)}
             controls
             playsInline
             autoPlay
+            onCanPlay={() => setPlaybackError('')}
+            onError={() =>
+              setPlaybackError('The recording could not be loaded. Please retry in a moment.')
+            }
             onLoadedMetadata={(event) => {
               const video = event.currentTarget;
               if (progress > 0 && progress < 95 && Number.isFinite(video.duration)) {
@@ -257,6 +274,16 @@ const RecordingPlayer = ({ recording, onClose, progress = 0, onProgress }) => {
             }}
             onEnded={() => onProgress?.(recording.id, 100, true)}
           />
+          {playbackError && (
+            <div className="zoom-recording-player__error" role="alert">
+              <AlertCircle size={24} strokeWidth={2.1} />
+              <p>{playbackError}</p>
+              <button type="button" onClick={retryPlayback}>
+                <RefreshCw size={16} strokeWidth={2.1} />
+                Retry playback
+              </button>
+            </div>
+          )}
         </div>
 
         {recording.playUrl && (

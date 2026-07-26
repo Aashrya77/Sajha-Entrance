@@ -102,23 +102,21 @@ const syncMeeting = async (meeting) => {
       fileType: file.file_type,
       recordingType: file.recording_type,
       fileSize: file.file_size,
-      playUrl: file.play_url,
-      downloadUrl: file.download_url,
-      thumbnailDownloadUrl: thumbnailFile?.download_url,
-      shareUrl: meeting.share_url,
-      passcode: meeting.recording_play_passcode ?? meeting.password,
+      playUrl: String(file.play_url || ""),
+      downloadUrl: String(file.download_url || ""),
+      thumbnailDownloadUrl: String(thumbnailFile?.download_url || ""),
+      shareUrl: String(meeting.share_url || ""),
+      passcode: String(meeting.recording_play_passcode ?? meeting.password ?? ""),
       source: "zoom",
       syncedAt: new Date(),
-      raw: {
-        meeting,
-        file,
-        thumbnailFile,
-      },
     };
 
     const result = await ZoomRecording.updateOne(
       { zoomFileId: file.id },
-      { $set: update },
+      {
+        $set: update,
+        $unset: { raw: 1 },
+      },
       { upsert: true }
     );
 
@@ -186,6 +184,15 @@ export const syncZoomRecordings = async ({ from, to } = {}) => {
   const windows = buildDateWindows(fromDate, toDate);
   const userIds = getZoomRecordingUserIds();
   const currentZoomFileIds = new Set();
+  const rawCleanupResult = await ZoomRecording.updateMany(
+    {
+      source: "zoom",
+      raw: { $exists: true },
+    },
+    {
+      $unset: { raw: 1 },
+    }
+  );
 
   const summary = {
     users: userIds.length,
@@ -195,6 +202,7 @@ export const syncZoomRecordings = async ({ from, to } = {}) => {
     created: 0,
     updated: 0,
     deleted: 0,
+    rawPayloadsRemoved: rawCleanupResult.modifiedCount || 0,
     removed: [],
     startedAt: new Date(),
     finishedAt: null,

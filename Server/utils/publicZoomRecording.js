@@ -1,3 +1,5 @@
+import { buildZoomRecordingShareUrl } from "./zoomRecordingUrl.js";
+
 export const publicZoomRecording = (recording) => ({
   id: recording._id.toString(),
   title: recording.title,
@@ -9,7 +11,11 @@ export const publicZoomRecording = (recording) => ({
   fileType: recording.fileType,
   recordingType: recording.recordingType,
   fileSize: recording.fileSize,
-  playUrl: recording.playUrl,
+  playUrl: buildZoomRecordingShareUrl({
+    shareUrl: recording.shareUrl,
+    playUrl: recording.playUrl,
+    passcode: recording.passcode,
+  }),
   source: recording.source,
   hasThumbnail: Boolean(recording.thumbnailDownloadUrl),
   createdAt: recording.createdAt,
