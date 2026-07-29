@@ -26,6 +26,16 @@ const AdminUserSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    passwordResetToken: {
+      type: String,
+      default: undefined,
+      select: false,
+    },
+    passwordResetExpires: {
+      type: Date,
+      default: undefined,
+      select: false,
+    },
     role: {
       type: String,
       enum: ["super_admin", "admin", "manager", "viewer"],

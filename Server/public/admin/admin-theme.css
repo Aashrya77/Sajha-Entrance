@@ -344,6 +344,56 @@ select:focus {
   color: var(--admin-muted-soft);
 }
 
+.sajha-login-card__password {
+  position: relative;
+}
+
+.sajha-login-card__password .adminjs_Input {
+  width: 100%;
+  padding-right: 68px;
+}
+
+.sajha-login-card__password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--admin-brand);
+  font: inherit;
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.sajha-login-card__password-toggle svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sajha-login-card__forgot {
+  align-self: flex-end;
+  margin: -6px 2px 2px;
+  color: var(--admin-brand);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.sajha-login-card__forgot:hover {
+  text-decoration: underline;
+}
+
 .sajha-login-card__submit {
   width: 100%;
   min-height: 54px;

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Eye, EyeOff } from 'lucide-react';
 import { authAPI } from '../../api/services';
 import '../../components/FormDesign/Form.css';
 import adsImage from '../../components/FormDesign/ads.jpg';
@@ -15,6 +16,7 @@ const StudentLogin = ({ setStudentData, setIsAuthenticated }) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -88,17 +90,30 @@ const StudentLogin = ({ setStudentData, setIsAuthenticated }) => {
               <span>Email</span>
             </label>
 
-            <label>
+            <label className="password-field">
               <input
                 required
                 placeholder=""
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 className="input"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
               />
               <span>Password</span>
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword((visible) => !visible)}
+                aria-pressed={showPassword}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? (
+                  <EyeOff size={19} aria-hidden="true" />
+                ) : (
+                  <Eye size={19} aria-hidden="true" />
+                )}
+              </button>
             </label>
 
             <div style={{textAlign: 'right', marginTop: '-5px'}}>

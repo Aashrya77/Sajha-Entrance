@@ -1,11 +1,24 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button, FormGroup, Input, Label, MessageBox } from "@adminjs/design-system";
 import { useTranslation } from "adminjs";
 import { useSelector } from "react-redux";
 import { buildAdminPath } from "../config/paths.js";
 import { adminBrandMeta } from "../config/theme.js";
 
+const PasswordVisibilityIcon = ({ visible }) =>
+  visible ? (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m3 3 18 18M10.6 10.7a2 2 0 0 0 2.7 2.7M9.9 4.2A10.8 10.8 0 0 1 12 4c5.5 0 9 5.9 9 5.9a14.7 14.7 0 0 1-2.1 2.8M6.6 6.6C4.4 8 3 9.9 3 9.9s3.5 5.9 9 5.9c1.2 0 2.3-.3 3.3-.7" />
+    </svg>
+  ) : (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6Z" />
+      <circle cx="12" cy="12" r="2.5" />
+    </svg>
+  );
+
 export default function Login() {
+  const [showPassword, setShowPassword] = useState(false);
   const props = window.__APP_STATE__ || {};
   const { action, errorMessage } = props;
   const { translateMessage } = useTranslation();
@@ -66,13 +79,32 @@ export default function Login() {
 
           <FormGroup>
             <Label required>Password</Label>
-            <Input
-              type="password"
-              name="password"
-              autoComplete="current-password"
-              placeholder="Password"
-            />
+            <div className="sajha-login-card__password">
+              <Input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                autoComplete="current-password"
+                placeholder="Password"
+              />
+              <button
+                type="button"
+                className="sajha-login-card__password-toggle"
+                onClick={() => setShowPassword((visible) => !visible)}
+                aria-pressed={showPassword}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                title={showPassword ? "Hide password" : "Show password"}
+              >
+                <PasswordVisibilityIcon visible={showPassword} />
+              </button>
+            </div>
           </FormGroup>
+
+          <a
+            className="sajha-login-card__forgot"
+            href="/forgot-password?account=admin"
+          >
+            Forgot password?
+          </a>
 
           <Button type="submit" variant="contained" className="sajha-login-card__submit">
             Login

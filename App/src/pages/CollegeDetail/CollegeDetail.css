@@ -258,6 +258,10 @@
 .college-detail-grid__nav {
   grid-area: nav;
   min-width: 0;
+  position: sticky;
+  top: 112px;
+  z-index: 20;
+  align-self: start;
 }
 
 .college-detail-grid__main {
@@ -282,9 +286,7 @@
 }
 
 .college-sidebar-nav {
-  position: sticky;
-  top: 112px;
-  z-index: 20;
+  position: relative;
   overflow: hidden;
 }
 
@@ -743,6 +745,10 @@
     position: relative;
     top: auto;
     margin-bottom: 24px;
+  }
+
+  .college-detail-grid__nav {
+    position: static;
   }
 
   .college-detail-grid {

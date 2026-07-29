@@ -67,8 +67,6 @@ const AdminNotificationAdminResource = {
     filterProperties: ["type", "isRead", "resource", "createdAt"],
     actions: {
       new: { isAccessible: false },
-      delete: { isAccessible: false },
-      bulkDelete: { isAccessible: false },
       edit: {
         before: [syncReadState],
       },

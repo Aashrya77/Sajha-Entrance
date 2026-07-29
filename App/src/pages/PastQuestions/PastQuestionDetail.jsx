@@ -46,7 +46,7 @@ const PastQuestionDetail = () => {
   if (loading) {
     return (
       <main className="past-question-detail">
-        <div className="container past-question-detail__loading">Loading PDF…</div>
+        <div className="container past-question-detail__loading">Loading resource…</div>
       </main>
     );
   }

@@ -1247,10 +1247,6 @@ const startAdminPanel = async () => {
           isAccessible: false,
           isVisible: false,
         },
-        bulkDelete: {
-          isAccessible: false,
-          isVisible: false,
-        },
         edit: {
           before: [validateYouTubeLibraryConfigBeforeEdit],
           after: [refreshLibraryScheduleAfterMutation],
@@ -1489,14 +1485,6 @@ const startAdminPanel = async () => {
           isAccessible: false,
           isVisible: false,
         },
-        delete: {
-          isAccessible: false,
-          isVisible: false,
-        },
-        bulkDelete: {
-          isAccessible: false,
-          isVisible: false,
-        },
       },
       properties: {
         youtubePlaylistId: {
@@ -1571,14 +1559,6 @@ const startAdminPanel = async () => {
       ],
       actions: {
         new: {
-          isAccessible: false,
-          isVisible: false,
-        },
-        delete: {
-          isAccessible: false,
-          isVisible: false,
-        },
-        bulkDelete: {
           isAccessible: false,
           isVisible: false,
         },

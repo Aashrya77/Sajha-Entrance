@@ -217,7 +217,7 @@ const CollegeDetail = () => {
           <div className="college-detail-grid">
             {/* Left Sidebar Navigation */}
             <div className="college-detail-grid__nav d-none d-lg-block">
-              <nav className="college-sidebar-nav sticky-top">
+              <nav className="college-sidebar-nav">
                 <ul className="college-nav-list">
                   {navSections.map((section) => {
                     const SectionIcon = section.icon;

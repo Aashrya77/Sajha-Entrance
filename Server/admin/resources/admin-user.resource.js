@@ -101,6 +101,10 @@ const stripBlankPassword = async (request) => {
 const preventSelfDelete = ({ currentAdmin, record }) =>
   currentAdmin?.id && record?.params?._id && currentAdmin.id !== record.params._id;
 
+const preventBulkSelfDelete = ({ currentAdmin, records = [] }) =>
+  !records.length ||
+  records.every((record) => String(record?.params?._id || "") !== String(currentAdmin?.id || ""));
+
 const permissionEditProperties = ADMIN_PERMISSION_PROPERTY_DESCRIPTORS.map(
   (descriptor) => descriptor.path
 );
@@ -146,6 +150,10 @@ const AdminUserAdminResource = {
       },
       delete: {
         isAccessible: preventSelfDelete,
+      },
+      bulkDelete: {
+        isAccessible: preventBulkSelfDelete,
+        guard: "Delete the selected administrator accounts? Your own account cannot be deleted.",
       },
     },
     properties: {

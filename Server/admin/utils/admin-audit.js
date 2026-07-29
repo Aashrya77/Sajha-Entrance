@@ -56,12 +56,23 @@ const createAuditAfterHook = (actionName, resourceId) => async (response, reques
     return response;
   }
 
-  const record = response.record || context.record;
+  const records = response.records || context.records || [];
+  const record = response.record || context.record || records[0];
   if (!record) {
     return response;
   }
 
   try {
+    if (actionName === "bulkDelete") {
+      await createAdminNotification({
+        title: "Records deleted",
+        message: `${records.length || 1} ${resourceId} record(s) were deleted in bulk.`,
+        type: "warning",
+        resource: resourceId,
+      });
+      return response;
+    }
+
     const notificationPayload = buildNotificationPayload({
       resourceId,
       actionName,

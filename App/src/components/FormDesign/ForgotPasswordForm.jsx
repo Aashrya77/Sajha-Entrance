@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { authAPI } from '../../api/services';
 import './Form.css';
 import adsImage from './ads.jpg';
 import logoImage from './sajha-entrance.png';
 
 const ForgotPasswordForm = () => {
-  const navigate = useNavigate();
   const { token } = useParams();
+  const [searchParams] = useSearchParams();
+  const requestedAccountType = searchParams.get('account') === 'admin' ? 'admin' : 'student';
   const images = [
     adsImage,
     adsImage
@@ -23,6 +24,7 @@ const ForgotPasswordForm = () => {
   const [loading, setLoading] = useState(false);
   const [validatingToken, setValidatingToken] = useState(Boolean(token));
   const [tokenInvalid, setTokenInvalid] = useState(false);
+  const [accountType, setAccountType] = useState(requestedAccountType);
   const isResetMode = Boolean(token);
 
   useEffect(() => {
@@ -46,8 +48,9 @@ const ForgotPasswordForm = () => {
       setTokenInvalid(false);
 
       try {
-        await authAPI.validateResetToken(token);
+        const response = await authAPI.validateResetToken(token);
         if (!ignore) {
+          setAccountType(response.data?.accountType === 'admin' ? 'admin' : 'student');
           setValidatingToken(false);
         }
       } catch (apiError) {
@@ -101,10 +104,16 @@ const ForgotPasswordForm = () => {
           password: formData.password,
         });
         setSuccessMessage(response.data.message || 'Password reset successful. Please sign in.');
-        setTimeout(() => navigate('/student/login'), 1200);
+        const resetAccountType =
+          response.data?.accountType === 'admin' ? 'admin' : accountType;
+        setTimeout(
+          () => window.location.assign(resetAccountType === 'admin' ? '/sajha-admin/login' : '/student/login'),
+          1200
+        );
       } else {
         const response = await authAPI.forgotPassword({
           email: formData.email,
+          accountType,
         });
         setSuccessMessage(
           response.data.message || 'If an account with that email exists, a reset link has been sent.'
@@ -206,8 +215,17 @@ const ForgotPasswordForm = () => {
                   ? (isResetMode ? 'Resetting Password...' : 'Sending Reset Link...')
                   : (isResetMode ? 'Reset Password' : 'Send Reset Link')}
             </button>
-            <p className="signin">Remember your password? <Link to="/student/login">Sign In</Link></p>
-            <p className="signin">Don't have an account? <Link to="/student/register">Register</Link></p>
+            <p className="signin">
+              Remember your password?{' '}
+              {accountType === 'admin' ? (
+                <a href="/sajha-admin/login">Admin Sign In</a>
+              ) : (
+                <Link to="/student/login">Sign In</Link>
+              )}
+            </p>
+            {accountType !== 'admin' ? (
+              <p className="signin">Don't have an account? <Link to="/student/register">Register</Link></p>
+            ) : null}
           </form>
         </div>
       </div>

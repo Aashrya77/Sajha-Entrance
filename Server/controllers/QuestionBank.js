@@ -258,20 +258,26 @@ const QuestionBankUploadMiddleware = (req, res, next) => {
 
 const buildPublicPreviewUrl = (question, resourceKind, index = null) => {
   const encodedSlug = encodeURIComponent(question.slug);
+  const version = encodeURIComponent(
+    new Date(question.updatedAt || question.createdAt || 0).getTime()
+  );
   if (resourceKind === "pdf") {
-    return `/api/question-bank/${encodedSlug}/preview/pdf`;
+    return `/api/question-bank/${encodedSlug}/preview/pdf?v=${version}`;
   }
 
-  return `/api/question-bank/${encodedSlug}/preview/image/${index}`;
+  return `/api/question-bank/${encodedSlug}/preview/image/${index}?v=${version}`;
 };
 
 const buildPublicDownloadUrl = (question, resourceKind, index = null) => {
   const encodedSlug = encodeURIComponent(question.slug);
+  const version = encodeURIComponent(
+    new Date(question.updatedAt || question.createdAt || 0).getTime()
+  );
   if (resourceKind === "pdf") {
-    return `/api/question-bank/${encodedSlug}/download/pdf`;
+    return `/api/question-bank/${encodedSlug}/download/pdf?v=${version}`;
   }
 
-  return `/api/question-bank/${encodedSlug}/download/image/${index}`;
+  return `/api/question-bank/${encodedSlug}/download/image/${index}?v=${version}`;
 };
 
 const serializeQuestionBank = (question = {}, { includeResources = true } = {}) => {
@@ -507,7 +513,6 @@ const sendQuestionBankAsset = async (
     fallbackFilenames = [],
     fallbackSize = null,
     extensions = [],
-    allowSingleMatchFallback = false,
   } = {}
 ) => {
   const originalKey = String(key || "").trim();
@@ -579,7 +584,6 @@ const sendQuestionBankAsset = async (
       {
         extensions,
         size: fallbackSize,
-        allowSingleMatchFallback,
       }
     );
 
@@ -639,7 +643,6 @@ const serveQuestionResource = async (req, res, { resourceKind, download = false 
         fallbackFilenames: [question.pdfFilename],
         fallbackSize: question.pdfSize,
         extensions: [".pdf"],
-        allowSingleMatchFallback: true,
       });
     }
 

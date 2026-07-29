@@ -156,7 +156,7 @@ const buildSearchFilenameVariants = (value = "") => {
 
 const findQuestionBankStorageFile = async (
   values = [],
-  { extensions = [], size = null, allowSingleMatchFallback = false } = {}
+  { extensions = [], size = null } = {}
 ) => {
   const filenames = new Set(
     values
@@ -189,8 +189,6 @@ const findQuestionBankStorageFile = async (
     !allowedExtensions.size ||
     allowedExtensions.has(path.extname(filename).toLowerCase());
 
-  const extensionMatches = [];
-
   const searchDirectory = async (directory) => {
     const entries = await fs.promises.readdir(directory, { withFileTypes: true });
 
@@ -198,8 +196,6 @@ const findQuestionBankStorageFile = async (
       const fullPath = path.join(directory, entry.name);
 
       if (entry.isFile() && matchesExtension(entry.name)) {
-        extensionMatches.push(fullPath);
-
         if (filenames.size && matchesFilename(entry.name)) {
           return fullPath;
         }
@@ -226,10 +222,6 @@ const findQuestionBankStorageFile = async (
   const directMatch = await searchDirectory(questionBankStorageDirectory);
   if (directMatch) {
     return directMatch;
-  }
-
-  if (allowSingleMatchFallback && extensionMatches.length === 1) {
-    return extensionMatches[0];
   }
 
   return null;

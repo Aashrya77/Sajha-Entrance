@@ -120,6 +120,12 @@ const decorateAdminResource = (resource, config = {}) => {
     actions.search = mergeAction(actions.search, buildDefaultSearchAction());
   }
 
+  actions.bulkDelete = mergeAction(actions.bulkDelete, {
+    icon: "Trash2",
+    variant: "danger",
+    guard: "Delete all selected records? This action cannot be undone.",
+  });
+
   const auditEnabled = resourceAccessConfig.audit !== false;
   const actionNames = new Set([
     "list",
@@ -142,7 +148,11 @@ const decorateAdminResource = (resource, config = {}) => {
       isVisible: isBackendOnlyAction(actionName, existingAction) ? false : guard,
     };
 
-    if (auditEnabled && isMutatingPermissionAction(permissionAction) && ["new", "edit", "delete"].includes(actionName)) {
+    if (
+      auditEnabled &&
+      isMutatingPermissionAction(permissionAction) &&
+      ["new", "edit", "delete", "bulkDelete"].includes(actionName)
+    ) {
       additions.after = [createAuditAfterHook(actionName, resourceId)];
     }
 

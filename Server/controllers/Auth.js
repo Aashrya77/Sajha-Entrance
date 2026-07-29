@@ -1,4 +1,5 @@
 import Student from "../models/Student.js";
+import AdminUserModel from "../models/AdminUser.js";
 import OnlineClass from "../models/OnlineClass.js";
 import RecordedClass from "../models/RecordedClass.js";
 import jwt from "jsonwebtoken";
@@ -187,9 +188,16 @@ export const forgotPassword = async (req, res) => {
       return res.status(400).json({ success: false, error: "Email is required." });
     }
 
-    const student = await Student.findOne({ email });
+    const requestedAccountType =
+      String(req.body?.accountType || "").toLowerCase() === "admin" ? "admin" : "student";
+    const account =
+      requestedAccountType === "admin"
+        ? await AdminUserModel.findOne({ email, isActive: true }).select(
+            "+passwordResetToken +passwordResetExpires"
+          )
+        : await Student.findOne({ email });
 
-    if (!student) {
+    if (!account) {
       return res.json({
         success: true,
         message:
@@ -198,18 +206,19 @@ export const forgotPassword = async (req, res) => {
     }
 
     const rawResetToken = crypto.randomBytes(32).toString("hex");
-    student.passwordResetToken = hashResetToken(rawResetToken);
-    student.passwordResetExpires = new Date(Date.now() + PASSWORD_RESET_EXPIRY_MS);
-    await student.save();
+    account.passwordResetToken = hashResetToken(rawResetToken);
+    account.passwordResetExpires = new Date(Date.now() + PASSWORD_RESET_EXPIRY_MS);
+    await account.save();
 
-    const resetUrl = `${buildFrontendUrl(req)}/reset-password/${rawResetToken}`;
+    const resetUrl = `${buildFrontendUrl(req)}/reset-password/${rawResetToken}?account=${requestedAccountType}`;
+    const accountName = requestedAccountType === "admin" ? account.fullName : account.name;
 
     await MailHandler.sendMail({
       from: process.env.MAIL_USERNAME,
-      to: student.email,
+      to: account.email,
       subject: "Reset your Sajha Entrance password",
       text: [
-        `Hello ${student.name},`,
+        `Hello ${accountName},`,
         "",
         "We received a request to reset your Sajha Entrance password.",
         `Open this link to choose a new password: ${resetUrl}`,
@@ -218,7 +227,7 @@ export const forgotPassword = async (req, res) => {
         "If you did not request a password reset, you can ignore this email.",
       ].join("\n"),
       html: `
-        <p>Hello ${student.name},</p>
+        <p>Hello ${accountName},</p>
         <p>We received a request to reset your Sajha Entrance password.</p>
         <p><a href="${resetUrl}">Reset your password</a></p>
         <p>This link will expire in 30 minutes.</p>
@@ -247,16 +256,28 @@ export const validateResetToken = async (req, res) => {
       return res.status(400).json({ success: false, error: "Reset token is required." });
     }
 
-    const student = await Student.findOne({
-      passwordResetToken: hashResetToken(token),
-      passwordResetExpires: { $gt: new Date() },
-    }).select("_id");
+    const tokenHash = hashResetToken(token);
+    const [student, adminUser] = await Promise.all([
+      Student.findOne({
+        passwordResetToken: tokenHash,
+        passwordResetExpires: { $gt: new Date() },
+      }).select("_id"),
+      AdminUserModel.findOne({
+        passwordResetToken: tokenHash,
+        passwordResetExpires: { $gt: new Date() },
+        isActive: true,
+      }).select("_id +passwordResetToken +passwordResetExpires"),
+    ]);
 
-    if (!student) {
+    if (!student && !adminUser) {
       return res.status(400).json({ success: false, error: "Reset link is invalid or has expired." });
     }
 
-    res.json({ success: true, message: "Reset link is valid." });
+    res.json({
+      success: true,
+      message: "Reset link is valid.",
+      accountType: adminUser ? "admin" : "student",
+    });
   } catch (error) {
     console.error("Validate reset token error:", error);
     res.status(500).json({ success: false, error: "Failed to validate reset link." });
@@ -272,23 +293,35 @@ export const resetPassword = async (req, res) => {
       return res.status(400).json({ success: false, error: "Reset token and password are required." });
     }
 
-    const student = await Student.findOne({
-      passwordResetToken: hashResetToken(token),
+    const tokenHash = hashResetToken(token);
+    let account = await Student.findOne({
+      passwordResetToken: tokenHash,
       passwordResetExpires: { $gt: new Date() },
     });
+    let accountType = "student";
 
-    if (!student) {
+    if (!account) {
+      account = await AdminUserModel.findOne({
+        passwordResetToken: tokenHash,
+        passwordResetExpires: { $gt: new Date() },
+        isActive: true,
+      }).select("+passwordResetToken +passwordResetExpires");
+      accountType = "admin";
+    }
+
+    if (!account) {
       return res.status(400).json({ success: false, error: "Reset link is invalid or has expired." });
     }
 
-    student.password = password;
-    student.passwordResetToken = undefined;
-    student.passwordResetExpires = undefined;
-    await student.save();
+    account.password = password;
+    account.passwordResetToken = undefined;
+    account.passwordResetExpires = undefined;
+    await account.save();
 
     res.json({
       success: true,
       message: "Password reset successful. Please log in with your new password.",
+      accountType,
     });
   } catch (error) {
     console.error("Reset password error:", error);
