@@ -22,7 +22,8 @@ const ZoomRecordingSchema = new mongoose.Schema(
     passcode: String,
     source: { type: String, default: "zoom" },
     syncedAt: { type: Date, default: Date.now },
-    raw: mongoose.Schema.Types.Mixed,
+    // Retained in the schema only so resync/playback can $unset legacy raw API payloads.
+    raw: { type: mongoose.Schema.Types.Mixed, select: false },
   },
   { timestamps: true }
 );

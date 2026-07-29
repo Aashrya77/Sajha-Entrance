@@ -5,6 +5,10 @@ import ZoomRecording from "../models/ZoomRecording.js";
 import { publicZoomRecording } from "../utils/publicZoomRecording.js";
 import { fetchZoomRecordingFile } from "../services/zoomRecordingClient.js";
 import {
+  normalizeZoomPlaybackError,
+  openZoomRecordingStream,
+} from "../services/zoomRecordingPlayback.js";
+import {
   getZoomRecordingSyncStatus,
   runZoomRecordingSync,
 } from "../services/zoomRecordingScheduler.js";
@@ -217,18 +221,20 @@ export const streamStudentZoomRecording = async (req, res) => {
       });
     }
 
-    const zoomResponse = await fetchZoomRecordingFile(recording.downloadUrl, {
+    const { response: zoomResponse } = await openZoomRecordingStream(recording, {
       range: req.headers.range,
+      persistMetadata: async (metadata) => {
+        await ZoomRecording.updateOne(
+          { _id: recording._id },
+          {
+            $set: metadata,
+            $unset: { raw: 1 },
+          }
+        );
+      },
     });
 
-    if (!zoomResponse.ok && zoomResponse.status !== 206) {
-      return res.status(zoomResponse.status).json({
-        success: false,
-        error: "Unable to stream recording from Zoom.",
-      });
-    }
-
-    res.status(zoomResponse.status === 206 ? 206 : 200);
+    res.status(zoomResponse.status);
 
     ["accept-ranges", "content-length", "content-range", "last-modified"].forEach(
       (header) => {
@@ -239,10 +245,7 @@ export const streamStudentZoomRecording = async (req, res) => {
       }
     );
 
-    const zoomContentType = zoomResponse.headers.get("content-type");
-    const contentType =
-      recording.fileType === "MP4" ? "video/mp4" : zoomContentType || "application/octet-stream";
-    res.setHeader("Content-Type", contentType);
+    res.setHeader("Content-Type", zoomResponse.headers.get("content-type"));
     res.setHeader("Cache-Control", "private, max-age=300");
 
     if (!zoomResponse.body) {
@@ -251,10 +254,15 @@ export const streamStudentZoomRecording = async (req, res) => {
 
     return Readable.fromWeb(zoomResponse.body).pipe(res);
   } catch (error) {
-    console.error("Zoom recording stream error:", error);
-    res.status(error.status || 500).json({
+    const playbackError = normalizeZoomPlaybackError(error);
+    console.error("Zoom recording stream error:", {
+      code: playbackError.code,
+      upstreamStatus: playbackError.upstreamStatus,
+      message: playbackError.message,
+    });
+    res.status(playbackError.status).json({
       success: false,
-      error: error.message || "Failed to stream Zoom recording.",
+      error: "Unable to play this recording right now. Please retry.",
     });
   }
 };
