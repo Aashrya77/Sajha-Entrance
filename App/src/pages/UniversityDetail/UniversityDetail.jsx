@@ -92,6 +92,8 @@ const UniversityDetail = () => {
   const coverImageUrl = getImageFieldUrl(university, 'universityCover', 'universities');
   const logoImageUrl = getImageFieldUrl(university, 'universityLogo', 'universities');
   const chancellorImageUrl = getImageFieldUrl(university, 'chancellorImage', 'universities');
+  const viceChancellorImageUrl = getImageFieldUrl(university, 'viceChancellorImage', 'universities');
+  const hasViceChancellorSection = Boolean(university.viceChancellorName || university.viceChancellorMessage || viceChancellorImageUrl);
   const galleryImages = getImageList(university, 'gallery', 'universities');
 
   return (
@@ -169,6 +171,17 @@ const UniversityDetail = () => {
                       <GraduationCap size={18} aria-hidden="true" /> Admission
                     </a>
                   </li>
+                  {hasViceChancellorSection && (
+                    <li className="college-nav-item">
+                      <a
+                        href="#vice-chancellor"
+                        className={`college-nav-link ${activeSection === 'vice-chancellor' ? 'active' : ''}`}
+                        onClick={(e) => scrollToSection(e, 'vice-chancellor')}
+                      >
+                        <User size={18} aria-hidden="true" /> Vice Chancellor
+                      </a>
+                    </li>
+                  )}
                   <li className="college-nav-item">
                     <a 
                       href="#about" 
@@ -534,6 +547,28 @@ const UniversityDetail = () => {
                   )}
                   {university.chancellorMessage && (
                     <div className="college-chairman-preview-message" dangerouslySetInnerHTML={{ __html: university.chancellorMessage }} />
+                  )}
+                </div>
+              )}
+
+              {hasViceChancellorSection && (
+                <div className="college-chairman-preview university-section" id="vice-chancellor">
+                  <div className="college-chairman-preview-title">Vice Chancellor</div>
+                  {viceChancellorImageUrl && (
+                    <div className="college-chairman-image-container">
+                      <img
+                        src={viceChancellorImageUrl}
+                        alt={university.viceChancellorName || 'Vice Chancellor'}
+                        className="college-chairman-image"
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
+                  {university.viceChancellorName && (
+                    <div className="college-chairman-preview-name">{university.viceChancellorName}</div>
+                  )}
+                  {university.viceChancellorMessage && (
+                    <div className="college-chairman-preview-message" dangerouslySetInnerHTML={{ __html: university.viceChancellorMessage }} />
                   )}
                 </div>
               )}

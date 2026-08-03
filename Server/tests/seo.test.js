@@ -159,6 +159,47 @@ test("sitemap XML escapes values, removes duplicates, and uses only the producti
   assert(!locations.some((location) => location.endsWith("/") && location !== `${SITEMAP_ORIGIN}/`));
 });
 
+test("page SEO endpoint returns configured metadata for a known path", async () => {
+  const pageSeoModel = {
+    findOne: async ({ pagePath }) => {
+      if (pagePath === "/about") {
+        return {
+          pagePath: "/about",
+          title: "About Sajha Entrance",
+          description: "Learn about Sajha Entrance and its entrance preparation programs.",
+          keywords: "Sajha Entrance, entrance preparation",
+          robots: "index,follow",
+          canonicalUrl: "https://sajhaentrance.org/about",
+          isActive: true,
+        };
+      }
+      return null;
+    },
+  };
+  const app = express();
+  app.use(
+    createSeoRouter({
+      pageSeoModel,
+      routeLogger: { error() {} },
+    })
+  );
+
+  const server = await listen(app);
+
+  try {
+    const response = await request(server, "/api/seo/page?path=/about");
+    const body = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.equal(body.success, true);
+    assert.equal(body.seo?.title, "About Sajha Entrance");
+    assert.equal(body.seo?.description, "Learn about Sajha Entrance and its entrance preparation programs.");
+    assert.equal(body.seo?.robots, "index,follow");
+  } finally {
+    await close(server);
+  }
+});
+
 test("SEO endpoints return the expected content types and status codes", async () => {
   const app = express();
   app.use(

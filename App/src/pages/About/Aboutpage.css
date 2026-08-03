@@ -24,14 +24,6 @@
     font-size: 1.05rem;
 }
 
-.title-underline {
-    width: 60px;
-    height: 4px;
-    background: var(--primary-orange);
-    border-radius: 2px;
-    margin-bottom: 20px;
-}
-
 /* ==========================================================================
    2. Feature Boxes & Rank Holders
    ========================================================================== */

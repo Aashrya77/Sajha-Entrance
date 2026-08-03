@@ -13,7 +13,9 @@ const logoRelativeFile = path.join("img", "adminlogo.png");
 const logoSourceFile = path.join(appPublicDirectory, logoRelativeFile);
 const publicMountPath = buildAdminPath("/brand-assets");
 const fallbackLogoUrl = buildAdminPath("/brand-logo.svg");
-const adminStyleVersion = "admin-rich-text-table-v1";
+const faviconRelativeFile = path.join("img", "meta-logo.png");
+const adminStyleVersion = "admin-action-menu-overflow-v2";
+const adminFaviconVersion = "sajha-mascot-v1";
 const resolvedLogoUrl = fs.existsSync(logoSourceFile)
   ? `${publicMountPath}/${logoRelativeFile.replace(/\\/g, "/")}`
   : fallbackLogoUrl;
@@ -25,7 +27,7 @@ const adminBrandAssets = {
   logoSourceFile,
   logoUrl: resolvedLogoUrl,
   fallbackLogoUrl,
-  faviconUrl: buildAdminPath("/favicon.svg"),
+  faviconUrl: `${publicMountPath}/${faviconRelativeFile.replace(/\\/g, "/")}?v=${adminFaviconVersion}`,
   themeStylesheetUrl: `${buildAdminPath("/admin-theme.css")}?v=${adminStyleVersion}`,
   dashboardStylesheetUrl: `${buildAdminPath("/Dashboard.css")}?v=${adminStyleVersion}`,
 };

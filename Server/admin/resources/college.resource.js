@@ -41,6 +41,18 @@ const chairmanUpload = createSingleImageUpload({
   description: "Upload the portrait displayed alongside the chairman message.",
 });
 
+const viceChancellorUpload = createSingleImageUpload({
+  keyProperty: "viceChancellorImage",
+  propertyBase: "viceChancellorImage",
+  label: "Vice Chancellor image",
+  entityName: "vice chancellor image",
+  storageFolder: "college",
+  publicBaseUrl: "/media/college",
+  uploadPathLabel: "/public/media/college",
+  uploadPath: createPrefixedUploadPath("vice-chancellor"),
+  description: "Upload the portrait displayed with the vice chancellor information.",
+});
+
 const galleryUpload = createMultipleImageUpload({
   keyProperty: "gallery",
   propertyBase: "gallery",
@@ -60,6 +72,7 @@ const CollegeAdminResource = {
     logoUpload.feature,
     coverUpload.feature,
     chairmanUpload.feature,
+    viceChancellorUpload.feature,
     galleryUpload.feature,
   ],
   options: {
@@ -90,6 +103,9 @@ const CollegeAdminResource = {
       "chairmanName",
       "chairmanMessage",
       chairmanUpload.fields.fileProperty,
+      "viceChancellorName",
+      "viceChancellorMessage",
+      viceChancellorUpload.fields.fileProperty,
       "keyFeatures",
       galleryUpload.fields.fileProperty,
       "googleMapUrl",
@@ -115,6 +131,9 @@ const CollegeAdminResource = {
       "chairmanName",
       "chairmanMessage",
       chairmanUpload.fields.fileProperty,
+      "viceChancellorName",
+      "viceChancellorMessage",
+      viceChancellorUpload.fields.fileProperty,
       "keyFeatures",
       galleryUpload.fields.fileProperty,
       "googleMapUrl",
@@ -174,6 +193,14 @@ const CollegeAdminResource = {
       chairmanMessage: {
         type: "richtext",
       },
+      viceChancellorName: {
+        type: "string",
+        label: "Vice Chancellor name",
+      },
+      viceChancellorMessage: {
+        type: "richtext",
+        label: "Vice Chancellor message",
+      },
       keyFeatures: {
         type: "textarea",
       },
@@ -195,6 +222,7 @@ const CollegeAdminResource = {
       ...logoUpload.propertyOptions,
       ...coverUpload.propertyOptions,
       ...chairmanUpload.propertyOptions,
+      ...viceChancellorUpload.propertyOptions,
       ...galleryUpload.propertyOptions,
     },
   },

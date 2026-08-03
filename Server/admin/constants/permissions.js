@@ -119,6 +119,7 @@ export const ADMIN_PERMISSION_RESOURCES = [
   createPermissionResource("admin_users", "Admin Users"),
   createPermissionResource("admin_notifications", "Admin Notifications", ["view", "edit"]),
   createPermissionResource("seo_hashtags", "SEO Hashtags"),
+  createPermissionResource("page_seo", "Page SEO"),
   createPermissionResource("blogs", "Blogs"),
   createPermissionResource("books", "Books"),
   createPermissionResource("notices", "Notices"),
@@ -186,6 +187,9 @@ export const ADMIN_RESOURCE_ACCESS = {
   SeoHashtag: {
     permissionResource: "seo_hashtags",
   },
+  PageSeo: {
+    permissionResource: "page_seo",
+  },
   Blog: {
     permissionResource: "blogs",
   },
@@ -248,6 +252,10 @@ export const ADMIN_RESOURCE_ACCESS = {
   },
   Student: {
     permissionResource: "students",
+    customActionPermissions: {
+      markPaid: "edit",
+      markUnpaid: "edit",
+    },
   },
   OnlineClass: {
     permissionResource: "online_classes",

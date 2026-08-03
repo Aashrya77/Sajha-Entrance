@@ -80,6 +80,7 @@ import MockTestModel, { MockTestAttemptModel } from "../models/MockTest.js";
 import BookOrderModel from "../models/BookOrder.js";
 import InquiryModel from "../models/Inquiry.js";
 import SeoHashtagAdminResource from "./resources/seo-hashtag.resource.js";
+import PageSeoAdminResource from "./resources/page-seo.resource.js";
 import BlogAdminResource from "./resources/blog.resource.js";
 import AdvertisementAdminResource from "./resources/advertisement.resource.js";
 import NoticeAdminResource from "./resources/notice.resource.js";
@@ -1950,6 +1951,34 @@ const startAdminPanel = async () => {
     },
   };
 
+  const createStudentPaymentStatusHandler = (accountStatus) => async (
+    _request,
+    _response,
+    context
+  ) => {
+    const { record, currentAdmin } = context;
+
+    if (!record) {
+      return {
+        record: null,
+        notice: {
+          message: "Student record not found.",
+          type: "error",
+        },
+      };
+    }
+
+    await record.update({ accountStatus });
+
+    return {
+      record: record.toJSON(currentAdmin),
+      notice: {
+        message: `Student marked as ${accountStatus.toLowerCase()}.`,
+        type: "success",
+      },
+    };
+  };
+
   const studentResource = {
     resource: Student,
     options: {
@@ -1980,6 +2009,26 @@ const startAdminPanel = async () => {
           variant: "primary",
           component: Components.StudentsExport,
           showInDrawer: true,
+        },
+        markPaid: {
+          actionType: "record",
+          component: false,
+          icon: "CheckCircle",
+          label: "Mark as Paid",
+          variant: "success",
+          guard: "Mark this student as paid?",
+          isVisible: ({ record }) => record?.params?.accountStatus !== "Paid",
+          handler: createStudentPaymentStatusHandler("Paid"),
+        },
+        markUnpaid: {
+          actionType: "record",
+          component: false,
+          icon: "XCircle",
+          label: "Mark as Unpaid",
+          variant: "danger",
+          guard: "Mark this student as unpaid?",
+          isVisible: ({ record }) => record?.params?.accountStatus === "Paid",
+          handler: createStudentPaymentStatusHandler("Unpaid"),
         },
       },
       properties: {
@@ -2247,6 +2296,7 @@ const startAdminPanel = async () => {
     AdminUserAdminResource,
     AdminNotificationAdminResource,
     SeoHashtagAdminResource,
+    PageSeoAdminResource,
     BlogAdminResource,
     BookAdminResource,
     mergeResourceOptions(NoticeAdminResource, {

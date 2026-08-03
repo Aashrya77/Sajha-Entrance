@@ -69,6 +69,18 @@ export const UniversitySchema = new mongoose.Schema({
   chancellorImageMimeType: String,
   chancellorImageFilename: String,
   chancellorImageSize: Number,
+  viceChancellorName: {
+    type: String,
+    default: ""
+  },
+  viceChancellorMessage: {
+    type: String,
+    default: ""
+  },
+  viceChancellorImage: String,
+  viceChancellorImageMimeType: String,
+  viceChancellorImageFilename: String,
+  viceChancellorImageSize: Number,
   keyFeatures: [String],
   gallery: [String],
   galleryMimeType: [String],

@@ -10,6 +10,7 @@ import { MailHandler } from "./MailHandler.js";
 import { resolveRecordedClassMedia } from "../utils/youtube.js";
 import { resolvePublicFrontendUrl } from "../utils/publicUrl.js";
 import { getCourseRegexMatchers } from "../utils/courseAccess.js";
+import { isAakashSmsConfigured, normalizeNepalMobileNumber, sendAakashSms } from "../services/aakashSmsService.js";
 
 import {
   buildOnlineClassCourseQuery,
@@ -201,7 +202,7 @@ export const forgotPassword = async (req, res) => {
       return res.json({
         success: true,
         message:
-          "If an account with that email exists, a password reset link has been sent.",
+          "If an account with that email exists, reset instructions have been sent to its registered contact details.",
       });
     }
 
@@ -213,7 +214,7 @@ export const forgotPassword = async (req, res) => {
     const resetUrl = `${buildFrontendUrl(req)}/reset-password/${rawResetToken}?account=${requestedAccountType}`;
     const accountName = requestedAccountType === "admin" ? account.fullName : account.name;
 
-    await MailHandler.sendMail({
+    const mailOptions = {
       from: process.env.MAIL_USERNAME,
       to: account.email,
       subject: "Reset your Sajha Entrance password",
@@ -233,18 +234,55 @@ export const forgotPassword = async (req, res) => {
         <p>This link will expire in 30 minutes.</p>
         <p>If you did not request a password reset, you can ignore this email.</p>
       `,
+    };
+    const deliveries = [];
+    const studentMobile = requestedAccountType === "student"
+      ? normalizeNepalMobileNumber(account.phone)
+      : "";
+
+    if (studentMobile && isAakashSmsConfigured()) {
+      deliveries.push({
+        channel: "SMS",
+        promise: sendAakashSms({
+          to: studentMobile,
+          text: `Sajha Entrance password reset: ${resetUrl} Expires in 30 minutes.`,
+        }),
+      });
+    }
+
+    if (process.env.MAIL_USERNAME && process.env.MAIL_PASSWORD) {
+      deliveries.push({ channel: "email", promise: MailHandler.sendMail(mailOptions) });
+    }
+
+    if (!deliveries.length) {
+      throw new Error("No password reset delivery channel is configured for this account.");
+    }
+
+    const deliveryResults = await Promise.allSettled(
+      deliveries.map(({ promise }) => promise)
+    );
+    deliveryResults.forEach((result, index) => {
+      if (result.status === "rejected") {
+        console.warn(
+          `Password reset ${deliveries[index].channel} delivery failed:`,
+          result.reason?.message || result.reason
+        );
+      }
     });
+    if (!deliveryResults.some((result) => result.status === "fulfilled")) {
+      throw new Error("All password reset delivery channels failed.");
+    }
 
     res.json({
       success: true,
       message:
-        "If an account with that email exists, a password reset link has been sent.",
+        "If an account with that email exists, reset instructions have been sent to its registered contact details.",
     });
   } catch (error) {
     console.error("Forgot password error:", error);
     res.status(500).json({
       success: false,
-      error: "Failed to send reset email. Please try again.",
+      error: "Failed to send password reset instructions. Please try again.",
     });
   }
 };

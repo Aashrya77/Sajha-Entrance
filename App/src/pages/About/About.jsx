@@ -131,7 +131,6 @@ const About = () => {
         <div className="row align-items-center mt-5">
           <div className="col-lg-6">
             <h2 className="section-title">Welcome to Sajha Entrance</h2>
-            <div className="title-underline"></div>
             <p className="mt-4 about-text">
               Sajha Entrance is a leading IT-based educational hub dedicated to preparing students for competitive entrance examinations and building strong technical careers.
               We specialize in <strong>BSc.CSIT, BIT, BCA, CMAT & BCS.IT</strong> entrance preparation, providing both online and physical classes with structured courses, weekly mock tests, and performance-based rewards.

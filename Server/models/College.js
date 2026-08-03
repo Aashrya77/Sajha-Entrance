@@ -65,6 +65,18 @@ export const CollegeSchema = new mongoose.Schema({
   chairmanImageMimeType: String,
   chairmanImageFilename: String,
   chairmanImageSize: Number,
+  viceChancellorName: {
+    type: String,
+    default: ""
+  },
+  viceChancellorMessage: {
+    type: String,
+    default: ""
+  },
+  viceChancellorImage: String,
+  viceChancellorImageMimeType: String,
+  viceChancellorImageFilename: String,
+  viceChancellorImageSize: Number,
   keyFeatures: [String],
   gallery: [String],
   galleryMimeType: [String],

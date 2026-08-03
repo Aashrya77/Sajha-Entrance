@@ -41,6 +41,18 @@ const chancellorUpload = createSingleImageUpload({
   description: "Upload the portrait displayed with the chancellor information.",
 });
 
+const viceChancellorUpload = createSingleImageUpload({
+  keyProperty: "viceChancellorImage",
+  propertyBase: "viceChancellorImage",
+  label: "Vice Chancellor image",
+  entityName: "vice chancellor image",
+  storageFolder: "university",
+  publicBaseUrl: "/media/university",
+  uploadPathLabel: "/public/media/university",
+  uploadPath: createPrefixedUploadPath("vice-chancellor"),
+  description: "Upload the portrait displayed with the vice chancellor information.",
+});
+
 const galleryUpload = createMultipleImageUpload({
   keyProperty: "gallery",
   propertyBase: "gallery",
@@ -60,6 +72,7 @@ const UniversityAdminResource = {
     logoUpload.feature,
     coverUpload.feature,
     chancellorUpload.feature,
+    viceChancellorUpload.feature,
     galleryUpload.feature,
   ],
   options: {
@@ -90,6 +103,9 @@ const UniversityAdminResource = {
       "chancellorName",
       "chancellorMessage",
       chancellorUpload.fields.fileProperty,
+      "viceChancellorName",
+      "viceChancellorMessage",
+      viceChancellorUpload.fields.fileProperty,
       "keyFeatures",
       galleryUpload.fields.fileProperty,
       "googleMapUrl",
@@ -116,6 +132,9 @@ const UniversityAdminResource = {
       "chancellorName",
       "chancellorMessage",
       chancellorUpload.fields.fileProperty,
+      "viceChancellorName",
+      "viceChancellorMessage",
+      viceChancellorUpload.fields.fileProperty,
       "keyFeatures",
       galleryUpload.fields.fileProperty,
       "googleMapUrl",
@@ -182,6 +201,14 @@ const UniversityAdminResource = {
       chancellorMessage: {
         type: "richtext",
       },
+      viceChancellorName: {
+        type: "string",
+        label: "Vice Chancellor name",
+      },
+      viceChancellorMessage: {
+        type: "richtext",
+        label: "Vice Chancellor message",
+      },
       keyFeatures: {
         type: "textarea",
       },
@@ -206,6 +233,7 @@ const UniversityAdminResource = {
       ...logoUpload.propertyOptions,
       ...coverUpload.propertyOptions,
       ...chancellorUpload.propertyOptions,
+      ...viceChancellorUpload.propertyOptions,
       ...galleryUpload.propertyOptions,
     },
   },

@@ -119,7 +119,9 @@ const CollegeDetail = () => {
   const coverImageUrl = getImageFieldUrl(college, 'collegeCover', 'colleges');
   const logoImageUrl = getImageFieldUrl(college, 'collegeLogo', 'colleges');
   const chairmanImageUrl = getImageFieldUrl(college, 'chairmanImage', 'colleges');
+  const viceChancellorImageUrl = getImageFieldUrl(college, 'viceChancellorImage', 'colleges');
   const hasChairmanSection = Boolean(college.chairmanName || college.chairmanMessage || chairmanImageUrl);
+  const hasViceChancellorSection = Boolean(college.viceChancellorName || college.viceChancellorMessage || viceChancellorImageUrl);
   const navSections = [
     courses && courses.length > 0 && {
       id: 'programs',
@@ -134,6 +136,7 @@ const CollegeDetail = () => {
     college.scholarshipInfo && { id: 'scholarship', icon: Banknote, label: 'Scholarship' },
     galleryImages.length > 0 && { id: 'gallery', icon: Image, label: 'Gallery' },
     hasChairmanSection && { id: 'chairman', icon: User, label: 'Chairman' },
+    hasViceChancellorSection && { id: 'vice-chancellor', icon: User, label: 'Vice Chancellor' },
   ].filter(Boolean);
 
   const heroStyle = coverImageUrl
@@ -454,6 +457,28 @@ const CollegeDetail = () => {
                   )}
                   {college.chairmanMessage && (
                     <div className="college-chairman-preview-message" dangerouslySetInnerHTML={{ __html: college.chairmanMessage }} />
+                  )}
+                </div>
+              )}
+
+              {hasViceChancellorSection && (
+                <div className="college-chairman-preview" id="vice-chancellor" data-nav-section>
+                  <div className="college-chairman-preview-title">Vice Chancellor</div>
+                  {viceChancellorImageUrl && (
+                    <div className="college-chairman-image-container">
+                      <img
+                        src={viceChancellorImageUrl}
+                        alt={college.viceChancellorName || 'Vice Chancellor'}
+                        className="college-chairman-image"
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
+                  {college.viceChancellorName && (
+                    <div className="college-chairman-preview-name">{college.viceChancellorName}</div>
+                  )}
+                  {college.viceChancellorMessage && (
+                    <div className="college-chairman-preview-message" dangerouslySetInnerHTML={{ __html: college.viceChancellorMessage }} />
                   )}
                 </div>
               )}

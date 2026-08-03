@@ -757,6 +757,27 @@ textarea {
   justify-content: flex-end;
 }
 
+/* Record action menus must be allowed to escape the rounded table surface.
+   AdminJS positions these menus absolutely; clipping the table vertically made
+   edit/delete actions inaccessible on the final rows of every resource list. */
+.adminjs_Table {
+  overflow: visible !important;
+}
+
+.adminjs_Table .options,
+.adminjs_Table .options .adminjs_ButtonGroup,
+.adminjs_Table .options .adminjs_DropDown {
+  position: relative;
+  overflow: visible !important;
+}
+
+.adminjs_Table tbody tr:last-child .adminjs_DropDownMenu,
+.adminjs_Table tbody tr:nth-last-child(2) .adminjs_DropDownMenu {
+  top: auto !important;
+  bottom: 100% !important;
+  z-index: 1000 !important;
+}
+
 [data-css="drawer"],
 .adminjs_Drawer {
   width: min(100vw, 540px) !important;
@@ -1426,5 +1447,181 @@ img[src*="/media/"] {
 
   .sajha-admin-topbar__brandCard img {
     max-width: 118px !important;
+  }
+}
+
+/* Shared responsive contract for every standard AdminJS resource screen.
+   Resource-specific data-css values always end in these action element names,
+   so this covers all current and future dashboard tabs without per-model CSS. */
+[data-css$="-list-table-wrapper"],
+[data-css$="-show-drawer-content"],
+[data-css$="-edit-drawer-content"],
+[data-css$="-new-drawer-content"],
+[data-css$="-edit-form"],
+[data-css$="-new-form"] {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+[data-css$="-list-table-wrapper"] {
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+[data-css$="-list-table-wrapper"] > .adminjs_Table {
+  width: max-content;
+  min-width: 100%;
+}
+
+/* Keep row actions reachable while a wide resource table scrolls sideways. */
+.adminjs_Table th:last-child,
+.adminjs_Table td.options {
+  position: sticky;
+  right: 0;
+  z-index: 4;
+  background: #fff;
+  box-shadow: -10px 0 16px -16px rgba(15, 23, 42, 0.55);
+}
+
+.adminjs_Table thead th:last-child {
+  z-index: 5;
+  background: #f8fafc;
+}
+
+.adminjs_Table tbody tr:hover td.options {
+  background: #fffaf7;
+}
+
+[data-css="notice-wrapper"] {
+  width: min(100%, 520px);
+  max-width: calc(100vw - 20px);
+}
+
+[data-css="notice-wrapper"] .adminjs_MessageBox {
+  width: 100%;
+  min-width: 0 !important;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.adminjs_Pagination,
+.adminjs_ActionHeader > div,
+.adminjs_ActionHeader .adminjs_ButtonGroup,
+[data-css$="-filter-drawer-footer"] {
+  max-width: 100%;
+}
+
+.adminjs_Pagination {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.adminjs_ValueGroup,
+.adminjs_Section,
+[data-css*="-show-"] {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.adminjs_FormGroup iframe,
+.adminjs_FormGroup .ProseMirror,
+.adminjs_FormGroup [contenteditable="true"] {
+  max-width: 100%;
+}
+
+@media (max-width: 767px) {
+  [data-css="app-content"] {
+    scrollbar-gutter: auto;
+  }
+
+  [data-css$="-list-table-wrapper"] {
+    padding: 16px 12px 22px !important;
+    border-radius: 16px;
+  }
+
+  [data-css$="-list-table-wrapper"] .adminjs_Table table {
+    min-width: 620px;
+  }
+
+  .adminjs_ActionHeader > div {
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+
+  .adminjs_ActionHeader .adminjs_ButtonGroup {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .adminjs_ActionHeader .adminjs_ButtonGroup .adminjs_Button,
+  .adminjs_ActionHeader .adminjs_ButtonGroup .adminjs_ButtonGroupItem {
+    flex: 1 1 140px;
+  }
+
+  [data-css$="-show-drawer-content"],
+  [data-css$="-edit-drawer-content"],
+  [data-css$="-new-drawer-content"],
+  [data-css$="-filter-drawer-content"] {
+    padding: 22px 16px 18px !important;
+  }
+
+  [data-css$="-edit-form"],
+  [data-css$="-new-form"] {
+    min-height: 100%;
+  }
+
+  [data-css$="-filter-drawer-footer"],
+  [data-css$="-edit-drawer-footer"],
+  [data-css$="-new-drawer-footer"] {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 16px !important;
+  }
+
+  [data-css$="-filter-drawer-footer"] .adminjs_Button,
+  [data-css$="-edit-drawer-footer"] .adminjs_Button,
+  [data-css$="-new-drawer-footer"] .adminjs_Button {
+    flex: 1 1 160px;
+  }
+
+  .adminjs_FormGroup {
+    margin-bottom: 18px;
+  }
+
+  .adminjs_FormGroup iframe {
+    height: min(52vh, 440px) !important;
+  }
+
+  .college-rich-text-editor__table-picker {
+    right: 0;
+    width: min(206px, calc(100vw - 48px));
+  }
+}
+
+@media (max-width: 480px) {
+  [data-css$="-list-table-wrapper"] .adminjs_Table table {
+    min-width: 560px;
+  }
+
+  .adminjs_ActionHeader .adminjs_ButtonGroup .adminjs_Button,
+  .adminjs_ActionHeader .adminjs_ButtonGroup .adminjs_ButtonGroupItem,
+  [data-css$="-filter-drawer-footer"] .adminjs_Button,
+  [data-css$="-edit-drawer-footer"] .adminjs_Button,
+  [data-css$="-new-drawer-footer"] .adminjs_Button {
+    flex-basis: 100%;
+    width: 100%;
+  }
+
+  .adminjs_Pagination .adminjs_Button {
+    min-width: 40px;
+    min-height: 40px;
+    padding: 8px;
   }
 }

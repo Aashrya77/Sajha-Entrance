@@ -45,6 +45,10 @@ const Components = {
     "DefaultRichtextShowProperty",
     path.join(__dirname, "./components/adminjs/DefaultRichtextShowProperty")
   ),
+  DefaultRichtextEditProperty: componentLoader.override(
+    "DefaultRichtextEditProperty",
+    path.join(__dirname, "./components/RichTextEditor")
+  ),
   DefaultShowProperty: componentLoader.override(
     "DefaultShowProperty",
     path.join(__dirname, "./components/adminjs/DefaultShowProperty")

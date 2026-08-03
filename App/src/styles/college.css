@@ -617,17 +617,6 @@
   position: relative;
 }
 
-.section-title::after {
-  content: '';
-  position: absolute;
-  bottom: -8px;
-  left: 0;
-  width: 40px;
-  height: 3px;
-  background: var(--primary-orange);
-  border-radius: 2px;
-}
-
 .section-content {
   padding: 24px;
 }
@@ -1025,17 +1014,6 @@
   color: #1a365d;
   margin-bottom: 1.5rem;
   position: relative;
-}
-
-.section-title::after {
-  content: '';
-  position: absolute;
-  bottom: -8px;
-  left: 0;
-  width: 60px;
-  height: 3px;
-  background: var(--primary-orange);
-  border-radius: 2px;
 }
 
 .admission-notices {

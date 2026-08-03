@@ -116,7 +116,7 @@ const ForgotPasswordForm = () => {
           accountType,
         });
         setSuccessMessage(
-          response.data.message || 'If an account with that email exists, a reset link has been sent.'
+          response.data.message || 'If an account with that email exists, reset instructions have been sent.'
         );
       }
     } catch (apiError) {
@@ -146,7 +146,7 @@ const ForgotPasswordForm = () => {
             <p className="message" style={{fontWeight: '350' , marginTop: '-19px'}}>
               {isResetMode
                 ? 'Choose a new password for your account.'
-                : 'Enter your email to receive a password reset link.'}
+                : 'Enter your email to receive reset instructions by SMS or email.'}
             </p>
 
             {error && (

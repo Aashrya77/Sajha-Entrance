@@ -7,6 +7,7 @@ import App from './App';
 import { BrowserRouter } from 'react-router-dom';
 import { loadGoogleAnalytics } from './analytics';
 import SeoHashtags from './components/Seo/SeoHashtags';
+import PageSeo from './components/Seo/PageSeo';
 
 loadGoogleAnalytics();
 
@@ -20,6 +21,7 @@ root.render(
       }}
     >
       <SeoHashtags />
+      <PageSeo />
       <App />
     </BrowserRouter>
   </React.StrictMode>
