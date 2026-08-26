@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import compression from "compression";
+import helmet from "helmet";
 import fs from "fs";
 import path from "path";
 
@@ -29,6 +30,7 @@ import SeoRoutes from "./routes/Seo.js";
 import { adminBrandAssets } from "./admin/config/branding.js";
 import { ADMIN_ROOT_PATH } from "./admin/config/paths.js";
 import { createLogger } from "./utils/logger.js";
+import { globalApiLimiter } from "./middleware/rateLimiters.js";
 import {
   findLegacyMediaFile,
   MEDIA_TYPES,
@@ -83,6 +85,13 @@ if (isProduction) {
 }
 
 // ================= GLOBAL MIDDLEWARE =================
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+  })
+);
+
 app.use(
   cors({
     origin: [
@@ -233,8 +242,15 @@ const registerApiRoutes = (router) => {
 const mountPublicApiRoutes = () => {
   const apiRouter = express.Router();
 
-  apiRouter.use(express.json());
-  apiRouter.use(express.urlencoded({ extended: true }));
+  apiRouter.use("/api", globalApiLimiter);
+  apiRouter.use(express.json({ limit: process.env.JSON_BODY_LIMIT || "100kb" }));
+  apiRouter.use(
+    express.urlencoded({
+      extended: true,
+      limit: process.env.URLENCODED_BODY_LIMIT || "100kb",
+      parameterLimit: 100,
+    })
+  );
 
   registerApiRoutes(apiRouter);
 

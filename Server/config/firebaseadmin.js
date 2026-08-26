@@ -26,4 +26,8 @@ if (existsSync(keyPath)) {
   console.warn("Firebase admin will not be initialized. Some features may not work.");
 }
 
+export const firebaseAdminClient = {
+  verifyIdToken: (token) => admin.auth().verifyIdToken(token),
+};
+
 export default admin;

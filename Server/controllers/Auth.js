@@ -4,7 +4,7 @@ import OnlineClass from "../models/OnlineClass.js";
 import RecordedClass from "../models/RecordedClass.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
-import admin from "../config/firebaseAdmin.js";
+import { firebaseAdminClient } from "../config/firebaseadmin.js";
 import { getClassStatus } from "./Class.js";
 import { MailHandler } from "./MailHandler.js";
 import { resolveRecordedClassMedia } from "../utils/youtube.js";
@@ -39,6 +39,8 @@ const hashResetToken = (token) =>
 
 const resolveStudentCourseForResponse = (value = "") =>
   normalizeStudentCourse(value) || String(value || "").trim();
+
+const normalizeEmail = (value = "") => String(value || "").trim().toLowerCase();
 
 const getDuplicateKeyField = (error) => {
   const keyPatternField = Object.keys(error?.keyPattern || {})[0];
@@ -554,19 +556,26 @@ export const firebaseLogin = async (req, res) => {
       });
     }
 
-    const decoded =
-      await admin.auth().verifyIdToken(firebaseToken);
+    const decoded = await firebaseAdminClient.verifyIdToken(firebaseToken);
+    const firebaseEmail = normalizeEmail(decoded.email);
 
-    let student = await Student.findOne({
-      email: decoded.email,
+    if (!firebaseEmail) {
+      return res.status(403).json({
+        success: false,
+        code: "REGISTRATION_REQUIRED",
+        error: "Student registration is required before Firebase login.",
+      });
+    }
+
+    const student = await Student.findOne({
+      email: firebaseEmail,
     });
 
     if (!student) {
-      student = await createStudentWithRetry({
-        name: decoded.name || "Student",
-        email: decoded.email,
-        password: Math.random().toString(36),
-        course: "NEB Preparation",
+      return res.status(403).json({
+        success: false,
+        code: "REGISTRATION_REQUIRED",
+        error: "Student registration is required before Firebase login.",
       });
     }
 

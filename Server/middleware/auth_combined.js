@@ -1,10 +1,13 @@
 import jwt from "jsonwebtoken";
-import admin from "../config/firebaseAdmin.js";
+import { firebaseAdminClient } from "../config/firebaseadmin.js";
 import Student from "../models/Student.js";
 import { createLogger } from "../utils/logger.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 const logger = createLogger("auth");
+const REGISTRATION_REQUIRED_CODE = "REGISTRATION_REQUIRED";
+
+const normalizeEmail = (value = "") => String(value || "").trim().toLowerCase();
 
 const getRequestToken = (req) => {
   const authHeader = req.headers.authorization || req.headers.Authorization;
@@ -30,20 +33,19 @@ const attachStudentFromToken = async (req, token) => {
   } catch (_error) {}
 
   try {
-    const firebaseUser = await admin.auth().verifyIdToken(token);
+    const firebaseUser = await firebaseAdminClient.verifyIdToken(token);
+    const firebaseEmail = normalizeEmail(firebaseUser.email);
 
-    let student = await Student.findOne({
-      email: firebaseUser.email,
+    if (!firebaseEmail) {
+      return REGISTRATION_REQUIRED_CODE;
+    }
+
+    const student = await Student.findOne({
+      email: firebaseEmail,
     });
 
     if (!student) {
-      student = await Student.create({
-        email: firebaseUser.email,
-        password: Math.random().toString(36),
-        name: firebaseUser.name || firebaseUser.email.split("@")[0],
-        course: "BSc.CSIT",
-      });
-
+      return REGISTRATION_REQUIRED_CODE;
     }
 
     req.student = {
@@ -71,8 +73,18 @@ export const authenticateAny = async (req, res, next) => {
       });
     }
 
-    if (await attachStudentFromToken(req, token)) {
+    const authResult = await attachStudentFromToken(req, token);
+
+    if (authResult === true) {
       return next();
+    }
+
+    if (authResult === REGISTRATION_REQUIRED_CODE) {
+      return res.status(403).json({
+        success: false,
+        code: REGISTRATION_REQUIRED_CODE,
+        error: "Student registration is required before accessing this resource.",
+      });
     }
 
     return res.status(401).json({
@@ -94,7 +106,11 @@ export const optionalAuthenticateAny = async (req, _res, next) => {
     const { token } = getRequestToken(req);
 
     if (token) {
-      await attachStudentFromToken(req, token);
+      const authResult = await attachStudentFromToken(req, token);
+      if (authResult !== true) {
+        req.student = null;
+        req.authType = null;
+      }
     }
   } catch (_error) {
     req.student = null;

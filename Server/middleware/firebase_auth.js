@@ -1,4 +1,4 @@
-import admin from "../config/firebaseAdmin.js";
+import admin from "../config/firebaseadmin.js";
 
 export const authenticateFirebase = async (
   req,
