@@ -21,6 +21,8 @@ const adminResourceLabels = Object.freeze({
   AdminUser: "Admin Users",
   AdminNotification: "Notifications",
   Blog: "Blogs",
+  News: "News",
+  Event: "Events",
   Book: "Books",
   Notice: "Notices",
   Advertisement: "Advertisements",

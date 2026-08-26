@@ -10,8 +10,6 @@ import express from "express";
 import { isIndexablePath } from "../../App/src/components/Seo/routeIndexing.js";
 import {
   PUBLIC_BOOK_IDS,
-  PUBLIC_EVENTS,
-  PUBLIC_NEWS_ITEMS,
 } from "../constants/publicSeoContent.js";
 import { createSeoRouter, ROBOTS_TXT } from "../routes/Seo.js";
 import {
@@ -65,16 +63,17 @@ test("robots.txt matches the Vite public asset without hiding noindex HTML route
   );
 });
 
-test("static sitemap entries include public pages and exclude expired events", () => {
+test("static sitemap entries include public pages without hardcoded CMS detail records", () => {
   const entries = getStaticSitemapEntries(new Date("2026-07-17T00:00:00.000Z"));
   const paths = new Set(entries.map((entry) => entry.path));
 
   assert(paths.has("/"));
   assert(paths.has("/mocktests"));
   assert(paths.has("/past-questions"));
-  assert(paths.has("/events/teacher-training-program"));
-  assert(paths.has("/events/nelta-international-conference"));
-  assert(!paths.has("/events/mock-test-championship"));
+  assert(paths.has("/news"));
+  assert(paths.has("/events"));
+  assert(![...paths].some((value) => value.startsWith("/news/")));
+  assert(![...paths].some((value) => value.startsWith("/events/")));
   assert(!paths.has("/results"));
   assert(!paths.has("/dashboard"));
   assert(![...paths].some((value) => value.startsWith("/student/")));
@@ -100,6 +99,19 @@ test("published past-question sitemap source excludes drafts", () => {
     }).path,
     "/past-questions/public-question"
   );
+});
+
+test("News and Event sitemap sources include only public published records", () => {
+  const newsSource = DYNAMIC_SITEMAP_SOURCES.find((source) => source.name === "news");
+  const eventSource = DYNAMIC_SITEMAP_SOURCES.find((source) => source.name === "events");
+
+  assert.equal(newsSource?.filter()?.status, "published");
+  assert.match(JSON.stringify(newsSource?.filter()), /publishedAt|publishAt/);
+  assert.equal(newsSource.toEntry({ slug: "public-news", updatedAt: "2026-08-01" }).path, "/news/public-news");
+
+  assert.equal(eventSource?.filter()?.status, "published");
+  assert.match(JSON.stringify(eventSource?.filter()), /publishedAt|publishAt/);
+  assert.equal(eventSource.toEntry({ slug: "public-event", startAt: "2026-09-01" }).path, "/events/public-event");
 });
 
 test("public routes are indexable and private or utility routes are noindex", () => {
@@ -253,43 +265,15 @@ test("sitemap endpoint safely returns static XML when dynamic generation fails",
   }
 });
 
-test("frontend-owned SEO IDs stay synchronized with the sitemap constants", () => {
-  const newsSource = fs.readFileSync(
-    path.join(repositoryRoot, "App/src/pages/News/News.jsx"),
-    "utf8"
-  );
-  const eventSource = fs.readFileSync(
-    path.join(repositoryRoot, "App/src/pages/Event/Event.jsx"),
-    "utf8"
-  );
+test("frontend-owned book IDs stay synchronized with the sitemap constants", () => {
   const bookSource = fs.readFileSync(
     path.join(repositoryRoot, "App/src/data/booksData.js"),
     "utf8"
   );
 
-  const newsIds = [...newsSource.matchAll(/^\s+id: ['"]([^'"]+)['"],$/gm)].map(
-    (match) => match[1]
-  );
-  const newsDates = [
-    ...newsSource.matchAll(/^\s+createdAt: ['"]([^'"]+)['"],$/gm),
-  ].map((match) => match[1]);
-  const eventIds = [...eventSource.matchAll(/^\s+id: ['"]([^'"]+)['"],$/gm)].map(
-    (match) => match[1]
-  );
-  const eventStartDates = [
-    ...eventSource.matchAll(/^\s+startAt: ['"]([^'"]+)['"],$/gm),
-  ].map((match) => match[1]);
-  const eventEndDates = [
-    ...eventSource.matchAll(/^\s+endAt: ['"]([^'"]+)['"],$/gm),
-  ].map((match) => match[1]);
   const bookSlugs = [
     ...bookSource.matchAll(/^\s+slug:\s*["']([^"']+)["'],$/gm),
   ].map((match) => match[1]);
 
-  assert.deepEqual(newsIds, PUBLIC_NEWS_ITEMS.map((item) => item.id));
-  assert.deepEqual(newsDates, PUBLIC_NEWS_ITEMS.map((item) => item.createdAt));
-  assert.deepEqual(eventIds, PUBLIC_EVENTS.map((item) => item.id));
-  assert.deepEqual(eventStartDates, PUBLIC_EVENTS.map((item) => item.startAt));
-  assert.deepEqual(eventEndDates, PUBLIC_EVENTS.map((item) => item.endAt));
   assert.deepEqual(bookSlugs, PUBLIC_BOOK_IDS);
 });

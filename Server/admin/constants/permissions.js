@@ -109,9 +109,11 @@ const isLegacyPermissionShape = (permissions = {}) =>
 
 export const ADMIN_PERMISSION_ACTIONS = [
   { key: "view", label: "View" },
+  { key: "create", label: "Create" },
   { key: "add", label: "Add" },
   { key: "edit", label: "Edit" },
   { key: "delete", label: "Delete" },
+  { key: "publish", label: "Publish" },
 ];
 
 export const ADMIN_PERMISSION_RESOURCES = [
@@ -121,6 +123,8 @@ export const ADMIN_PERMISSION_RESOURCES = [
   createPermissionResource("seo_hashtags", "SEO Hashtags"),
   createPermissionResource("page_seo", "Page SEO"),
   createPermissionResource("blogs", "Blogs"),
+  createPermissionResource("news", "News", ["view", "create", "edit", "delete", "publish"]),
+  createPermissionResource("events", "Events", ["view", "create", "edit", "delete", "publish"]),
   createPermissionResource("books", "Books"),
   createPermissionResource("notices", "Notices"),
   createPermissionResource("advertisements", "Advertisements"),
@@ -192,6 +196,22 @@ export const ADMIN_RESOURCE_ACCESS = {
   },
   Blog: {
     permissionResource: "blogs",
+  },
+  News: {
+    permissionResource: "news",
+    customActionPermissions: {
+      new: "create",
+      publish: "publish",
+      unpublish: "publish",
+    },
+  },
+  Event: {
+    permissionResource: "events",
+    customActionPermissions: {
+      new: "create",
+      publish: "publish",
+      unpublish: "publish",
+    },
   },
   Book: {
     permissionResource: "books",

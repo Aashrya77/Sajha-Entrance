@@ -28,7 +28,7 @@ export const slugifyText = (value = "") =>
     .replace(/-{2,}/g, "-")
     .slice(0, 160);
 
-const findAvailableSlug = async (model, source, excludedId) => {
+export const findAvailableSlug = async (model, source, excludedId) => {
   const baseSlug = slugify(source);
   let candidate = baseSlug;
   let suffix = 2;

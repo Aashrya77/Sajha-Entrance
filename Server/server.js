@@ -13,6 +13,8 @@ import CourseRoutes from "./routes/Course.js";
 import CollegeRoutes from "./routes/College.js";
 import HomeRoutes from "./routes/Home.js";
 import BlogRoutes from "./routes/Blog.js";
+import NewsRoutes from "./routes/News.js";
+import EventRoutes from "./routes/Event.js";
 import AuthRoutes from "./routes/Auth.js";
 import ResultRoutes from "./routes/Result.js";
 import PaymentRoutes from "./routes/Payment.js";
@@ -219,6 +221,8 @@ const registerApiRoutes = (router) => {
 
   router.use("/api", HomeRoutes);
   router.use("/api", BlogRoutes);
+  router.use("/api", NewsRoutes);
+  router.use("/api", EventRoutes);
   router.use("/api", CourseRoutes);
   router.use("/api", CollegeRoutes);
   router.use("/api/student", AuthRoutes);

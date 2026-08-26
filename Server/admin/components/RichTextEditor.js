@@ -14,6 +14,7 @@ const EDITOR_PLUGINS = [
   "code",
   "codesample",
   "fullscreen",
+  "hr",
   "image",
   "link",
   "lists",
@@ -28,7 +29,7 @@ const EDITOR_PLUGINS = [
 const EDITOR_TOOLBAR = [
   "undo redo | blocks fontfamily fontsize | bold italic underline strikethrough",
   "forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent",
-  "link image media table | blockquote codesample charmap | searchreplace visualblocks removeformat",
+  "link unlink image table hr | blockquote codesample charmap | searchreplace visualblocks removeformat",
   "preview code fullscreen",
 ];
 

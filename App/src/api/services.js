@@ -101,6 +101,30 @@ export const blogAPI = {
   getBlogById: (id) => API.get(`/blog/${id}`),
 };
 
+export const newsAPI = {
+  getNews: ({ page = 1, search = '', category = '', limit = 8 } = {}) => {
+    const params = new URLSearchParams();
+    params.append('page', page);
+    params.append('limit', limit);
+    if (search) params.append('search', search);
+    if (category && category !== 'all') params.append('category', category);
+    return publicAPI.get(`/news?${params.toString()}`);
+  },
+  getNewsByIdentifier: (identifier) => publicAPI.get(`/news/${encodeURIComponent(identifier)}`),
+};
+
+export const eventAPI = {
+  getEvents: ({ page = 1, search = '', category = '', limit = 9 } = {}) => {
+    const params = new URLSearchParams();
+    params.append('page', page);
+    params.append('limit', limit);
+    if (search) params.append('search', search);
+    if (category && category !== 'all') params.append('category', category);
+    return publicAPI.get(`/events?${params.toString()}`);
+  },
+  getEventByIdentifier: (identifier) => publicAPI.get(`/events/${encodeURIComponent(identifier)}`),
+};
+
 // Auth API
 export const authAPI = {
   login: (credentials) => API.post('/student/login', credentials),

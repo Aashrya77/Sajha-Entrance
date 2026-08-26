@@ -82,6 +82,8 @@ import InquiryModel from "../models/Inquiry.js";
 import SeoHashtagAdminResource from "./resources/seo-hashtag.resource.js";
 import PageSeoAdminResource from "./resources/page-seo.resource.js";
 import BlogAdminResource from "./resources/blog.resource.js";
+import NewsAdminResource from "./resources/news.resource.js";
+import EventAdminResource from "./resources/event.resource.js";
 import AdvertisementAdminResource from "./resources/advertisement.resource.js";
 import NoticeAdminResource from "./resources/notice.resource.js";
 import PopupAdminResource from "./resources/popup.resource.js";
@@ -2298,6 +2300,8 @@ const startAdminPanel = async () => {
     SeoHashtagAdminResource,
     PageSeoAdminResource,
     BlogAdminResource,
+    NewsAdminResource,
+    EventAdminResource,
     BookAdminResource,
     mergeResourceOptions(NoticeAdminResource, {
       navigation: contentNavigation,

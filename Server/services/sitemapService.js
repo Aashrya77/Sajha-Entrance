@@ -1,13 +1,11 @@
 import BlogModel from "../models/Blog.js";
 import CollegeModel from "../models/College.js";
 import CourseModel from "../models/Course.js";
+import EventModel from "../models/Event.js";
+import NewsModel from "../models/News.js";
 import QuestionBankModel from "../models/QuestionBank.js";
 import UniversityModel from "../models/University.js";
-import {
-  PUBLIC_BOOK_IDS,
-  PUBLIC_EVENTS,
-  PUBLIC_NEWS_ITEMS,
-} from "../constants/publicSeoContent.js";
+import { PUBLIC_BOOK_IDS } from "../constants/publicSeoContent.js";
 
 export const SITEMAP_ORIGIN = "https://sajhaentrance.org";
 
@@ -65,22 +63,12 @@ export const createSitemapEntry = (path, lastmod) => ({
 });
 
 export const getStaticSitemapEntries = (now = new Date()) => {
-  const nowTimestamp = now.getTime();
   const staticEntries = STATIC_PUBLIC_PATHS.map((path) => createSitemapEntry(path));
-  const newsEntries = PUBLIC_NEWS_ITEMS.map((item) =>
-    createSitemapEntry(`/news/${encodePathSegment(item.id)}`, item.createdAt)
-  );
-  const activeEventEntries = PUBLIC_EVENTS.filter((event) => {
-    const endTimestamp = new Date(event.endAt).getTime();
-    return Number.isFinite(endTimestamp) && endTimestamp >= nowTimestamp;
-  }).map((event) =>
-    createSitemapEntry(`/events/${encodePathSegment(event.id)}`)
-  );
   const bookEntries = PUBLIC_BOOK_IDS.map((id) =>
     createSitemapEntry(`/book/${encodePathSegment(id)}`)
   );
 
-  return [...staticEntries, ...newsEntries, ...activeEventEntries, ...bookEntries];
+  return [...staticEntries, ...bookEntries];
 };
 
 export const DYNAMIC_SITEMAP_SOURCES = [
@@ -106,6 +94,28 @@ export const DYNAMIC_SITEMAP_SOURCES = [
     projection: "_id slug createdAt",
     toEntry: (record) =>
       createSitemapEntry(`/blog/${encodePathSegment(record.slug || record._id)}`, record.createdAt),
+  },
+  {
+    name: "news",
+    model: NewsModel,
+    filter: () => NewsModel.buildPublicFilter(new Date()),
+    projection: "slug legacyId publishedAt publishAt updatedAt createdAt",
+    toEntry: (record) =>
+      createSitemapEntry(
+        `/news/${encodePathSegment(record.slug || record.legacyId)}`,
+        record.updatedAt || record.publishedAt || record.publishAt || record.createdAt
+      ),
+  },
+  {
+    name: "events",
+    model: EventModel,
+    filter: () => EventModel.buildPublicFilter(new Date()),
+    projection: "slug legacyId startAt publishedAt publishAt updatedAt createdAt",
+    toEntry: (record) =>
+      createSitemapEntry(
+        `/events/${encodePathSegment(record.slug || record.legacyId)}`,
+        record.updatedAt || record.startAt || record.publishedAt || record.publishAt || record.createdAt
+      ),
   },
   {
     name: "universities",
@@ -138,8 +148,9 @@ export const DYNAMIC_SITEMAP_SOURCES = [
 ];
 
 const loadDynamicSource = async (source) => {
+  const filter = typeof source.filter === "function" ? source.filter() : source.filter;
   const records = await source.model
-    .find(source.filter, source.projection)
+    .find(filter, source.projection)
     .lean()
     .exec();
 

@@ -69,7 +69,7 @@ const resolvePermissionAction = (actionName, resourceAccessConfig) =>
   "view";
 
 const isMutatingPermissionAction = (permissionAction) =>
-  ["add", "edit", "delete"].includes(permissionAction);
+  ["add", "create", "edit", "delete", "publish"].includes(permissionAction);
 
 const buildDefaultSearchAction = () => ({
   icon: "Search",
@@ -151,7 +151,7 @@ const decorateAdminResource = (resource, config = {}) => {
     if (
       auditEnabled &&
       isMutatingPermissionAction(permissionAction) &&
-      ["new", "edit", "delete", "bulkDelete"].includes(actionName)
+      ["new", "edit", "delete", "bulkDelete", "publish", "unpublish"].includes(actionName)
     ) {
       additions.after = [createAuditAfterHook(actionName, resourceId)];
     }

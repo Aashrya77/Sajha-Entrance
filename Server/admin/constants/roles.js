@@ -83,9 +83,9 @@ const createDefaultRolePermissionSet = (role = "viewer") => {
   permissions.dashboard.view = true;
 
   if (role === "admin") {
-    grantPermissionActions(permissions, NON_SUPER_ADMIN_RESOURCE_KEYS, ["view", "add", "edit", "delete"]);
+    grantPermissionActions(permissions, NON_SUPER_ADMIN_RESOURCE_KEYS, ["view", "add", "create", "edit", "delete", "publish"]);
   } else if (role === "manager") {
-    grantPermissionActions(permissions, NON_SUPER_ADMIN_RESOURCE_KEYS, ["view", "add", "edit"]);
+    grantPermissionActions(permissions, NON_SUPER_ADMIN_RESOURCE_KEYS, ["view", "add", "create", "edit"]);
   } else {
     grantPermissionActions(permissions, NON_SUPER_ADMIN_RESOURCE_KEYS, ["view"]);
   }
@@ -124,12 +124,20 @@ const buildLegacyPermissionSet = (role = "viewer", legacyPermissions = {}) => {
       resourcePermissions.add = write;
     }
 
+    if (resourcePermissions.create !== undefined) {
+      resourcePermissions.create = write;
+    }
+
     if (resourcePermissions.edit !== undefined) {
       resourcePermissions.edit = write;
     }
 
     if (resourcePermissions.delete !== undefined) {
       resourcePermissions.delete = canDelete;
+    }
+
+    if (resourcePermissions.publish !== undefined) {
+      resourcePermissions.publish = write;
     }
   });
 

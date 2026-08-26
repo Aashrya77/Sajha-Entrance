@@ -10,6 +10,8 @@ export const mediaRootDirectory = path.join(publicDirectory, "media");
 
 export const MEDIA_TYPES = Object.freeze({
   blog: "blog",
+  news: "news",
+  event: "event",
   advertisement: "advertisement",
   popup: "popup",
   landing: "landing",
@@ -26,6 +28,14 @@ export const legacyMediaDirectories = Object.freeze({
     path.join(publicDirectory, "blogs"),
     path.join(publicDirectory, "uploads", "blog"),
     path.join(publicDirectory, "uploads", "blogs"),
+  ],
+  [MEDIA_TYPES.news]: [
+    path.join(publicDirectory, "news"),
+    path.join(publicDirectory, "uploads", "news"),
+  ],
+  [MEDIA_TYPES.event]: [
+    path.join(publicDirectory, "events"),
+    path.join(publicDirectory, "uploads", "events"),
   ],
   [MEDIA_TYPES.advertisement]: [
     path.join(publicDirectory, "advertisements"),
@@ -61,6 +71,12 @@ export const legacyMediaDirectories = Object.freeze({
 export const mediaFieldMaps = Object.freeze({
   blog: {
     blogImage: MEDIA_TYPES.blog,
+  },
+  news: {
+    featuredImage: MEDIA_TYPES.news,
+  },
+  event: {
+    featuredImage: MEDIA_TYPES.event,
   },
   advertisement: {
     advertisementFile: MEDIA_TYPES.advertisement,
