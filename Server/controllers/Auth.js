@@ -24,8 +24,12 @@ import {
 
 import { createLogger } from "../utils/logger.js";
 import { createAdminNotification } from "../admin/utils/admin-audit.js";
+import { redisClient } from "../utils/redisClient.js";
 
 const logger = createLogger("auth");
+
+const OTP_NOTIFY_THRESHOLD = Number.parseInt(process.env.OTP_NOTIFY_THRESHOLD || "3", 10);
+const OTP_NOTIFY_WINDOW_SECONDS = Number.parseInt(process.env.OTP_NOTIFY_WINDOW_SECONDS || "3600", 10);
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 const JWT_EXPIRY = process.env.JWT_EXPIRY || "7d";
@@ -474,16 +478,39 @@ export const resetPasswordWithOtp = async (req, res) => {
     account.passwordResetToken = undefined;
     account.passwordResetExpires = undefined;
     await account.save();
+
+    // Increment OTP reset counter (optional Redis) and only notify on threshold
     try {
-      // Audit admin notification for password reset via OTP
-      await createAdminNotification({
-        title: "Password reset via OTP",
-        message: `Password reset for ${account.email} via OTP from IP ${req.ip}`,
-        type: "warning",
-        resource: "Student",
-      });
-    } catch (notifyErr) {
-      logger.warn("Failed to create admin notification for OTP reset:", notifyErr?.message || notifyErr);
+      let notify = false;
+      if (redisClient) {
+        const key = `otp_reset:${account.email}`;
+        const count = await redisClient.incr(key);
+        if (count === 1) {
+          await redisClient.expire(key, OTP_NOTIFY_WINDOW_SECONDS);
+        }
+        logger.debug('otp_reset count', account.email, count);
+        if (count >= OTP_NOTIFY_THRESHOLD || requestedAccountType === 'admin') {
+          notify = true;
+        }
+      } else {
+        // If no redis available, fall back to notifying only for admin accounts
+        notify = requestedAccountType === 'admin';
+      }
+
+      if (notify) {
+        try {
+          await createAdminNotification({
+            title: "Password reset via OTP",
+            message: `Password reset for ${account.email} via OTP from IP ${req.ip}`,
+            type: "warning",
+            resource: requestedAccountType === 'admin' ? 'AdminUser' : 'Student',
+          });
+        } catch (notifyErr) {
+          logger.warn("Failed to create admin notification for OTP reset:", notifyErr?.message || notifyErr);
+        }
+      }
+    } catch (err) {
+      logger.warn('otp reset notify check failed', err?.message || err);
     }
 
     logger.info("Password reset via OTP succeeded for", account.email, { ip: req.ip });
