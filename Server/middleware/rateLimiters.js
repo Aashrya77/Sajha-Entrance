@@ -1,4 +1,6 @@
 import { rateLimit } from "express-rate-limit";
+import RedisStore from "rate-limit-redis";
+import IORedis from "ioredis";
 
 const FIFTEEN_MINUTES_MS = 15 * 60 * 1000;
 const ONE_HOUR_MS = 60 * 60 * 1000;
@@ -18,14 +20,31 @@ const buildRateLimitResponse = (message) => (_req, res, _next, options) =>
     error: message,
   });
 
+// Try to initialize Redis client if REDIS_URL provided
+let redisClient = null;
+const REDIS_URL = process.env.REDIS_URL || process.env.REDIS_URI || process.env.REDIS;
+if (REDIS_URL) {
+  try {
+    redisClient = new IORedis(REDIS_URL);
+  } catch (err) {
+    // don't throw — fall back to in-memory store
+    // eslint-disable-next-line no-console
+    console.warn('Failed to initialize Redis for rate limiter; falling back to memory store', err?.message || err);
+    redisClient = null;
+  }
+}
+
 const createLimiter = ({
   message = "Too many requests. Please try again later.",
+  useRedis = true,
   ...options
 }) =>
   rateLimit({
     standardHeaders: "draft-8",
     legacyHeaders: false,
     handler: buildRateLimitResponse(message),
+    // attach Redis store when available and requested
+    ...(redisClient && useRedis ? { store: new RedisStore({ sendCommand: (...args) => redisClient.call(...args) }) } : {}),
     ...options,
   });
 
@@ -65,6 +84,13 @@ export const rateLimitDefaults = {
   forgotPasswordIpLimit: 5,
   forgotPasswordEmailWindowMs: ONE_HOUR_MS,
   forgotPasswordEmailLimit: 3,
+  // OTP-specific stricter limits
+  forgotPasswordOtpIpWindowMs: FIFTEEN_MINUTES_MS,
+  forgotPasswordOtpIpLimit: 3,
+  forgotPasswordOtpEmailWindowMs: ONE_HOUR_MS,
+  forgotPasswordOtpEmailLimit: 2,
+  resetPasswordOtpWindowMs: FIFTEEN_MINUTES_MS,
+  resetPasswordOtpLimit: 5,
   resetPasswordWindowMs: FIFTEEN_MINUTES_MS,
   resetPasswordLimit: 10,
 };
@@ -124,10 +150,28 @@ export const createAuthRateLimiters = (overrides = {}) => {
       limit: config.forgotPasswordEmailLimit,
       message: "Too many password reset requests. Please try again later.",
     }),
+    // Stricter OTP-specific limiters (protects against mass OTP requests)
+    forgotPasswordOtpIpLimiter: createLimiter({
+      windowMs: config.forgotPasswordOtpIpWindowMs,
+      limit: config.forgotPasswordOtpIpLimit,
+      message: "Too many OTP requests from this IP. Please try again later.",
+    }),
+    forgotPasswordOtpEmailLimiter: createEmailLimiter({
+      keyPrefix: "student-forgot-password-otp-email",
+      windowMs: config.forgotPasswordOtpEmailWindowMs,
+      limit: config.forgotPasswordOtpEmailLimit,
+      message: "Too many OTP requests for this account. Please try again later.",
+    }),
     resetPasswordLimiter: createLimiter({
       windowMs: config.resetPasswordWindowMs,
       limit: config.resetPasswordLimit,
       message: "Too many password reset attempts. Please try again later.",
+    }),
+    // Stricter limiter for OTP-based reset attempts
+    resetPasswordOtpLimiter: createLimiter({
+      windowMs: config.resetPasswordOtpWindowMs,
+      limit: config.resetPasswordOtpLimit,
+      message: "Too many OTP verification attempts. Please try again later.",
     }),
   };
 };
@@ -143,4 +187,7 @@ export const {
   forgotPasswordIpLimiter,
   forgotPasswordEmailLimiter,
   resetPasswordLimiter,
+  forgotPasswordOtpIpLimiter,
+  forgotPasswordOtpEmailLimiter,
+  resetPasswordOtpLimiter,
 } = createAuthRateLimiters();

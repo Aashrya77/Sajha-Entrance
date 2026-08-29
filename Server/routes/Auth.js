@@ -28,11 +28,14 @@ import {
   firebaseLoginLimiter,
   forgotPasswordEmailLimiter,
   forgotPasswordIpLimiter,
+  forgotPasswordOtpIpLimiter,
+  forgotPasswordOtpEmailLimiter,
   loginEmailLimiter,
   loginIpLimiter,
   registerEmailLimiter,
   registerIpLimiter,
   resetPasswordLimiter,
+  resetPasswordOtpLimiter,
 } from "../middleware/rateLimiters.js";
 
 const Router = express.Router();
@@ -49,13 +52,13 @@ Router.post(
 );
 Router.post(
   "/forgot-password-otp",
-  forgotPasswordIpLimiter,
-  forgotPasswordEmailLimiter,
+  forgotPasswordOtpIpLimiter,
+  forgotPasswordOtpEmailLimiter,
   forgotPasswordOtp
 );
 Router.get("/reset-password/:token", resetPasswordLimiter, validateResetToken);
 Router.post("/reset-password/:token", resetPasswordLimiter, resetPassword);
-Router.post("/reset-password-otp", resetPasswordLimiter, resetPasswordWithOtp);
+Router.post("/reset-password-otp", resetPasswordOtpLimiter, resetPasswordWithOtp);
 Router.get("/verify-email/:token", verifyEmail);
 
 // Protected routes

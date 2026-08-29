@@ -22,6 +22,11 @@ import {
   normalizeStudentCourse,
 } from "../constants/studentCourses.js";
 
+import { createLogger } from "../utils/logger.js";
+import { createAdminNotification } from "../admin/utils/admin-audit.js";
+
+const logger = createLogger("auth");
+
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 const JWT_EXPIRY = process.env.JWT_EXPIRY || "7d";
 const PASSWORD_RESET_EXPIRY_MS = 1000 * 60 * 30;
@@ -365,7 +370,10 @@ export const forgotPasswordOtp = async (req, res) => {
           )
         : await Student.findOne({ email }).select("+passwordResetOtpHash +passwordResetOtpExpires +phone");
 
+    logger.info("forgotPasswordOtp requested", email, { ip: req.ip });
+
     if (!account) {
+      logger.debug("forgotPasswordOtp: no account found for email", email);
       return res.json({ success: true, message: "If an account exists, an OTP was sent." });
     }
 
@@ -405,11 +413,21 @@ export const forgotPasswordOtp = async (req, res) => {
     }
 
     if (!deliveries.length) {
+      logger.error("forgotPasswordOtp: no delivery channels configured for", email);
       return res.status(500).json({ success: false, error: "No delivery channel configured for this account." });
     }
 
     const deliveryResults = await Promise.allSettled(deliveries.map((d) => d.promise));
+    deliveryResults.forEach((result, idx) => {
+      if (result.status === "rejected") {
+        logger.warn("forgotPasswordOtp delivery failed", deliveries[idx].channel, email, result.reason?.message || result.reason);
+      } else {
+        logger.info("forgotPasswordOtp delivered", deliveries[idx].channel, email);
+      }
+    });
+
     if (!deliveryResults.some((r) => r.status === "fulfilled")) {
+      logger.error("forgotPasswordOtp: all delivery channels failed for", email);
       return res.status(500).json({ success: false, error: "Failed to deliver OTP. Please try again later." });
     }
 
@@ -456,6 +474,19 @@ export const resetPasswordWithOtp = async (req, res) => {
     account.passwordResetToken = undefined;
     account.passwordResetExpires = undefined;
     await account.save();
+    try {
+      // Audit admin notification for password reset via OTP
+      await createAdminNotification({
+        title: "Password reset via OTP",
+        message: `Password reset for ${account.email} via OTP from IP ${req.ip}`,
+        type: "warning",
+        resource: "Student",
+      });
+    } catch (notifyErr) {
+      logger.warn("Failed to create admin notification for OTP reset:", notifyErr?.message || notifyErr);
+    }
+
+    logger.info("Password reset via OTP succeeded for", account.email, { ip: req.ip });
 
     return res.json({ success: true, message: "Password reset successful. Please log in with your new password." });
   } catch (error) {
