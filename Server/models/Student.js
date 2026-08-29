@@ -105,6 +105,19 @@ const StudentSchema = new mongoose.Schema({
     enum: ["Unpaid", "Paid"],
     default: "Unpaid",
   },
+  // Email verification
+  isVerified: {
+    type: Boolean,
+    default: false,
+    index: true,
+  },
+  verificationToken: {
+    type: String,
+    trim: true,
+  },
+  verificationExpires: {
+    type: Date,
+  },
   isTestAccount: {
     type: Boolean,
     default: false,
@@ -116,6 +129,15 @@ const StudentSchema = new mongoose.Schema({
   },
   passwordResetExpires: {
     type: Date,
+  },
+  passwordResetOtpHash: {
+    type: String,
+    trim: true,
+    select: false,
+  },
+  passwordResetOtpExpires: {
+    type: Date,
+    select: false,
   },
   createdAt: {
     type: Date,

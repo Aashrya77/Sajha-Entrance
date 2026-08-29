@@ -4,8 +4,11 @@ import {
   login,
   firebaseLogin,
   forgotPassword,
+  forgotPasswordOtp,
   resetPassword,
+  resetPasswordWithOtp,
   validateResetToken,
+  verifyEmail,
   getProfile,
   updateProfile,
   getClasses,
@@ -44,8 +47,16 @@ Router.post(
   forgotPasswordEmailLimiter,
   forgotPassword
 );
+Router.post(
+  "/forgot-password-otp",
+  forgotPasswordIpLimiter,
+  forgotPasswordEmailLimiter,
+  forgotPasswordOtp
+);
 Router.get("/reset-password/:token", resetPasswordLimiter, validateResetToken);
 Router.post("/reset-password/:token", resetPasswordLimiter, resetPassword);
+Router.post("/reset-password-otp", resetPasswordLimiter, resetPasswordWithOtp);
+Router.get("/verify-email/:token", verifyEmail);
 
 // Protected routes
 Router.get("/profile", authenticateToken, getProfile);

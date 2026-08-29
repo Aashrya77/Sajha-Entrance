@@ -119,9 +119,36 @@ export const register = async (req, res) => {
       course: normalizedCourse,
     });
 
+    // After creating student, generate email verification token and send
+    const createdStudent = await Student.findOne({ email: email.toLowerCase().trim() });
+    if (createdStudent) {
+      const rawVerifyToken = crypto.randomBytes(20).toString("hex");
+      createdStudent.verificationToken = hashResetToken(rawVerifyToken);
+      createdStudent.verificationExpires = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 hours
+      createdStudent.isVerified = false;
+      await createdStudent.save();
+
+      const verifyUrl = `${buildFrontendUrl(req)}/verify-email/${rawVerifyToken}`;
+      const mailOptions = {
+        from: process.env.MAIL_USERNAME,
+        to: createdStudent.email,
+        subject: "Verify your Sajha Entrance account",
+        text: `Hello ${createdStudent.name},\n\nPlease verify your email by opening: ${verifyUrl}\n\nThis link expires in 24 hours.`,
+        html: `<p>Hello ${createdStudent.name},</p><p>Please verify your email by clicking <a href="${verifyUrl}">here</a>.</p><p>This link expires in 24 hours.</p>`,
+      };
+
+      try {
+        if (process.env.MAIL_USERNAME && process.env.MAIL_PASSWORD) {
+          await MailHandler.sendMail(mailOptions);
+        }
+      } catch (mailErr) {
+        console.warn("Email verification delivery failed:", mailErr?.message || mailErr);
+      }
+    }
+
     res.status(201).json({
       success: true,
-      message: "Registration successful! Please login.",
+      message: "Registration successful! Check your email to verify the account.",
     });
   } catch (error) {
     console.error("Register error:", error);
@@ -155,6 +182,11 @@ export const login = async (req, res) => {
       return res.status(401).json({ success: false, error: "Invalid email or password." });
     }
 
+    // Prevent login for unverified students
+    if (!student.isVerified) {
+      return res.status(403).json({ success: false, error: "Account not verified. Please check your email for verification instructions." });
+    }
+
     const token = generateToken(student._id, student.studentId, student.email);
 
     // Set cookie for browser
@@ -180,6 +212,32 @@ export const login = async (req, res) => {
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ success: false, error: "Login failed. Please try again." });
+  }
+};
+
+// Verify email token
+export const verifyEmail = async (req, res) => {
+  try {
+    const token = String(req.params.token || "").trim();
+    if (!token) {
+      return res.status(400).json({ success: false, error: "Verification token is required." });
+    }
+
+    const tokenHash = hashResetToken(token);
+    const student = await Student.findOne({ verificationToken: tokenHash, verificationExpires: { $gt: new Date() } });
+    if (!student) {
+      return res.status(400).json({ success: false, error: "Verification link is invalid or has expired." });
+    }
+
+    student.isVerified = true;
+    student.verificationToken = undefined;
+    student.verificationExpires = undefined;
+    await student.save();
+
+    res.json({ success: true, message: "Email verified. You can now log in." });
+  } catch (error) {
+    console.error("Verify email error:", error);
+    res.status(500).json({ success: false, error: "Failed to verify email. Please try again." });
   }
 };
 
@@ -286,6 +344,123 @@ export const forgotPassword = async (req, res) => {
       success: false,
       error: "Failed to send password reset instructions. Please try again.",
     });
+  }
+};
+
+// Send OTP for password reset (email/SMS)
+export const forgotPasswordOtp = async (req, res) => {
+  try {
+    const email = String(req.body?.email || "").toLowerCase().trim();
+    if (!email) {
+      return res.status(400).json({ success: false, error: "Email is required." });
+    }
+
+    const requestedAccountType =
+      String(req.body?.accountType || "").toLowerCase() === "admin" ? "admin" : "student";
+
+    const account =
+      requestedAccountType === "admin"
+        ? await AdminUserModel.findOne({ email, isActive: true }).select(
+            "+passwordResetOtpHash +passwordResetOtpExpires"
+          )
+        : await Student.findOne({ email }).select("+passwordResetOtpHash +passwordResetOtpExpires +phone");
+
+    if (!account) {
+      return res.json({ success: true, message: "If an account exists, an OTP was sent." });
+    }
+
+    // Generate 6-digit OTP
+    const rawOtp = String(crypto.randomInt(100000, 999999));
+    const otpHash = hashResetToken(rawOtp);
+    account.passwordResetOtpHash = otpHash;
+    account.passwordResetOtpExpires = new Date(Date.now() + 1000 * 60 * 10); // 10 minutes
+    await account.save();
+
+    const accountName = requestedAccountType === "admin" ? account.fullName : account.name;
+    const deliveries = [];
+
+    // Email delivery
+    if (process.env.MAIL_USERNAME && process.env.MAIL_PASSWORD) {
+      const mailOptions = {
+        from: process.env.MAIL_USERNAME,
+        to: account.email,
+        subject: "Your Sajha Entrance password reset code",
+        text: `Hello ${accountName},\n\nYour password reset code is: ${rawOtp}\nIt expires in 10 minutes.\n\nIf you did not request this, ignore this message.`,
+        html: `<p>Hello ${accountName},</p><p>Your password reset code is: <strong>${rawOtp}</strong></p><p>It expires in 10 minutes.</p>`,
+      };
+
+      deliveries.push({ channel: "email", promise: MailHandler.sendMail(mailOptions) });
+    }
+
+    // SMS delivery for students if configured
+    const studentMobile = requestedAccountType === "student" ? normalizeNepalMobileNumber(account.phone) : "";
+    if (studentMobile && isAakashSmsConfigured()) {
+      deliveries.push({
+        channel: "SMS",
+        promise: sendAakashSms({
+          to: studentMobile,
+          text: `Sajha Entrance password reset code: ${rawOtp} (valid 10 minutes)`,
+        }),
+      });
+    }
+
+    if (!deliveries.length) {
+      return res.status(500).json({ success: false, error: "No delivery channel configured for this account." });
+    }
+
+    const deliveryResults = await Promise.allSettled(deliveries.map((d) => d.promise));
+    if (!deliveryResults.some((r) => r.status === "fulfilled")) {
+      return res.status(500).json({ success: false, error: "Failed to deliver OTP. Please try again later." });
+    }
+
+    return res.json({ success: true, message: "If an account exists, an OTP was sent to its registered contact details." });
+  } catch (error) {
+    console.error("Forgot password OTP error:", error);
+    return res.status(500).json({ success: false, error: "Failed to send OTP. Please try again." });
+  }
+};
+
+// Reset password using OTP
+export const resetPasswordWithOtp = async (req, res) => {
+  try {
+    const email = String(req.body?.email || "").toLowerCase().trim();
+    const rawOtp = String(req.body?.otp || "").trim();
+    const password = String(req.body?.password || "").trim();
+
+    if (!email || !rawOtp || !password) {
+      return res.status(400).json({ success: false, error: "Email, OTP and new password are required." });
+    }
+
+    const requestedAccountType =
+      String(req.body?.accountType || "").toLowerCase() === "admin" ? "admin" : "student";
+
+    const otpHash = hashResetToken(rawOtp);
+
+    let account =
+      requestedAccountType === "admin"
+        ? await AdminUserModel.findOne({ email, passwordResetOtpHash: otpHash, passwordResetOtpExpires: { $gt: new Date() } }).select(
+            "+passwordResetOtpHash +passwordResetOtpExpires +password"
+          )
+        : await Student.findOne({ email, passwordResetOtpHash: otpHash, passwordResetOtpExpires: { $gt: new Date() } }).select(
+            "+passwordResetOtpHash +passwordResetOtpExpires +password"
+          );
+
+    if (!account) {
+      return res.status(400).json({ success: false, error: "OTP is invalid or has expired." });
+    }
+
+    account.password = password;
+    account.passwordResetOtpHash = undefined;
+    account.passwordResetOtpExpires = undefined;
+    // Also clear any token-based reset fields for safety
+    account.passwordResetToken = undefined;
+    account.passwordResetExpires = undefined;
+    await account.save();
+
+    return res.json({ success: true, message: "Password reset successful. Please log in with your new password." });
+  } catch (error) {
+    console.error("Reset password with OTP error:", error);
+    return res.status(500).json({ success: false, error: "Failed to reset password. Please try again." });
   }
 };
 

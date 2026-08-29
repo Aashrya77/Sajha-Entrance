@@ -36,6 +36,16 @@ const AdminUserSchema = new mongoose.Schema(
       default: undefined,
       select: false,
     },
+    passwordResetOtpHash: {
+      type: String,
+      default: undefined,
+      select: false,
+    },
+    passwordResetOtpExpires: {
+      type: Date,
+      default: undefined,
+      select: false,
+    },
     role: {
       type: String,
       enum: ["super_admin", "admin", "manager", "viewer"],

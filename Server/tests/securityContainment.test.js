@@ -489,6 +489,7 @@ test("an existing valid student can still log in", async () => {
         email: "student@example.com",
         course: "BSc.CSIT",
         accountStatus: "Unpaid",
+        isVerified: true,
         comparePassword: async (password) => password === "correct-password",
       };
     },

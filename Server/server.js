@@ -91,8 +91,21 @@ app.use(
   helmet({
     contentSecurityPolicy: false,
     crossOriginEmbedderPolicy: false,
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    referrerPolicy: { policy: "no-referrer-when-downgrade" },
   })
 );
+
+// Apply HSTS in production to force HTTPS for future requests
+if (isProduction) {
+  app.use(
+    helmet.hsts({
+      maxAge: 15552000, // 180 days in seconds
+      includeSubDomains: true,
+      preload: true,
+    })
+  );
+}
 
 app.use(
   cors({
