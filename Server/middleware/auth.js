@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
+import { getJwtSecret } from "../config/securitySecrets.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
+const JWT_SECRET = getJwtSecret();
 
 // Helper to extract token from cookie or Authorization header
 const getToken = (req) => {

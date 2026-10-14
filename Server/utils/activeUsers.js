@@ -1,7 +1,8 @@
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
+import { getJwtSecret } from "../config/securitySecrets.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
+const JWT_SECRET = getJwtSecret();
 const ACTIVE_USER_WINDOW_MS = 1000 * 60 * 2;
 const MAX_TRACKED_ACTIVE_USERS = 500;
 const activeUsers = new Map();

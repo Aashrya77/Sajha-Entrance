@@ -1,7 +1,8 @@
 import Student from "../models/Student.js";
 import jwt from "jsonwebtoken";
+import { getJwtSecret } from "../config/securitySecrets.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
+const JWT_SECRET = getJwtSecret();
 
 // Middleware to inject student data into all views
 export const injectStudentData = async (req, res, next) => {

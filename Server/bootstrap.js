@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { assertProductionSecuritySecrets } from "./config/securitySecrets.js";
 
 dotenv.config();
 
@@ -19,5 +20,7 @@ const defaultNodeEnv =
   npmLifecycleEvent === "start" || isPm2Runtime ? "production" : "development";
 
 process.env.NODE_ENV = configuredNodeEnv || defaultNodeEnv;
+
+assertProductionSecuritySecrets();
 
 await import("./server.js");

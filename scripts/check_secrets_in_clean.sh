@@ -1,23 +1,34 @@
 #!/usr/bin/env bash
 set -euo pipefail
-REPO="/mnt/c/Users/LOQ/Desktop/Sajha-Entrance/tmp-repo-clean"
-if [ ! -d "$REPO/.git" ]; then
-  echo "Cleaned repo not found at $REPO/.git"
+if [ "$#" -ne 2 ]; then
+  echo "Usage: $0 <repository-path> <secret-values-file>" >&2
   exit 1
 fi
-cat > /tmp/secret_list.txt <<'VALS'
-Mukesh:0908
-76ed680ef82ae0bca21c29b0953d591da64462e660af75a19c6796708321c718
-test123
-8gBm/:&EnhH.1/q
-AIzaSyC62kUe3nYLXQHLyep3O6RM5IUBut9GvBY
-614959587925644:bE-X7Rc7nHWmAkuOv70S8NqYiGk
-d1327571da12900caa0eb3f6ae576253534ebd0d1260ca7268e5e6f9e3ef4594
-VALS
+REPO="$1"
+SECRET_VALUES_FILE="$2"
 
-while IFS= read -r s; do
-  echo "== $s =="
-  git --git-dir="$REPO/.git" --work-tree="$REPO" grep -n -F "$s" || echo "no matches"
-done < /tmp/secret_list.txt
+if ! git -C "$REPO" rev-parse --git-dir >/dev/null 2>&1; then
+  echo "Repository not found: $REPO" >&2
+  exit 1
+fi
 
-echo "check complete"
+if [ ! -f "$SECRET_VALUES_FILE" ]; then
+  echo "Secret values file not found: $SECRET_VALUES_FILE" >&2
+  exit 1
+fi
+
+found=0
+while IFS= read -r secret || [ -n "$secret" ]; do
+  [ -z "$secret" ] && continue
+  if git -C "$REPO" grep -l -F -e "$secret" HEAD -- >/dev/null 2>&1; then
+    echo "Potential secret match found in repository content (value redacted)."
+    found=1
+  fi
+done < "$SECRET_VALUES_FILE"
+
+if [ "$found" -eq 1 ]; then
+  echo "Check failed. Review matches locally without sharing secret values."
+  exit 1
+fi
+
+echo "No supplied secret values found in HEAD. Git history was not scanned."

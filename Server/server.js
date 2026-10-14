@@ -47,6 +47,7 @@ import { refreshYouTubeLibrarySchedule } from "./services/youtubeLibrarySchedule
 import { startZoomRecordingAutoSync } from "./services/zoomRecordingScheduler.js";
 import { backfillPublicSlugs } from "./services/publicSlugService.js";
 import { seedInitialBooks } from "./services/bookSeedService.js";
+import { assertProductionSecuritySecrets } from "./config/securitySecrets.js";
 
 dotenv.config();
 
@@ -54,6 +55,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 const logger = createLogger("server");
 const isProduction = process.env.NODE_ENV === "production";
+assertProductionSecuritySecrets();
 
 const runtimeState = {
   adminStatus: "pending",

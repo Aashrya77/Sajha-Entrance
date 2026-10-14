@@ -2,8 +2,9 @@ import jwt from "jsonwebtoken";
 import { firebaseAdminClient } from "../config/firebaseadmin.js";
 import Student from "../models/Student.js";
 import { createLogger } from "../utils/logger.js";
+import { getJwtSecret } from "../config/securitySecrets.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
+const JWT_SECRET = getJwtSecret();
 const logger = createLogger("auth");
 const REGISTRATION_REQUIRED_CODE = "REGISTRATION_REQUIRED";
 

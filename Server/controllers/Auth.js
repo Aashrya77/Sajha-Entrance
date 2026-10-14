@@ -25,13 +25,14 @@ import {
 import { createLogger } from "../utils/logger.js";
 import { createAdminNotification } from "../admin/utils/admin-audit.js";
 import { redisClient } from "../utils/redisClient.js";
+import { getJwtSecret } from "../config/securitySecrets.js";
 
 const logger = createLogger("auth");
+const JWT_SECRET = getJwtSecret();
 
 const OTP_NOTIFY_THRESHOLD = Number.parseInt(process.env.OTP_NOTIFY_THRESHOLD || "3", 10);
 const OTP_NOTIFY_WINDOW_SECONDS = Number.parseInt(process.env.OTP_NOTIFY_WINDOW_SECONDS || "3600", 10);
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 const JWT_EXPIRY = process.env.JWT_EXPIRY || "7d";
 const PASSWORD_RESET_EXPIRY_MS = 1000 * 60 * 30;
 const STUDENT_REGISTRATION_ATTEMPTS = 3;

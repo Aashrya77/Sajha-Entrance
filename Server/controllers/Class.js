@@ -4,8 +4,9 @@ import jwt from "jsonwebtoken";
 import Notice from "../models/Notice.js";
 import Popup from "../models/Popup.js";
 import { hasOnlineClassCourseAccess } from "../utils/onlineClassCourses.js";
+import { getJwtSecret } from "../config/securitySecrets.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
+const JWT_SECRET = getJwtSecret();
 
 // Check if student can access classes
 export const canAccessClasses = (student) => {

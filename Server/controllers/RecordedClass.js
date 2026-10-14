@@ -3,8 +3,9 @@ import Student from "../models/Student.js";
 import jwt from "jsonwebtoken";
 import { fetchYoutubePlaylistDetails, resolveRecordedClassMedia } from "../utils/youtube.js";
 import { getCourseRegexMatchers, hasCourseAccess } from "../utils/courseAccess.js";
+import { getJwtSecret } from "../config/securitySecrets.js";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
+const JWT_SECRET = getJwtSecret();
 
 const formatRecordedClass = (recordedClass, isPaid) => {
   const media = resolveRecordedClassMedia(recordedClass);

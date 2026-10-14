@@ -17,10 +17,10 @@ const config = {
 
   // Authentication
   auth: {
-    jwtSecret: process.env.JWT_SECRET || 'your-secret-key',
-    sessionSecret: process.env.SESSION_SECRET || 'your-session-secret',
+    jwtSecret: process.env.JWT_SECRET,
+    sessionSecret: process.env.SESSION_SECRET,
     adminUsername: process.env.ADMIN_USERNAME || 'admin@sajha.com',
-    adminPassword: process.env.ADMIN_PASSWORD || 'password123',
+    adminPassword: process.env.ADMIN_PASSWORD,
   },
 
   // Firebase
