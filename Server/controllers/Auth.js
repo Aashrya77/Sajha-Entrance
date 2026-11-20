@@ -52,6 +52,27 @@ const resolveStudentCourseForResponse = (value = "") =>
 
 const normalizeEmail = (value = "") => String(value || "").trim().toLowerCase();
 
+const sendStudentVerificationEmail = async (req, student) => {
+  if (!process.env.MAIL_USERNAME || !process.env.MAIL_PASSWORD) {
+    throw new Error("Email delivery is not configured.");
+  }
+
+  const rawVerifyToken = crypto.randomBytes(20).toString("hex");
+  student.verificationToken = hashResetToken(rawVerifyToken);
+  student.verificationExpires = new Date(Date.now() + 1000 * 60 * 60 * 24);
+  student.isVerified = false;
+  await student.save();
+
+  const verifyUrl = `${buildFrontendUrl(req)}/verify-email/${rawVerifyToken}`;
+  await MailHandler.sendMail({
+    from: process.env.MAIL_USERNAME,
+    to: student.email,
+    subject: "Verify your Sajha Entrance account",
+    text: `Hello ${student.name},\n\nPlease verify your email by opening: ${verifyUrl}\n\nThis link expires in 24 hours.`,
+    html: `<p>Hello ${student.name},</p><p>Please verify your email by clicking <a href="${verifyUrl}">here</a>.</p><p>This link expires in 24 hours.</p>`,
+  });
+};
+
 const getDuplicateKeyField = (error) => {
   const keyPatternField = Object.keys(error?.keyPattern || {})[0];
   if (keyPatternField) {
@@ -130,27 +151,12 @@ export const register = async (req, res) => {
     });
 
     // After creating student, generate email verification token and send
+    let verificationEmailSent = false;
     const createdStudent = await Student.findOne({ email: email.toLowerCase().trim() });
     if (createdStudent) {
-      const rawVerifyToken = crypto.randomBytes(20).toString("hex");
-      createdStudent.verificationToken = hashResetToken(rawVerifyToken);
-      createdStudent.verificationExpires = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 hours
-      createdStudent.isVerified = false;
-      await createdStudent.save();
-
-      const verifyUrl = `${buildFrontendUrl(req)}/verify-email/${rawVerifyToken}`;
-      const mailOptions = {
-        from: process.env.MAIL_USERNAME,
-        to: createdStudent.email,
-        subject: "Verify your Sajha Entrance account",
-        text: `Hello ${createdStudent.name},\n\nPlease verify your email by opening: ${verifyUrl}\n\nThis link expires in 24 hours.`,
-        html: `<p>Hello ${createdStudent.name},</p><p>Please verify your email by clicking <a href="${verifyUrl}">here</a>.</p><p>This link expires in 24 hours.</p>`,
-      };
-
       try {
-        if (process.env.MAIL_USERNAME && process.env.MAIL_PASSWORD) {
-          await MailHandler.sendMail(mailOptions);
-        }
+        await sendStudentVerificationEmail(req, createdStudent);
+        verificationEmailSent = true;
       } catch (mailErr) {
         console.warn("Email verification delivery failed:", mailErr?.message || mailErr);
       }
@@ -158,7 +164,10 @@ export const register = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: "Registration successful! Check your email to verify the account.",
+      verificationEmailSent,
+      message: verificationEmailSent
+        ? "Registration successful! Check your email to verify the account."
+        : "Registration successful, but we couldn't send the verification email. Please request a new email from the login page or contact support.",
     });
   } catch (error) {
     console.error("Register error:", error);
@@ -194,7 +203,11 @@ export const login = async (req, res) => {
 
     // Prevent login for unverified students
     if (!student.isVerified) {
-      return res.status(403).json({ success: false, error: "Account not verified. Please check your email for verification instructions." });
+      return res.status(403).json({
+        success: false,
+        code: "EMAIL_NOT_VERIFIED",
+        error: "Account not verified. Please check your email for verification instructions.",
+      });
     }
 
     const token = generateToken(student._id, student.studentId, student.email);
@@ -222,6 +235,35 @@ export const login = async (req, res) => {
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ success: false, error: "Login failed. Please try again." });
+  }
+};
+
+export const resendVerification = async (req, res) => {
+  try {
+    const email = normalizeEmail(req.body?.email);
+    const password = req.body?.password;
+
+    if (!email || !password) {
+      return res.status(400).json({ success: false, error: "Email and password are required." });
+    }
+
+    const student = await Student.findOne({ email });
+    if (!student || !(await student.comparePassword(password))) {
+      return res.status(401).json({ success: false, error: "Invalid email or password." });
+    }
+
+    if (student.isVerified) {
+      return res.json({ success: true, message: "This account is already verified. You can log in." });
+    }
+
+    await sendStudentVerificationEmail(req, student);
+    return res.json({ success: true, message: "A new verification email has been sent." });
+  } catch (error) {
+    console.error("Resend verification email failed:", error?.message || error);
+    return res.status(503).json({
+      success: false,
+      error: "We couldn't send the verification email. Please try again later or contact support.",
+    });
   }
 };
 

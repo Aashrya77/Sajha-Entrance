@@ -2,6 +2,7 @@ import express from "express";
 import {
   register,
   login,
+  resendVerification,
   firebaseLogin,
   forgotPassword,
   forgotPasswordOtp,
@@ -34,6 +35,8 @@ import {
   loginIpLimiter,
   registerEmailLimiter,
   registerIpLimiter,
+  resendVerificationEmailLimiter,
+  resendVerificationIpLimiter,
   resetPasswordLimiter,
   resetPasswordOtpLimiter,
 } from "../middleware/rateLimiters.js";
@@ -43,6 +46,12 @@ const Router = express.Router();
 // Public routes
 Router.post("/register", registerIpLimiter, registerEmailLimiter, register);
 Router.post("/login", loginIpLimiter, loginEmailLimiter, login);
+Router.post(
+  "/resend-verification",
+  resendVerificationIpLimiter,
+  resendVerificationEmailLimiter,
+  resendVerification
+);
 Router.post("/firebase-login", firebaseLoginLimiter, firebaseLogin);
 Router.post(
   "/forgot-password",

@@ -16,6 +16,9 @@ const StudentLogin = ({ setStudentData, setIsAuthenticated }) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [verificationRequired, setVerificationRequired] = useState(false);
+  const [resendingVerification, setResendingVerification] = useState(false);
+  const [verificationMessage, setVerificationMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
@@ -31,6 +34,8 @@ const StudentLogin = ({ setStudentData, setIsAuthenticated }) => {
       [e.target.name]: e.target.value
     });
     if (error) setError('');
+    setVerificationRequired(false);
+    setVerificationMessage('');
   };
 
   const handleSubmit = async (e) => {
@@ -48,8 +53,21 @@ const StudentLogin = ({ setStudentData, setIsAuthenticated }) => {
       }
     } catch (error) {
       setError(error.response?.data?.error || 'Login failed');
+      setVerificationRequired(error.response?.data?.code === 'EMAIL_NOT_VERIFIED');
     }
     setLoading(false);
+  };
+
+  const handleResendVerification = async () => {
+    setResendingVerification(true);
+    setVerificationMessage('');
+    try {
+      const response = await authAPI.resendVerification(formData);
+      setVerificationMessage(response.data.message);
+    } catch (error) {
+      setError(error.response?.data?.error || 'Unable to send a verification email.');
+    }
+    setResendingVerification(false);
   };
 
   return (
@@ -76,6 +94,17 @@ const StudentLogin = ({ setStudentData, setIsAuthenticated }) => {
                 {error}
               </div>
             )}
+            {verificationRequired && (
+              <button
+                type="button"
+                className="submit"
+                onClick={handleResendVerification}
+                disabled={resendingVerification}
+              >
+                {resendingVerification ? 'Sending...' : 'Resend verification email'}
+              </button>
+            )}
+            {verificationMessage && <p role="status">{verificationMessage}</p>}
 
             <label>
               <input

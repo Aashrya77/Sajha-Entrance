@@ -80,7 +80,7 @@ const StudentRegister = () => {
     try {
       const response = await authAPI.register(formData);
       if (response.data.success) {
-        alert('Registration successful! Please login.');
+        alert(response.data.message || 'Registration successful! Please login.');
         navigate('/student/login');
       }
     } catch (error) {

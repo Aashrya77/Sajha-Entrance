@@ -7,7 +7,8 @@ import mongoose from "mongoose";
 
 import { firebaseAdminClient } from "../config/firebaseadmin.js";
 import Student from "../models/Student.js";
-import { firebaseLogin, login } from "../controllers/Auth.js";
+import { firebaseLogin, login, resendVerification } from "../controllers/Auth.js";
+import { MailHandler } from "../controllers/MailHandler.js";
 import { authenticateAny } from "../middleware/auth_combined.js";
 import {
   createAuthRateLimiters,
@@ -505,6 +506,51 @@ test("an existing valid student can still log in", async () => {
     assert.ok(state.payload.token);
     assert.equal(state.payload.data.email, "student@example.com");
     assert.equal(state.cookies[0]?.name, "studentToken");
+  });
+});
+
+test("an unverified student can request a fresh verification email with valid credentials", async () => {
+  const verificationStudent = {
+    name: "Existing Student",
+    email: "student@example.com",
+    isVerified: false,
+    comparePassword: async (password) => password === "correct-password",
+    save: async () => {},
+  };
+  let sentMessage;
+
+  await withPatched(Student, {
+    findOne: async (query) => {
+      assert.deepEqual(query, { email: "student@example.com" });
+      return verificationStudent;
+    },
+  }, async () => {
+    await withPatched(MailHandler, {
+      sendMail: async (message) => {
+        sentMessage = message;
+      },
+    }, async () => {
+      await withPatched(process.env, {
+        MAIL_USERNAME: "mail@example.com",
+        MAIL_PASSWORD: "mail-password",
+      }, async () => {
+        const { state, response } = createResponse();
+        await resendVerification(
+          {
+            body: { email: " Student@Example.com ", password: "correct-password" },
+            headers: { host: "example.com" },
+            get: (header) => (header.toLowerCase() === "host" ? "example.com" : ""),
+          },
+          response
+        );
+
+        assert.equal(state.statusCode, 200);
+        assert.equal(state.payload.success, true);
+        assert.match(sentMessage.text, /verify-email\//);
+        assert.ok(verificationStudent.verificationToken);
+        assert.ok(verificationStudent.verificationExpires > new Date());
+      });
+    });
   });
 });
 

@@ -74,6 +74,10 @@ export const rateLimitDefaults = {
   registerIpLimit: 3,
   registerEmailWindowMs: ONE_HOUR_MS,
   registerEmailLimit: 3,
+  resendVerificationIpWindowMs: FIFTEEN_MINUTES_MS,
+  resendVerificationIpLimit: 5,
+  resendVerificationEmailWindowMs: ONE_HOUR_MS,
+  resendVerificationEmailLimit: 3,
   loginIpWindowMs: FIFTEEN_MINUTES_MS,
   loginIpLimit: 20,
   loginEmailWindowMs: FIFTEEN_MINUTES_MS,
@@ -120,6 +124,17 @@ export const createAuthRateLimiters = (overrides = {}) => {
       windowMs: config.registerEmailWindowMs,
       limit: config.registerEmailLimit,
       message: "Too many registration attempts. Please try again later.",
+    }),
+    resendVerificationIpLimiter: createLimiter({
+      windowMs: config.resendVerificationIpWindowMs,
+      limit: config.resendVerificationIpLimit,
+      message: "Too many verification email requests. Please try again later.",
+    }),
+    resendVerificationEmailLimiter: createEmailLimiter({
+      keyPrefix: "student-resend-verification-email",
+      windowMs: config.resendVerificationEmailWindowMs,
+      limit: config.resendVerificationEmailLimit,
+      message: "Too many verification email requests. Please try again later.",
     }),
     loginIpLimiter: createLimiter({
       windowMs: config.loginIpWindowMs,
@@ -181,6 +196,8 @@ export const globalApiLimiter = createGlobalApiLimiter();
 export const {
   registerIpLimiter,
   registerEmailLimiter,
+  resendVerificationIpLimiter,
+  resendVerificationEmailLimiter,
   loginIpLimiter,
   loginEmailLimiter,
   firebaseLoginLimiter,
