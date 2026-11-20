@@ -28,6 +28,7 @@ const Event = React.lazy(() => import('./pages/Event/Event'));
 const Scholarship = React.lazy(() => import('./pages/Scholarship/Scholarship'));
 const StudentLogin = React.lazy(() => import('./pages/StudentLogin/StudentLogin'));
 const StudentRegister = React.lazy(() => import('./pages/StudentRegister/StudentRegister'));
+const VerifyEmail = React.lazy(() => import('./pages/VerifyEmail/VerifyEmail'));
 const StudentProfile = React.lazy(() => import('./pages/StudentProfile/StudentProfile'));
 const StudentRecordedClassesPage = React.lazy(() => import('./pages/StudentRecordedClasses/StudentRecordedClasses'));
 const AdminRedirect = React.lazy(() => import('./pages/AdminRedirect/AdminRedirect'));
@@ -242,6 +243,7 @@ function App() {
   const authPages = ['/student/login', '/student/register', '/forgot-password'];
   const isAuthPage =
     authPages.includes(location.pathname) ||
+    location.pathname.startsWith('/verify-email/') ||
     location.pathname.startsWith('/reset-password/');
   const isMockTestExamPage = /^\/mocktest\/[^/]+$/.test(location.pathname);
   const hideSiteChrome = isAuthPage || isMockTestExamPage;
@@ -297,6 +299,7 @@ function App() {
         <Route path="/cart" element={<Cart cartItems={cartItems} removeFromCart={removeFromCart} updateQuantity={updateQuantity} clearCart={clearCart} />} />
         <Route path="/student/login" element={<StudentLogin setStudentData={setStudentData} setIsAuthenticated={setIsAuthenticated} />} />
         <Route path="/student/register" element={<StudentRegister />} />
+        <Route path="/verify-email/:token" element={<VerifyEmail />} />
         <Route path="/student/recorded-classes" element={<StudentRecordedClassesPage />} />
         <Route path="/student/profile/*" element={<StudentProfile studentData={studentData} setStudentData={setStudentData} setIsAuthenticated={setIsAuthenticated} />} />
         <Route path="/forgot-password" element={<ForgotPasswordForm />} />

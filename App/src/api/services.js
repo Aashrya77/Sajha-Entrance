@@ -129,6 +129,7 @@ export const eventAPI = {
 export const authAPI = {
   login: (credentials) => API.post('/student/login', credentials),
   resendVerification: (credentials) => API.post('/student/resend-verification', credentials),
+  verifyEmail: (token) => API.get(`/student/verify-email/${encodeURIComponent(token)}`),
   register: (userData) => API.post('/student/register', userData),
   forgotPassword: (data) => API.post('/student/forgot-password', data),
   validateResetToken: (token) => API.get(`/student/reset-password/${token}`),
